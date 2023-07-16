@@ -1,5 +1,44 @@
 #include "code/utility/fileOpeartions.h"
 
+bool updateableFile(std::string path)
+{
+    if(path.length() < 3)
+        return false;
+
+    if(path.substr(path.length()-4,4) == ".exe")
+        return true;
+
+    if(path.substr(path.length()-5,5) == ".glsl")
+        return true;
+
+    if(path.substr(path.length()-4,4) == ".dll")
+        return true;
+
+    if(path.substr(0,6) == ".\\gui\\")
+        return true;
+
+    return false;
+}
+
+unsigned int getFileChecksum(const char *filePath)
+{
+    std::ifstream file(filePath,std::ios::in | std::ios::binary);
+    if(!file.is_open())
+        return 0;
+
+    const unsigned int bufSize = 2048;
+    char buffer[bufSize];
+    unsigned int ret = 0;
+    while(!file.eof())
+    {
+        file.read(buffer,bufSize);
+        ret = CRC::Calculate(buffer,file.gcount(),CRC::CRC_32(),ret);
+    }
+
+    file.close();
+    return ret;
+}
+
 void replaceAll(std::string& source, const std::string& from, const std::string& to)
 {
     std::string newString;

@@ -10,6 +10,10 @@
 #include <cctype>
 #include <bits/stdc++.h>
 #include <sys/stat.h>
+#include "code/external/crc.h"
+
+bool updateableFile(std::string path);
+unsigned int getFileChecksum(const char *filePath);
 
 void replaceAll(std::string& source, const std::string& from, const std::string& to);
 
@@ -19,6 +23,7 @@ long GetFileSize(std::string filename);
 
 std::string lowercase(std::string in);
 
+//Should do words separated by any whitespace e.g. tabs
 void split(const std::string &s,std::vector<std::string> &elems);
 
 //Gets the file name and extension from a full file path
