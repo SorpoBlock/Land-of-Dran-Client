@@ -37,12 +37,19 @@ namespace syj
         return nmemb;
     }
 
+    SDL_sem *whichFileLock = 0;
+    unsigned int bytesInFile = 0;
+
     size_t getFileListFile(void *buffer,size_t size,size_t nmemb,void *userp)
     {
         if(nmemb > 0)
         {
             std::ofstream *file = (std::ofstream*)userp;
             file->write((char*)buffer,nmemb);
+
+            SDL_SemWait(whichFileLock);
+            bytesInFile += nmemb;
+            SDL_SemPost(whichFileLock);
         }
 
         return nmemb;
@@ -95,18 +102,82 @@ namespace syj
         CEGUI::Window *updater = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("Updater");
         error(message);
         replaceAll(message,"\\","/");
-        textBoxAdd(updater->getChild("Listbox"),"[Colour='FFFF0000']" + message,0,false);
+        textBoxAdd(updater->getChild("Listbox"),"[colour='FFFF0000']" + message,0,false);
+    }
+
+    int whichFile = 0;
+    bool threadWantsDie = false;
+
+    int updateThread(void *data)
+    {
+        CURL *curlHandle = curl_easy_init();
+
+        std::vector<std::string> *pathsToDownload = (std::vector<std::string>*)data;
+
+        for(int a = 0; a<pathsToDownload->size(); a++)
+        {
+            std::string asdf = pathsToDownload->at(a);
+            replaceAll(asdf,"\\","/");
+            std::string folder = getFolderFromPath(asdf.substr(1,asdf.length()-1));
+            folder = folder.substr(1,folder.length()-1);
+            if(folder.length() > 0)
+                std::filesystem::create_directories(folder.c_str());
+
+            std::cout<<pathsToDownload->at(a)<<"\n";
+            if(pathsToDownload->at(a) == ".\\LandOfDran.exe")
+            {
+                updateLog("Renaming old .exe, will be deleted on next start-up.");
+                rename("LandOfDran.exe","oldlandofdran.exe");
+            }
+
+            std::ofstream tmp(pathsToDownload->at(a).c_str(),std::ios::binary);
+
+            if(tmp.is_open())
+            {
+                std::string url = "http://dran.land/repo" + pathsToDownload->at(a).substr(1,pathsToDownload->at(a).size()-1);
+                replaceAll(url,"\\","/");
+
+                curl_easy_setopt(curlHandle,CURLOPT_URL,url.c_str());
+                curl_easy_setopt(curlHandle,CURLOPT_WRITEFUNCTION,getFileListFile);
+                curl_easy_setopt(curlHandle,CURLOPT_WRITEDATA,&tmp);
+                CURLcode res = curl_easy_perform(curlHandle);
+
+                //It gives CURLE_URL_MALFORMAT error when we have a space in a file name to download
+                if(res != CURLE_OK && res != CURLE_URL_MALFORMAT)
+                    updateError("Could not get file " + url + " error " + std::to_string(res));
+
+                tmp.close();
+            }
+            else
+                updateError("Could not open file " + pathsToDownload->at(a) + " for writing.");
+
+            SDL_SemWait(whichFileLock);
+            bytesInFile = 0;
+            whichFile = a;
+            bool threadWantsDieCopy = threadWantsDie;
+            SDL_SemPost(whichFileLock);
+            if(threadWantsDieCopy)
+                break;
+        }
+
+        curl_easy_cleanup(curlHandle);
+
+        return 0;
     }
 
     bool updateButton(const CEGUI::EventArgs &e)
     {
-
         CEGUI::Window *updater = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("Updater");
+        updater->getChild("Button")->setDisabled(true);
+        CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setDisabled(true);
 
         CEGUI::Window *text = updater->getChild("StaticText");
         text->setVisible(true);
         CEGUI::Window *bar = updater->getChild("ProgressBar/ProgressBar");
         bar->setSize(CEGUI::USize(CEGUI::UDim(0,0),CEGUI::UDim(0.8275,0)));
+
+        CEGUI::Window *topbar = updater->getChild("SubProgress/ProgressBar");
+        topbar->setSize(CEGUI::USize(CEGUI::UDim(0,0),CEGUI::UDim(0.8275,0)));
 
         updateLog("Checking for updates...");
 
@@ -140,7 +211,11 @@ namespace syj
             return true;
         }
 
+        curl_easy_cleanup(curlHandle);
+
         std::vector<std::string> pathsToDownload;
+        std::vector<unsigned int> sizes;
+        unsigned int bytesInFileSafe = 0;
 
         std::string line = "";
         while(!fileListFileIn.eof())
@@ -152,31 +227,39 @@ namespace syj
                 continue;
             replaceAll(line,"\r","");
 
-            if(line.find("\t") == std::string::npos)
+            int firstTab = line.find("\t");
+            std::string fileName = line.substr(0,firstTab);
+            std::string afterFirstTab = line.substr(firstTab+1,line.length()-(firstTab+1));
+
+            if(afterFirstTab.find("\t") == std::string::npos)
             {
-                if(!doesFileExist(line))
+                if(!doesFileExist(fileName))
                 {
-                    updateLog("Missing " + line);
-                    pathsToDownload.push_back(line);
+                    updateLog("Missing " + fileName);
+                    sizes.push_back(atoi(afterFirstTab.c_str()));
+                    pathsToDownload.push_back(fileName);
                 }
             }
             else
             {
-                std::string fileName = line.substr(0,line.find("\t"));
+                //std::string fileName = line.substr(0,line.find("\t"));
+                std::string sizeStr = afterFirstTab.substr(0,afterFirstTab.find("\t"));
 
                 if(!doesFileExist(fileName))
                 {
                     updateLog("Missing " + fileName);
+                    sizes.push_back(atoi(sizeStr.c_str()));
                     pathsToDownload.push_back(fileName);
                 }
                 else
                 {
-                    std::string checksum = line.substr(line.find("\t")+1,line.length() - (line.find("\t")+1));
+                    std::string checksum = afterFirstTab.substr(afterFirstTab.find("\t")+1,afterFirstTab.length() - (afterFirstTab.find("\t")+1));
                     unsigned int latest = atoi(checksum.c_str());
                     unsigned int ours = getFileChecksum(fileName.c_str());
                     if(latest != ours)
                     {
                         updateLog("Checksum " + std::to_string(ours) + " does not match " + std::to_string(latest) + " for " + fileName);
+                        sizes.push_back(atoi(sizeStr.c_str()));
                         pathsToDownload.push_back(fileName);
                     }
                 }
@@ -187,45 +270,135 @@ namespace syj
 
         remove("filelist.tmp");
 
+        bool replacedExe = false;
         for(int a = 0; a<pathsToDownload.size(); a++)
         {
-            std::string msg = "Downloading file " + std::to_string(a) + " / " + std::to_string(pathsToDownload.size());
-            text->setText(msg);
-            info(msg);
-
-            std::string asdf = pathsToDownload[a];
-            replaceAll(asdf,"\\","/");
-            std::string folder = getFolderFromPath(asdf.substr(1,asdf.length()-1));
-            folder = folder.substr(1,folder.length()-1);
-            std::filesystem::create_directories(folder.c_str());
-
-            std::ofstream tmp(pathsToDownload[a].c_str());
-
-            if(tmp.is_open())
+            if(pathsToDownload[a] == ".\\LandOfDran.exe")
             {
-                std::string url = "http://dran.land/repo" + pathsToDownload[a].substr(1,pathsToDownload[a].size()-1);
-                replaceAll(url,"\\","/");
-
-                curl_easy_setopt(curlHandle,CURLOPT_URL,url.c_str());
-                curl_easy_setopt(curlHandle,CURLOPT_WRITEFUNCTION,getFileListFile);
-                curl_easy_setopt(curlHandle,CURLOPT_WRITEDATA,&tmp);
-                CURLcode res = curl_easy_perform(curlHandle);
-                if(res != CURLE_OK)
-                    updateError("Could not get file " + url);
-
-                tmp.close();
+                replacedExe = true;
+                break;
             }
-            else
-                updateError("Could not open file " + pathsToDownload[a] + " for writing.");
-
         }
 
-        curl_easy_cleanup(curlHandle);
+        if(pathsToDownload.size() == 0)
+        {
+            CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setDisabled(false);
+            updater->getChild("Button")->setDisabled(false);
+            updateLog("No files need updating!");
+            return true;
+        }
+
+
+        float hue = 0;
+        float lastTick = SDL_GetTicks();
+        float deltaT = 0;
+        float horBounceDir = 1;
+        float vertBounceDir = 1;
+        int totalFiles = pathsToDownload.size();
+        CEGUI::Window *bounceText = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("Bouncer");
+        renderContext *context = ((serverStuff*)updater->getUserData())->context;
+
+        whichFileLock = SDL_CreateSemaphore(1);
+        SDL_Thread *thread = SDL_CreateThread(updateThread,"UpdaterThread",&pathsToDownload);
+
+        bool cont = true;
+        while(cont)
+        {
+            SDL_SemWait(whichFileLock);
+            float progress = whichFile;
+            std::string msg = "Downloading file " + std::to_string(whichFile) + " / " + std::to_string(totalFiles);
+            bytesInFileSafe = bytesInFile;
+            SDL_SemPost(whichFileLock);
+
+            if(whichFile+1 == totalFiles)
+                cont = false;
+            text->setText(msg);
+
+            const Uint8 *states = SDL_GetKeyboardState(NULL);
+            SDL_Event e;
+            while(SDL_PollEvent(&e))
+            {
+                if(e.type == SDL_QUIT)
+                {
+                    SDL_SemWait(whichFileLock);
+                    threadWantsDie = true;
+                    SDL_SemPost(whichFileLock);
+                    cont = false;
+                    break;
+                }
+
+                processEventsCEGUI(e,states);
+            }
+            progress /= ((float)totalFiles);
+
+            bar->setSize(CEGUI::USize(CEGUI::UDim(progress,0),CEGUI::UDim(0.8275,0)));
+
+            if(whichFile+1 < sizes.size())
+            {
+                float subProgress = bytesInFileSafe;
+                subProgress /= ((float)sizes[whichFile+1]);
+                topbar->setSize(CEGUI::USize(CEGUI::UDim(subProgress,0),CEGUI::UDim(0.8275,0)));
+            }
+
+            deltaT = SDL_GetTicks() - lastTick;
+            lastTick = SDL_GetTicks();
+
+            CEGUI::UVector2 pos = bounceText->getPosition();
+            if(pos.d_x.d_scale > 0.75)
+                horBounceDir = -1;
+            if(pos.d_y.d_scale > 0.9)
+                vertBounceDir = -1;
+
+            if(pos.d_x.d_scale < -0.1)
+                horBounceDir = 1;
+            if(pos.d_y.d_scale < -0.05)
+                vertBounceDir = 1;
+            pos += CEGUI::UVector2(CEGUI::UDim(horBounceDir * deltaT * 0.0002,0),CEGUI::UDim(vertBounceDir * deltaT * 0.0001,0));
+            bounceText->setPosition(pos);
+
+            hue += deltaT * 0.00003;
+            if(hue > 1)
+                hue -= 1;
+
+            HsvColor hsv;
+            hsv.h = hue*255;
+            hsv.s = 0.5*255;
+            hsv.v = 0.5*255;
+            RgbColor rgb = HsvToRgb(hsv);
+
+            context->clear(((float)rgb.r)/255.0,((float)rgb.g)/255.0,((float)rgb.b)/255.0);
+            context->select();
+            CEGUI::System::getSingleton().getRenderer()->setDisplaySize(CEGUI::Size<float>(context->getResolution().x,context->getResolution().y));
+            glViewport(0,0,context->getResolution().x,context->getResolution().y);
+            glDisable(GL_DEPTH_TEST);
+            glActiveTexture(GL_TEXTURE0);
+            CEGUI::System::getSingleton().renderAllGUIContexts();
+            context->swap();
+            glEnable(GL_DEPTH_TEST);
+        }
+
+        SDL_DestroySemaphore(whichFileLock);
+        whichFileLock = 0;
+
+        updateLog("Update complete!");
+        text->setText("Update complete!");
+
+        if(replacedExe)
+            updateError("You will need to restart for this update to take full effect.");
+        else
+            CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setDisabled(false);
+
+        updater->getChild("Button")->setDisabled(false);
+
+        ((serverStuff*)updater->getUserData())->prefs->set("REVISION",((serverStuff*)updater->getUserData())->masterRevision);
+        ((serverStuff*)updater->getUserData())->prefs->set("NETWORK",((serverStuff*)updater->getUserData())->masterNetwork);
+        ((serverStuff*)updater->getUserData())->prefs->exportToFile("config.txt");
     }
 
-    CEGUI::Window *addUpdater()
+    CEGUI::Window *addUpdater(serverStuff *ohWow)
     {
         CEGUI::Window *updater = addGUIFromFile("updater.layout");
+        updater->setUserData(ohWow);
         updater->subscribeEvent(CEGUI::FrameWindow::EventCloseClicked,CEGUI::Event::Subscriber(&closeUpdater));
         updater->getChild("Button")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&updateButton));
 

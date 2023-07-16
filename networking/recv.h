@@ -59,6 +59,9 @@ namespace syj
         /*unsigned int serverTimePoint = 0;
         unsigned int clientTimePoint = 0;*/
 
+        int masterRevision = -1;
+        int masterNetwork = -1;
+
         std::vector<std::string> typingPlayersNames;
         std::string typingPlayerNameString = "";
 

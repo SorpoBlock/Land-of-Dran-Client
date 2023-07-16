@@ -11,8 +11,8 @@ bool updateableFile(std::string path)
     if(path.substr(path.length()-5,5) == ".glsl")
         return true;
 
-    if(path.substr(path.length()-4,4) == ".dll")
-        return true;
+    //if(path.substr(path.length()-4,4) == ".dll")
+      //  return true;
 
     if(path.substr(0,6) == ".\\gui\\")
         return true;
@@ -29,10 +29,17 @@ unsigned int getFileChecksum(const char *filePath)
     const unsigned int bufSize = 2048;
     char buffer[bufSize];
     unsigned int ret = 0;
+    bool firstRun = true;
     while(!file.eof())
     {
         file.read(buffer,bufSize);
-        ret = CRC::Calculate(buffer,file.gcount(),CRC::CRC_32(),ret);
+        if(firstRun)
+        {
+            ret = CRC::Calculate(buffer,file.gcount(),CRC::CRC_32());
+            firstRun = false;
+        }
+        else
+            ret = CRC::Calculate(buffer,file.gcount(),CRC::CRC_32(),ret);
     }
 
     file.close();

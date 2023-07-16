@@ -144,6 +144,8 @@ int main(int argc, char *argv[])
     int revisionVersion = -1;
     int networkVersion = -1;
     getVersions(revisionVersion,networkVersion);
+    ohWow.masterRevision = revisionVersion;
+    ohWow.masterNetwork = networkVersion;
     int ourRevisionVersion = -1;
     int ourNetworkVersion = -1;
     if(prefs.getPreference("REVISION"))
@@ -218,7 +220,7 @@ int main(int argc, char *argv[])
     CEGUI::Window *hud = addGUIFromFile("hud.layout");
     CEGUI::Window *brickHighlighter = hud->getChild("BrickPopup/Selector");
     CEGUI::Window *chat = hud->getChild("Chat");
-    CEGUI::Window *updater = addUpdater();
+    CEGUI::Window *updater = addUpdater(&ohWow);
     chat->moveToBack();
     ohWow.playerList = hud->getChild("PlayerList");
     ohWow.chat = (CEGUI::Listbox*)hud->getChild("Chat/Listbox");
@@ -566,6 +568,11 @@ int main(int argc, char *argv[])
         }
 
         deltaT = SDL_GetTicks() - lastTick;
+
+        //After auto-updating, land of dran text may dissapear without this:
+        if(deltaT > 20)
+            deltaT = 20;
+
         lastTick = SDL_GetTicks();
 
         CEGUI::UVector2 pos = bounceText->getPosition();

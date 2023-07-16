@@ -251,6 +251,9 @@ namespace syj
         prefs->addIntegerPreference("MASTERVOLUME",80);
         prefs->addIntegerPreference("MUSICVOLUME",80);
         prefs->addIntegerPreference("MATERIALCUTOFF",400);
+
+        prefs->addIntegerPreference("NETWORK",0);
+        prefs->addIntegerPreference("REVISION",0);
     }
 
     void options::loadFromFile(preferenceFile *prefs)
