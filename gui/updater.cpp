@@ -2,6 +2,7 @@
 
 namespace syj
 {
+    //TODO: uh, std::tuples and pairs exist lol
     struct literallyJustTwoInts
     {
         int revision = -1;
@@ -47,9 +48,11 @@ namespace syj
             std::ofstream *file = (std::ofstream*)userp;
             file->write((char*)buffer,nmemb);
 
-            SDL_SemWait(whichFileLock);
+            if(whichFileLock)
+                SDL_SemWait(whichFileLock);
             bytesInFile += nmemb;
-            SDL_SemPost(whichFileLock);
+            if(whichFileLock)
+                SDL_SemPost(whichFileLock);
         }
 
         return nmemb;
@@ -136,6 +139,7 @@ namespace syj
             {
                 std::string url = "http://dran.land/repo" + pathsToDownload->at(a).substr(1,pathsToDownload->at(a).size()-1);
                 replaceAll(url,"\\","/");
+                replaceAll(url," ","%20");
 
                 curl_easy_setopt(curlHandle,CURLOPT_URL,url.c_str());
                 curl_easy_setopt(curlHandle,CURLOPT_WRITEFUNCTION,getFileListFile);
@@ -143,7 +147,7 @@ namespace syj
                 CURLcode res = curl_easy_perform(curlHandle);
 
                 //It gives CURLE_URL_MALFORMAT error when we have a space in a file name to download
-                if(res != CURLE_OK && res != CURLE_URL_MALFORMAT)
+                if(res != CURLE_OK)// && res != CURLE_URL_MALFORMAT)
                     updateError("Could not get file " + url + " error " + std::to_string(res));
 
                 tmp.close();
@@ -195,6 +199,8 @@ namespace syj
             updateError("Could not get files list from master server.");
             fileListFile.close();
             curl_easy_cleanup(curlHandle);
+            updater->getChild("Button")->setDisabled(false);
+            CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setDisabled(false);
             return true;
         }
         else
@@ -377,6 +383,7 @@ namespace syj
             glEnable(GL_DEPTH_TEST);
         }
 
+        SDL_WaitThread(thread,NULL);
         SDL_DestroySemaphore(whichFileLock);
         whichFileLock = 0;
 
@@ -384,9 +391,15 @@ namespace syj
         text->setText("Update complete!");
 
         if(replacedExe)
+        {
             updateError("You will need to restart for this update to take full effect.");
+            CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/UpdateText")->setText("[colour='FFFF0000']Restart to complete update!");
+        }
         else
+        {
             CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setDisabled(false);
+            CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/UpdateText")->setText("[colour='FF00CC00']Your game appears up to date!");
+        }
 
         updater->getChild("Button")->setDisabled(false);
 

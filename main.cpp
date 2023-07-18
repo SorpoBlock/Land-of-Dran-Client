@@ -245,14 +245,22 @@ int main(int argc, char *argv[])
     info("Most recent revision available on master server: " + std::to_string(revisionVersion));
     info("Our revision: " + std::to_string(ourRevisionVersion));
 
-    if(revisionVersion == -1)
-        joinServer->getChild("UpdateText")->setText("Could not retrieve version info!");
+    if(ourRevisionVersion == -1 || ourRevisionVersion == 0)
+    {
+        joinServer->getChild("UpdateText")->setText("[colour='FFFF0000']New installs must run updater first ->");
+        CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setDisabled(true);
+    }
     else
     {
-        if(revisionVersion > ourRevisionVersion)
-            joinServer->getChild("UpdateText")->setText("Your game may be out of date!");
+        if(revisionVersion == -1)
+            joinServer->getChild("UpdateText")->setText("[colour='FFFF0000']Could not retrieve version info!");
         else
-            joinServer->getChild("UpdateText")->setText("Your game appears up to date!");
+        {
+            if(revisionVersion > ourRevisionVersion)
+                joinServer->getChild("UpdateText")->setText("[colour='FFFF9900']Your game may be out of date!");
+            else
+                joinServer->getChild("UpdateText")->setText("[colour='FF00CC00']Your game appears up to date!");
+        }
     }
 
 
@@ -616,8 +624,22 @@ int main(int argc, char *argv[])
     joinServer->setVisible(false);
 
     root->removeChild("Bouncer");
+    updater->setVisible(false);
 
     //End connect screen
+
+    ohWow.brickMat = new material("assets/brick/otherBrickMat.txt");
+    ohWow.brickMatSide = new material("assets/brick/sideBrickMat.txt");
+    ohWow.brickMatRamp = new material("assets/brick/rampBrickMat.txt");
+    ohWow.brickMatBottom = new material("assets/brick/bottomBrickMat.txt");
+
+    blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",ohWow.brickSelector,true);
+    ohWow.staticBricks.allocateVertBuffer();
+    ohWow.staticBricks.allocatePerTexture(ohWow.brickMat);
+    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatSide,true,true);
+    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatBottom,true);
+    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatRamp);
+    ohWow.staticBricks.blocklandTypes = &blocklandHolder;
 
     info("Trying to connect to server...");
 
@@ -671,19 +693,6 @@ int main(int argc, char *argv[])
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-
-    ohWow.brickMat = new material("assets/brick/otherBrickMat.txt");
-    ohWow.brickMatSide = new material("assets/brick/sideBrickMat.txt");
-    ohWow.brickMatRamp = new material("assets/brick/rampBrickMat.txt");
-    ohWow.brickMatBottom = new material("assets/brick/bottomBrickMat.txt");
-
-    blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",ohWow.brickSelector,true);
-    ohWow.staticBricks.allocateVertBuffer();
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMat);
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatSide,true,true);
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatBottom,true);
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatRamp);
-    ohWow.staticBricks.blocklandTypes = &blocklandHolder;
 
     ohWow.env = new environment(shadowRes,shadowRes);
     /*ohWow.env->loadDaySkyBox("assets/sky/bluecloud_");
@@ -856,7 +865,7 @@ int main(int argc, char *argv[])
         ohWow.wheelWrench->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
         ohWow.steeringWrench->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
         ohWow.playerList->setAlpha(((float)ohWow.settings->hudOpacity)/100.0);
-        chat->moveToBack();
+        //chat->moveToBack();
 
         float gain = ohWow.settings->masterVolume;
         gain /= 100.0;

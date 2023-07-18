@@ -25,6 +25,71 @@ namespace syj
         optionsWindow->setVisible(true);
     }
 
+    size_t getLoginResponse(void *buffer,size_t size,size_t nmemb,void *userp)
+    {
+        if(nmemb > 0)
+        {
+            CEGUI::Window *statusText = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/StatusText");
+
+            std::string response;
+            response.assign((char*)buffer,nmemb);
+
+            int space = response.find(" ");
+            if(space == std::string::npos)
+            {
+                statusText->setText("Malformed login server response.");
+                error("Login response: " + response);
+                return nmemb;
+            }
+
+            std::string beforeSpace = response.substr(0,space);
+
+            if(beforeSpace == "NOACCOUNT")
+                statusText->setText("No account by that name. Register at http://dran.land");
+            else if(beforeSpace == "GOOD")
+            {
+                statusText->setText(std::string("Welcome, ") + std::string(CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/UsernameBox")->getText().c_str()));
+                CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setText("Join");
+                std::string afterSpace = response.substr(space+1,response.length() - (space+1));
+                std::cout<<"Session token: "<<afterSpace<<"\n";
+            }
+            else if(beforeSpace == "BAD")
+                statusText->setText("Incorrect password!");
+            else
+            {
+                statusText->setText("Malformed login server response.");
+                error("Login response: " + response);
+            }
+        }
+
+        return nmemb;
+    }
+
+    bool loginButton(const CEGUI::EventArgs &e)
+    {
+        CEGUI::Window *joinServerWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer");
+        std::string username = joinServerWindow->getChild("UsernameBox")->getText().c_str();
+        std::string password = joinServerWindow->getChild("PasswordBox")->getText().c_str();
+
+        if(username.length() < 1 || password.length() < 1)
+        {
+            joinServerWindow->getChild("StatusText")->setText("You need a name and pass to login!");
+            error("You need a name and pass to login!");
+            return true;
+        }
+
+        CURL *curlHandle = curl_easy_init();
+        curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYPEER , 0);
+        curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYHOST , 0);
+        curl_easy_setopt(curlHandle,CURLOPT_WRITEFUNCTION,getLoginResponse);
+        std::string url = "http://dran.land/getSessionToken.php";
+        std::string args = "pass=" + password + "&name=" + username;
+        curl_easy_setopt(curlHandle,CURLOPT_URL,url.c_str());
+        curl_easy_setopt(curlHandle,CURLOPT_POSTFIELDS,args.c_str());
+        CURLcode res = curl_easy_perform(curlHandle);
+        curl_easy_cleanup(curlHandle);
+    }
+
     bool connectToServer(const CEGUI::EventArgs &e)
     {
         CEGUI::Window *joinServerWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer");
@@ -78,6 +143,7 @@ namespace syj
         joinServerWindow->getChild("ConnectButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&connectToServer));
         joinServerWindow->getChild("OptionsButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&optionsButton));
         joinServerWindow->getChild("UpdateButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&updaterButton));
+        joinServerWindow->getChild("LoginButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&loginButton));
 
         joinServerWindow->getChild("RedSlider")->subscribeEvent(CEGUI::Slider::EventValueChanged,CEGUI::Event::Subscriber(&playerColorSlider));
         joinServerWindow->getChild("GreenSlider")->subscribeEvent(CEGUI::Slider::EventValueChanged,CEGUI::Event::Subscriber(&playerColorSlider));
