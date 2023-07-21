@@ -54,8 +54,18 @@ namespace syj
         light *l = 0;
     };
 
+    struct heldClientPhysicsDataPacket
+    {
+        int dynamicID = -1;
+        btVector3 finalHalfExtents;
+        btVector3 finalOffset;
+        unsigned int deletionTime = 0;
+    };
+
     struct serverStuff
     {
+        newDynamic *currentPlayer = 0;
+
         /*unsigned int serverTimePoint = 0;
         unsigned int clientTimePoint = 0;*/
 
@@ -75,6 +85,8 @@ namespace syj
         std::vector<light*> lights;
         std::vector<heldLightPacket> heldLightPackets;
         emitterType *wheelDirtEmitter = 0;
+
+        std::vector<heldClientPhysicsDataPacket> clientPhysicsPackets;
 
         std::vector<glm::vec3> debugLocations;
         std::vector<glm::vec3> debugColors;

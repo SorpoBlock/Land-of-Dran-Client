@@ -32,7 +32,16 @@ namespace syj
 
     struct newDynamic
     {
+        //Only used for players at the moment, as result of packetType_clientPhysicsData
         btRigidBody *body = 0;
+        btCompoundShape *shape = 0;
+        void createBoxBody(btDynamicsWorld *_world,btVector3 extents,btVector3 offset);
+        btVector3 finalOffset;
+        btVector3 finalHalfExtents;
+        btMotionState *defaultMotionState = 0;
+        float mass = 1.0;
+        btVector3 defaultInertia;
+        btDynamicsWorld *world = 0;
 
         //Networking stuff:
         int serverID = -1;
@@ -78,8 +87,6 @@ namespace syj
         void play(int animID,bool reset = false,float speed = 1.0);
         void stop();
         void calculateMeshTransforms(float deltaMS,newNode *node = 0,glm::mat4 transform = glm::mat4(1.0));
-
-
 
         newDynamic(newModel *_type,glm::vec3 baseScale = glm::vec3(0.02,0.02,0.02));
         ~newDynamic();

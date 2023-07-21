@@ -743,6 +743,14 @@ int main(int argc, char *argv[])
     world->setForceUpdateAllAabbs(false);
     ohWow.world = world;
 
+    btCollisionShape *plane = new btStaticPlaneShape(btVector3(0,1,0),0);
+    btDefaultMotionState* planeState = new btDefaultMotionState();
+    btRigidBody::btRigidBodyConstructionInfo planeCon(0,planeState,plane);
+    btRigidBody *groundPlane = new btRigidBody(planeCon);
+    groundPlane->setFriction(1.0);
+    //groundPlane->setUserIndex(bodyUserIndex_plane);
+    world->addRigidBody(groundPlane);
+
     selectionBox *box = new selectionBox(world,cubeVAO);
 
     material grass("assets/ground/grass1/grass.txt");
@@ -869,10 +877,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        /*if(play)
-        {
-            totalSteps += world->stepSimulation(deltaT / 1000.0);
-        }*/
+        if(useClientPhysics)
+            world->stepSimulation(deltaT / 1000.0);
 
         const Uint8 *states = SDL_GetKeyboardState(NULL);
         playerInput.getKeyStates();
@@ -1030,6 +1036,13 @@ int main(int argc, char *argv[])
 
                 if(event.key.keysym.sym == SDLK_F1)
                 {
+                    if(ohWow.currentPlayer)
+                    {
+                        btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                        btVector3 v = t.getOrigin();
+                        std::cout<<"Physics pos: "<<v.x()<<","<<v.y()<<","<<v.z()<<"\n";
+                    }
+
                     std::cout<<"Position: "<<ohWow.playerCamera->getPosition().x<<","<<ohWow.playerCamera->getPosition().y<<","<<ohWow.playerCamera->getPosition().z<<"\n";
                     std::cout<<"Direction: "<<ohWow.playerCamera->getDirection().x<<","<<ohWow.playerCamera->getDirection().y<<","<<ohWow.playerCamera->getDirection().z<<"\n";
                 }

@@ -177,6 +177,33 @@ namespace syj
             else
                 iter2++;
         }
+
+        auto iter3 = clientPhysicsPackets.begin();
+        while(iter3 != clientPhysicsPackets.end())
+        {
+            heldClientPhysicsDataPacket tmp = *iter3;
+
+            bool used = false;
+            for(int a = 0; a<newDynamics.size(); a++)
+            {
+                if(newDynamics[a]->serverID == tmp.dynamicID)
+                {
+                    newDynamics[a]->createBoxBody(world,tmp.finalHalfExtents,tmp.finalOffset);
+                    currentPlayer = newDynamics[a];
+
+                    used = true;
+                    iter3 = clientPhysicsPackets.erase(iter3);
+                    break;
+                }
+            }
+            if(used)
+                continue;
+
+            if(tmp.deletionTime < SDL_GetTicks())
+                iter3 = clientPhysicsPackets.erase(iter3);
+            else
+                iter3++;
+        }
     }
 
     void recvHandle(client *theClient,packet *data,void *userData)
@@ -188,6 +215,31 @@ namespace syj
             //std::cout<<"Got "<<(data->critical?"critical":"normal")<<" packet type: "<<packetType<<" streampos: "<<data->getStreamPos()<<" allocated bytes: "<<data->allocatedChunks<<"\n";
         switch(packetType)
         {
+            case packetType_clientPhysicsData:
+            {
+                heldClientPhysicsDataPacket tmp;
+
+                tmp.dynamicID = data->readUInt(dynamicObjectIDBits);
+                tmp.deletionTime = SDL_GetTicks() + 10000;
+                tmp.finalHalfExtents.setX(data->readFloat());
+                tmp.finalHalfExtents.setY(data->readFloat());
+                tmp.finalHalfExtents.setZ(data->readFloat());
+                tmp.finalOffset.setX(data->readFloat());
+                tmp.finalOffset.setY(data->readFloat());
+                tmp.finalOffset.setZ(data->readFloat());
+
+                for(int a = 0; a<ohWow->clientPhysicsPackets.size(); a++)
+                {
+                    if(ohWow->clientPhysicsPackets[a].dynamicID == tmp.dynamicID)
+                    {
+                        ohWow->clientPhysicsPackets.erase(ohWow->clientPhysicsPackets.begin() + a);
+                        break;
+                    }
+                }
+
+                ohWow->clientPhysicsPackets.push_back(tmp);
+            }
+
             case packetType_addRemoveLight:
             {
                 int id = data->readUInt(20);
@@ -2157,7 +2209,7 @@ namespace syj
 
                 bool addOrRemove = data->readBit();
 
-                if(addOrRemove)
+                if(addOrRemove) //add
                 {
                     int typeID = data->readUInt(10);
                     float red = data->readFloat();
@@ -2202,7 +2254,7 @@ namespace syj
                     else
                         error("Could not find dynamic type: " + std::to_string(typeID));
                 }
-                else
+                else //remove
                 {
                     for(int a = 0; a<ohWow->newDynamics.size(); a++)
                     {
@@ -2211,6 +2263,8 @@ namespace syj
                             if(ohWow->cameraTarget == ohWow->newDynamics[a])
                                 ohWow->cameraTarget = 0;
 
+                            if(ohWow->currentPlayer == ohWow->newDynamics[a])
+                                ohWow->currentPlayer = 0;
                             delete ohWow->newDynamics[a];
                             ohWow->newDynamics.erase(ohWow->newDynamics.begin() + a);
                             break;

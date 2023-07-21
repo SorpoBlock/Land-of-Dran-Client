@@ -2,6 +2,48 @@
 
 namespace syj
 {
+    void newDynamic::createBoxBody(btDynamicsWorld *_world,btVector3 extents,btVector3 offset)
+    {
+        world = _world;
+        //TODO: Don't reuse motion state or shape for each dynamic!
+
+        if(body)
+        {
+            error("newDynamic::createBoxBody body already present!");
+            return;
+        }
+
+        finalHalfExtents = extents;
+        finalOffset = offset;
+
+        //See dynamicType::dynamicType on LoD2 server player.cpp
+        shape = new btCompoundShape();
+        btTransform t;
+        t.setIdentity();
+        t.setOrigin(offset);
+        btBoxShape *box = new btBoxShape(extents);
+        shape->addChildShape(t,box);
+
+        btScalar masses[1];
+        masses[0] = 1.0;
+        t.setIdentity(); //idk if needed
+        shape->calculatePrincipalAxisTransform(masses,t,defaultInertia);
+
+        btTransform startTrans = btTransform::getIdentity();
+        btVector3 startPos;
+        startPos.setX(modelInterpolator.getPosition().x);
+        startPos.setY(modelInterpolator.getPosition().y);
+        startPos.setZ(modelInterpolator.getPosition().z);
+        startTrans.setOrigin(startPos);
+        defaultMotionState = new btDefaultMotionState(startTrans);
+        mass = 1.0;
+
+        body = new btRigidBody(mass,defaultMotionState,shape,defaultInertia);
+        body->setUserPointer(this);
+        body->setUserIndex(userIndex_dynamic);
+        world->addRigidBody(body);
+    }
+
     void newDynamic::setFixedRotation(std::string name,glm::mat4 rotation)
     {
         for(int a = 0; a<type->allMeshes.size(); a++)
@@ -18,6 +60,13 @@ namespace syj
 
     newDynamic::~newDynamic()
     {
+        if(world && body)
+        {
+            world->removeRigidBody(body);
+            delete defaultMotionState;
+            delete shape;
+        }
+
         for(int a = 0; a<type->allMeshes.size(); a++)
         {
             instancedMesh *mesh = (instancedMesh*)type->allMeshes[a];

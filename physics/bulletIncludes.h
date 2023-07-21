@@ -14,5 +14,7 @@ const bool useClientPhysics = true;
 #define userIndex_livingBrick 77
 #define userIndex_staticNormalBrick 88
 #define userIndex_staticSpecialBrick 99
+//TODO: Why the hell are these different from the server
+#define userIndex_dynamic 109
 
 #endif // BULLETINCLUDES_H_INCLUDED
