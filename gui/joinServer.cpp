@@ -82,7 +82,7 @@ namespace syj
         curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYPEER , 0);
         curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYHOST , 0);
         curl_easy_setopt(curlHandle,CURLOPT_WRITEFUNCTION,getLoginResponse);
-        std::string url = "http://dran.land/getSessionToken.php";
+        std::string url = "https://dran.land/getSessionToken.php";
         std::string args = "pass=" + password + "&name=" + username;
         curl_easy_setopt(curlHandle,CURLOPT_URL,url.c_str());
         curl_easy_setopt(curlHandle,CURLOPT_POSTFIELDS,args.c_str());

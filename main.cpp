@@ -154,6 +154,7 @@ int main(int argc, char *argv[])
         ourNetworkVersion = prefs.getPreference("NETWORK")->toInteger();
 
     renderContextOptions renderOptions;
+    renderOptions.name = "Rev " + std::to_string(ourRevisionVersion) + " - " + __DATE__;
     renderOptions.startingResX = ohWow.settings->resolutionX;
     renderOptions.startingResY = ohWow.settings->resolutionY;
     renderOptions.useVSync = ohWow.settings->vsync;

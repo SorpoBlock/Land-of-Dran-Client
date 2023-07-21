@@ -23,6 +23,7 @@ namespace syj
         bool useFullscreen = false;
         bool useVSync = false;
         bool debug = true;
+        std::string name = "";
     };
 
     class renderContext
