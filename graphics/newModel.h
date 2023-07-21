@@ -1,6 +1,7 @@
 #ifndef NEWMODEL_H_INCLUDED
 #define NEWMODEL_H_INCLUDED
 
+#include "code/physics/bulletIncludes.h"
 #include "code/networking/interpolator.h"
 #include "code/utility/preference.h"
 #include "code/graphics/texture.h"
@@ -31,6 +32,8 @@ namespace syj
 
     struct newDynamic
     {
+        btRigidBody *body = 0;
+
         //Networking stuff:
         int serverID = -1;
 
@@ -75,6 +78,8 @@ namespace syj
         void play(int animID,bool reset = false,float speed = 1.0);
         void stop();
         void calculateMeshTransforms(float deltaMS,newNode *node = 0,glm::mat4 transform = glm::mat4(1.0));
+
+
 
         newDynamic(newModel *_type,glm::vec3 baseScale = glm::vec3(0.02,0.02,0.02));
         ~newDynamic();

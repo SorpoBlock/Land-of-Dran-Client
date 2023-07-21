@@ -17,7 +17,8 @@ enum serverToClientPacketType
     packetType_addBricksToBuiltCar = 10,
     packetType_luaPasswordResponse = 11,
     packetType_setColorPalette = 12,
-    packetType_clientLuaConsoleText = 13,
+    //packetType_clientLuaConsoleText = 13,
+    packetType_clientPhysicsData = 13,
     //packetType_addGUIText = 14,
     packetType_ping = 14,
     packetType_removeBrickVehicle = 15,
@@ -731,13 +732,23 @@ namespace syj
             }
             case packetType_addMessage:
             {
-                bool isBottomPrint = data->readBit();
+                //0 = chat message
+                //1 = bottom print
+                //2 = eval window output
+                int messageLocation = data->readUInt(2);
 
-                if(isBottomPrint)
+                if(messageLocation == 1)
                 {
                     std::string text = data->readString();
                     int timeoutMS = data->readUInt(16);
                     ohWow->bottomPrint.setText(text,timeoutMS);
+                    return;
+                }
+
+                if(messageLocation == 2)
+                {
+                    std::string text = data->readString();
+                    textBoxAdd(ohWow->evalWindow->getChild("Code/Listbox"),text);
                     return;
                 }
 
@@ -1394,20 +1405,6 @@ namespace syj
                 }
                 return;
             }
-            /*case packetType_addGUIText:
-            {
-                std::string text = data->readString();
-                int timeoutMS = data->readUInt(16);
-                ohWow->bottomPrint.setText(text,timeoutMS);
-                return;
-            }*/
-            case packetType_clientLuaConsoleText:
-            {
-                std::string text = data->readString();
-                textBoxAdd(ohWow->evalWindow->getChild("Code/Listbox"),text);
-                return;
-            }
-
             case packetType_setColorPalette:
             {
                 int howMany = data->readUInt(8);

@@ -70,47 +70,6 @@ size_t write_data(void *buffer,size_t size,size_t nmemb,void *userp)
 
 int main(int argc, char *argv[])
 {
-    /*for (recursive_directory_iterator i("."), end; i != end; ++i)
-    {
-        if (!is_directory(i->path()))
-        {
-            if(updateableFile(i->path().string()))
-                std::cout<<i->path().string()<<" -- "<<getFileChecksum(i->path().string().c_str())<<"\n";
-        }
-    }*/
-
-    /*CURL *curlHandle = curl_easy_init();
-
-    curl_version_info_data * vinfo = curl_version_info(CURLVERSION_NOW);
-
-    if(curlHandle)
-    {
-        for(int a = 800; a<1444; a++)
-        {
-            tempFileHandle.open(std::string("myposts/drendransposts_page_" + std::to_string(a)+".html").c_str(),std::ios::binary);
-            std::string url = "https://forum.blockland.us/index.php?action=profile;u=29663;area=showposts;start="+std::to_string(a*15);
-            std::cout<<"Getting: "<<url<<"\n";
-            curl_easy_setopt(curlHandle,CURLOPT_URL,url.c_str());
-
-            curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYPEER , 0);
-            curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYHOST , 0);
-
-            curl_easy_setopt(curlHandle, CURLOPT_HTTPGET, 1L);
-
-            curl_easy_setopt(curlHandle,CURLOPT_WRITEFUNCTION,write_data);
-            CURLcode res = curl_easy_perform(curlHandle);
-            std::cout<<"Page "<<a<<" had "<<res<<" curl result\n";
-            if(res != CURLE_OK)
-                std::cout<<"Failed: "<<curl_easy_strerror(res)<<"\n";
-            tempFileHandle.close();
-            SDL_Delay(2000 + (rand() % 1000));
-        }
-
-        curl_easy_cleanup(curlHandle);
-    }
-    else
-        std::cout<<"Error initing curl.\n";*/
-
     serverStuff ohWow;
 
     preferenceFile prefs;
