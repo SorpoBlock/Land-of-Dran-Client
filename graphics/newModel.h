@@ -42,6 +42,9 @@ namespace syj
         float mass = 1.0;
         btVector3 defaultInertia;
         btDynamicsWorld *world = 0;
+        unsigned int lastPlayerControl = 0;
+        bool walking = false;
+        bool control(float yaw,bool forward,bool backward,bool left,bool right,bool jump,bool isJetting,bool allowTurning=true,bool relativeSpeed = false);
 
         //Networking stuff:
         int serverID = -1;

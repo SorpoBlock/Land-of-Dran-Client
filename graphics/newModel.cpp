@@ -42,6 +42,15 @@ namespace syj
         body->setUserPointer(this);
         body->setUserIndex(userIndex_dynamic);
         world->addRigidBody(body);
+
+        body->setActivationState(DISABLE_DEACTIVATION);
+        body->setFriction(1);
+        body->setRestitution(0.5);
+        body->setAngularFactor(btVector3(0,0,0));
+
+        std::cout<<"\n\n"<<defaultInertia.x()<<","<<defaultInertia.y()<<","<<defaultInertia.z()<<"\n";
+
+        std::cout<<"Created body!\n\n\n";
     }
 
     void newDynamic::setFixedRotation(std::string name,glm::mat4 rotation)

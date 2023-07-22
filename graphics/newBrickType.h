@@ -11,7 +11,7 @@ namespace syj
 {
     std::string getBrickMatName(brickMaterial mat);
 
-    btRigidBody *addBrickToWorld(glm::vec3 pos,int rotation,int w,int h,int l,btCollisionShape *shape,btDynamicsWorld *world);
+    btRigidBody *addBrickToWorld(glm::vec3 pos,int rotation,int w,int h,int l,btCollisionShape *shape,btDynamicsWorld *world,brickMaterial mat);
 
     //One *instance* of a brick
     //Basic bricks can have dynamically changing dimensions and specified print faces:

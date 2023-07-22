@@ -23,446 +23,320 @@ namespace syj
         return false;
     }
 
-    /*btVector3 dynamic::getLinearVelocity()
+    btRigidBody *getClosestBody(btVector3 start,btVector3 end,btDynamicsWorld *world)
     {
-        return body->getLinearVelocity();
-    }
+        btCollisionWorld::AllHitsRayResultCallback ground(start,end);
+        world->rayTest(start,end,ground);
 
-    void dynamic::smoothLinearVelocity(btVector3 vel,float deltaMS)
-    {
-        float blend = deltaMS / 16.666; //standardize to 60 fps
-        //32.33 ms, blend = 2
-        blend = 1.0 / pow(2,blend);
-        //blend pow = 1/4
-
-        btVector3 oldVel = getLinearVelocity();
-        setLinearVelocity(oldVel * blend + vel * (1.0-blend));
-    }
-
-    std::string bts(bool in){return in ? "True " : "False ";}
-
-    void dynamic::control(float deltaMS,glm::vec3 direction,bool forward,bool backward,bool left,bool right,bool jump)
-    {
-        cameraFollowDistance = 30.0;
-        btVector3 cameraEnd = getPosition() - glmToBt(direction) * cameraFollowDistance;
-        btCollisionWorld::AllHitsRayResultCallback camera(getPosition(),cameraEnd);
-        float lowestHitFrac = 1.0;
-        world->rayTest(getPosition(),cameraEnd,camera);
-        for(int a = 0; a<camera.m_collisionObjects.size(); a++)
-        {
-            if(camera.m_collisionObjects[a] != body)
-            {
-                if(camera.m_hitFractions[a] < lowestHitFrac && camera.m_hitFractions[a] > 0.08)
-                    lowestHitFrac = camera.m_hitFractions[a];
-            }
-        }
-        if(lowestHitFrac > 1.0)
-            lowestHitFrac -= 0.3;
-        cameraFollowDistance *= lowestHitFrac;
-        cameraFollowDistance *= 0.9;
-
-        float bodyLength = (scale.z * (max.z()-min.z()))/2.0;
-        float bodyWidth = (scale.x * (max.x()-min.x()))/2.0;
-        float footDown = (scale.y * (max.y()-min.y()))/2.0;
-
-        int sides = 0;
-        btVector3 directionSpeed(0,0,0);
-        float yaw = atan2(direction.x,direction.z);
-        setRotation(btQuaternion(3.1415 + yaw,0,0));
-
-        //std::cout<<"Yaw: "<<yaw<<" forward: "<<(forward ? "Yes" : "No")<<"\n";
-
-        bool sideWays = false;
-        bool stopWalking = true;
-        if(forward)
-        {
-            sides++;
-            directionSpeed += btVector3(sin(yaw),0,cos(yaw));
-            stopWalking = false;
-        }
-        else if(backward)
-        {
-            sides++;
-            directionSpeed += btVector3(sin(yaw+3.1415),0,cos(yaw+3.1415));
-            stopWalking = false;
-        }
-        if(left)
-        {
-            sides++;
-            sideWays = true;
-            directionSpeed += btVector3(sin(yaw-1.57),0,cos(yaw-1.57));
-            stopWalking = false;
-        }
-        else if(right)
-        {
-            sides++;
-            sideWays = true;
-            directionSpeed += btVector3(sin(yaw+1.57),0,cos(yaw+1.57));
-            stopWalking = false;
-        }
-
-        float middlex = directionSpeed.normalized().x();
-        float middlez = directionSpeed.normalized().z();
-        btVector3 dir = btVector3(sin(yaw),0,cos(yaw));
-        btVector3 perpDir = dir.cross(btVector3(0,1,0));
-        if(stopWalking)
-            dir = btVector3(0,0,0);
-        else
-            dir = btVector3(middlex,0,middlez);
-
-        bool onGround = false;
-        btVector3 groundEnd = getPosition() - btVector3(0,footDown+0.4,0);
-        btCollisionWorld::AllHitsRayResultCallback ground(getPosition(),groundEnd);
-        world->rayTest(getPosition(),groundEnd,ground);
-        //debugLocations[0] = BtToGlm(groundEnd);
+        float closestDist = 100;
+        int closestIdx = -1;
 
         for(int a = 0; a<ground.m_collisionObjects.size(); a++)
         {
-            if(ground.m_collisionObjects[a] != body)
+            float dist = (ground.m_hitPointWorld[a]-start).length();
+            if(dist < closestDist)
             {
-                onGround = true;
+                closestIdx = a;
+                closestDist = dist;
+            }
+        }
+
+        if(closestIdx != -1)
+            return (btRigidBody*)ground.m_collisionObjects[closestIdx];
+        else
+            return 0;
+    }
+
+    btRigidBody *getClosestBody(btVector3 start,btVector3 end,btDynamicsWorld *world,btRigidBody *ignore,btVector3 &hitPos)
+    {
+        btCollisionWorld::AllHitsRayResultCallback ground(start,end);
+        world->rayTest(start,end,ground);
+
+        float closestDist = 100;
+        int closestIdx = -1;
+
+        for(int a = 0; a<ground.m_collisionObjects.size(); a++)
+        {
+            if(ground.m_collisionObjects[a] == ignore)
+                continue;
+
+            float dist = (ground.m_hitPointWorld[a]-start).length();
+            if(dist < closestDist)
+            {
+                hitPos = ground.m_hitPointWorld[a];
+                closestIdx = a;
+                closestDist = dist;
+            }
+        }
+
+        if(closestIdx != -1)
+            return (btRigidBody*)ground.m_collisionObjects[closestIdx];
+        else
+            return 0;
+    }
+
+    btRigidBody *getClosestBody(btVector3 start,btVector3 end,btDynamicsWorld *world,btRigidBody *ignore,btVector3 &hitPos,btVector3 &normal)
+    {
+        btCollisionWorld::AllHitsRayResultCallback ground(start,end);
+        world->rayTest(start,end,ground);
+
+        float closestDist = 100;
+        int closestIdx = -1;
+
+        for(int a = 0; a<ground.m_collisionObjects.size(); a++)
+        {
+            if(ground.m_collisionObjects[a] == ignore)
+                continue;
+
+            float dist = (ground.m_hitPointWorld[a]-start).length();
+            if(dist < closestDist)
+            {
+                hitPos = ground.m_hitPointWorld[a];
+                closestIdx = a;
+                closestDist = dist;
+                normal = ground.m_hitNormalWorld[a];
+            }
+        }
+
+        if(closestIdx != -1)
+            return (btRigidBody*)ground.m_collisionObjects[closestIdx];
+        else
+            return 0;
+    }
+
+    btRigidBody *getClosestBody(btVector3 start,btVector3 end,btDynamicsWorld *world,btVector3 &normal)
+    {
+        btCollisionWorld::AllHitsRayResultCallback ground(start,end);
+        world->rayTest(start,end,ground);
+
+        float closestDist = 100;
+        int closestIdx = -1;
+
+        for(int a = 0; a<ground.m_collisionObjects.size(); a++)
+        {
+            float dist = (ground.m_hitPointWorld[a]-start).length();
+            if(dist < closestDist)
+            {
+                closestIdx = a;
+                closestDist = dist;
+                normal = ground.m_hitNormalWorld[a];
+            }
+        }
+
+        if(closestIdx != -1)
+            return (btRigidBody*)ground.m_collisionObjects[closestIdx];
+        else
+            return 0;
+    }
+
+    //Copied from server with some changes
+    //Returns true if player has just jumped
+    bool newDynamic::control(float yaw,bool forward,bool backward,bool left,bool right,bool jump,bool isJetting,bool allowTurning,bool relativeSpeed)
+    {
+        bool sideWays = false;
+        btVector3 walkVelocity = btVector3(0,0,0);
+        btVector3 walkVelocityDontTouch = btVector3(0,0,0);
+        if(forward)
+        {
+            walkVelocity += btVector3(sin(yaw),0,cos(yaw));
+            walkVelocityDontTouch += btVector3(sin(yaw),0,cos(yaw));
+        }
+        if(backward)
+        {
+            walkVelocity += btVector3(sin(yaw+3.1415),0,cos(yaw+3.1415));
+            walkVelocityDontTouch += btVector3(sin(yaw+3.1415),0,cos(yaw+3.1415));
+        }
+        if(left)
+        {
+            sideWays = true;
+            walkVelocity += btVector3(sin(yaw-1.57),0,cos(yaw-1.57));
+            walkVelocityDontTouch += btVector3(sin(yaw-1.57),0,cos(yaw-1.57));
+        }
+        if(right)
+        {
+            sideWays = true;
+            walkVelocity += btVector3(sin(yaw+1.57),0,cos(yaw+1.57));
+            walkVelocityDontTouch += btVector3(sin(yaw+1.57),0,cos(yaw+1.57));
+        }
+
+        if(isJetting)
+        {
+            body->setGravity(btVector3(0,20,0));
+            //applyCentralForce(walkVelocity * 20);
+        }
+        else
+        {
+            btVector3 gravity = world->getGravity();
+            body->setGravity(gravity);
+        }
+
+        float speed = 13.0;
+        float blendTime = 50;
+
+        if(!type)
+        {
+            error("Tried to control (i.e. like a player) dynamic without a type (i.e. a vehicle)?");
+            return false;
+        }
+
+        if(allowTurning)
+        {
+            btTransform t = body->getWorldTransform();
+            t.setRotation(btQuaternion(3.1415 + yaw,0,0));
+            body->setWorldTransform(t);
+        }
+
+        btTransform rotMatrix = body->getWorldTransform();
+        rotMatrix.setOrigin(btVector3(0,0,0));
+        btVector3 position = body->getWorldTransform().getOrigin();
+
+        btVector3 normal;
+        btRigidBody *ground = 0;
+        for(int gx = -1; gx<=1; gx++)
+        {
+            for(int gz = -1; gz<=1; gz++)
+            {
+                btVector3 lateralOffsets = btVector3(finalHalfExtents.x() * gx, 0, finalHalfExtents.z() * gz);
+                lateralOffsets = rotMatrix * lateralOffsets;
+
+                ground = getClosestBody(position+btVector3(0,finalHalfExtents.y()*0.1,0),position - btVector3(lateralOffsets.x(),finalHalfExtents.y()*0.1,lateralOffsets.z()),world,normal);
+
+                if(ground)
+                    break;
+            }
+
+            if(ground)
                 break;
-            }
         }
 
-        if(!onGround)
+        int deltaMS = SDL_GetTicks() - lastPlayerControl;
+        lastPlayerControl = SDL_GetTicks();
+
+        if(jump && ground && body->getLinearVelocity().y() < 1)
         {
-            btVector3 groundStart = getPosition() - perpDir * bodyWidth;
-            btVector3 groundEnd = groundStart - btVector3(0,footDown+0.4,0);
-            //debugLocations[1] = BtToGlm(groundEnd);
-            btCollisionWorld::AllHitsRayResultCallback ground(groundStart,groundEnd);
-            world->rayTest(groundStart,groundEnd,ground);
-            for(int a = 0; a<ground.m_collisionObjects.size(); a++)
-            {
-                if(ground.m_collisionObjects[a] != body)
-                {
-                    onGround = true;
-                    break;
-                }
-            }
+            btVector3 vel = body->getLinearVelocity();
+            vel.setY(45);
+            body->setLinearVelocity(vel);
+            return true;
         }
 
-        if(!onGround)
+        if(walkVelocity.length2() < 0.01)
         {
-            btVector3 groundStart = getPosition() + perpDir * bodyWidth;
-            btVector3 groundEnd = groundStart - btVector3(0,footDown+0.4,0);
-            //debugLocations[2] = BtToGlm(groundEnd);
-            btCollisionWorld::AllHitsRayResultCallback ground(groundStart,groundEnd);
-            world->rayTest(groundStart,groundEnd,ground);
-            for(int a = 0; a<ground.m_collisionObjects.size(); a++)
-            {
-                if(ground.m_collisionObjects[a] != body)
-                {
-                    onGround = true;
-                    break;
-                }
-            }
+            walking = false;
+            body->setFriction(1.0);
+            return false;
         }
 
-        if(stopWalking)
+        if(!ground)
         {
-            body->setDamping(0.1,0);
-            if(SDL_GetTicks() - lastWalked < 50)
-            {
-                body->setFriction(5.0);
-            }
-            else
-            {
-                body->setFriction(0.5);
-            }
+            walkVelocity *= speed;
+            blendTime = 600;
         }
         else
         {
-            lastWalked = SDL_GetTicks();
-            body->setDamping(0,0);
-            body->setFriction(0);
-
-            btVector3 toSet = body->getLinearVelocity();
-            toSet.setX(dir.x()*20);
-            toSet.setZ(dir.z()*20);
-            body->setLinearVelocity(toSet);
+            walking = true;
+            body->setFriction(0.0);
+            btVector3 halfWay = (normal+walkVelocity)/2.0;
+            float dot = fabs(btDot(normal,walkVelocity));
+            walkVelocity = halfWay * fabs(dot) + walkVelocity * (1.0-fabs(dot)); //1.0 = use half way, 0.0 = use normal vel
+            if(dot > 0)
+                walkVelocity.setY(-walkVelocity.getY());
+            btVector3 oldVelNoY = walkVelocity.normalized();
+            oldVelNoY.setY(0);
+            oldVelNoY.normalized();
+            walkVelocity = oldVelNoY * speed + btVector3(0,walkVelocity.getY() * speed,0);
         }
 
-        if(jump && onGround && body->getLinearVelocity().y() < 1)
+        float blendCoefficient = deltaMS / blendTime;
+        btVector3 velocity = body->getLinearVelocity();
+        btVector3 endVel = (1.0-blendCoefficient) * velocity + blendCoefficient * walkVelocity;
+        endVel.setY(velocity.getY());
+
+        if(isinf(endVel.x()) || isinf(endVel.y()) || isinf(endVel.z()) || isnanf(endVel.x()) || isnanf(endVel.y()) || isnanf(endVel.z()))
         {
-            body->applyCentralForce(btVector3(0,2000,0));
-            return;
+            std::cout<<"Player walking bad result...\n";
+            std::cout<<"Normal "; sayVec3(normal);
+            std::cout<<"Walk vel "; sayVec3(walkVelocity);
+            std::cout<<"End "; sayVec3(endVel);
+            std::cout<<"\n";
         }
-
-        /*float maxSpeed = 15.0;
-        float sideSpeed = btVector3(vel.x(),0,vel.z()).length();
-
-        //Where we actually calculate walking and jumping
-
-        if(sides == 2)
-            maxSpeed *= 1.5;
-
-        btVector3 walkVel = directionSpeed * maxSpeed * 0.7;
-        if(sides == 2)
-            walkVel *= 0.7;
-        if(sideSpeed > maxSpeed)
-        {
-            if(sameSign(walkVel.x(),vel.x()) && fabs(walkVel.x()) > fabs(vel.x()))
-                walkVel.setX(0);
-            if(sameSign(walkVel.z(),vel.z()) && fabs(walkVel.z()) > fabs(vel.z()))
-                walkVel.setZ(0);
-        }
-
-        if(stopWalking)
-            body->setFriction(0.9);
         else
-            body->setFriction(0.1);
-        body->applyCentralForce(walkVel);*/
-        /*if(onGround && !stopWalking)
+            body->setLinearVelocity(endVel);
+
+        if(!ground)
+            return false;
+
+        btVector3 dir = walkVelocityDontTouch.normalize();
+        btVector3 perpDir = walkVelocityDontTouch.cross(btVector3(0,1,0));
+
+        /*colors.clear();
+        poses.clear();
+
+        colors.push_back(btVector3(1,1,1));
+        poses.push_back(position);*/
+
+        float bodyX = finalHalfExtents.x();
+        float bodyZ = finalHalfExtents.z();
+        if(sideWays)
+            std::swap(bodyX,bodyZ);
+
+        btVector3 footPos;
+        btVector3 hitpos;
+        btRigidBody *step;
+        for(float footUp = 0; footUp <= 1.2; footUp += 0.3)
         {
-            btVector3 newVel = btVector3(vel * 0.2 + walkVel);
-            newVel.setY(vel.y());
-            setLinearVelocity(newVel);
-        }
-        else if(onGround && stopWalking)
-        {
-            btVector3 newVel = btVector3(vel * 0.2);
-            newVel.setY(vel.y());
-            setLinearVelocity(newVel);
-        }
-        else if(!onGround && !stopWalking)
-        {
-            btVector3 newVel = btVector3(vel * 0.75 + walkVel * 0.25);
-            newVel.setY(vel.y());
-            setLinearVelocity(newVel);
-        }
-        else if(!onGround && stopWalking)
-        {
-
-        }
-
-        //sayVec3(body->getLinearVelocity());
-        //End walking and jumping calculations
-
-        if(stopWalking)
-            stop();
-        else
-        {
-            play("walk");
-
-            if(!onGround)
-                return;
-
-            footDown -= 0.2;
-
-            if(sideWays)
-                std::swap(bodyLength,bodyWidth);
-            bodyLength += 1.25;
-
-            bool gotHit = false;
-            float hitFrac;
-            btVector3 rayHitPos;
-
-            btVector3 footPosition = getPosition() - btVector3(0,footDown,0);
-            btVector3 footEndPosition = footPosition + dir * bodyLength;
-            btCollisionWorld::AllHitsRayResultCallback res(footPosition,footEndPosition);
-            world->rayTest(footPosition,footEndPosition,res);
-
-            for(int a = 0; a<res.m_collisionObjects.size(); a++)
+            for(int across = -1; across <= 1; across++)
             {
-                if(res.m_collisionObjects[a] != body && (((btRigidBody*)res.m_collisionObjects[a])->getUserIndex() == userIndex_staticNormalBrick||((btRigidBody*)res.m_collisionObjects[a])->getUserIndex() == userIndex_staticSpecialBrick))
-                {
-                    gotHit = true;
-                    rayHitPos = res.m_hitPointWorld[a];
-                    hitFrac = res.m_hitFractions[a];
-                }
-            }
+                footPos = position + (2 * dir * bodyZ + perpDir * across * bodyX);
+                footPos += btVector3(0,footUp,0);
+                /*colors.push_back(btVector3(0,0,0));
+                poses.push_back(footPos);*/
 
-            if(!gotHit)
-            {
-                btVector3 footPosition = getPosition() - btVector3(0,footDown,0) - perpDir * bodyWidth;
-                btVector3 footEndPosition = footPosition + dir * bodyLength;
-                btCollisionWorld::AllHitsRayResultCallback res(footPosition,footEndPosition);
-                world->rayTest(footPosition,footEndPosition,res);
-
-                for(int a = 0; a<res.m_collisionObjects.size(); a++)
+                step = getClosestBody(position,footPos,world,body,hitpos,normal);
+                if(step)
                 {
-                    if(res.m_collisionObjects[a] != body)
+                    if(btDot(normal,btVector3(0,1,0)) < 0.15)
                     {
-                        gotHit = true;
-                        rayHitPos = res.m_hitPointWorld[a];
-                        hitFrac = res.m_hitFractions[a];
+                        //float dist = (hitpos-position).length();
+                        if(hitpos.y() <= position.y())
+                            step = 0;
+                        else
+                            break;
                     }
+                    else
+                        step = 0;
                 }
             }
-
-            if(!gotHit)
-            {
-                btVector3 footPosition = getPosition() - btVector3(0,footDown,0) + perpDir * bodyWidth;
-                btVector3 footEndPosition = footPosition + dir * bodyLength;
-                btCollisionWorld::AllHitsRayResultCallback res(footPosition,footEndPosition);
-                world->rayTest(footPosition,footEndPosition,res);
-
-                for(int a = 0; a<res.m_collisionObjects.size(); a++)
-                {
-                    if(res.m_collisionObjects[a] != body && ((btRigidBody*)res.m_collisionObjects[a])->getUserIndex() != userIndex_livingBrick)
-                    {
-                        gotHit = true;
-                        rayHitPos = res.m_hitPointWorld[a];
-                        hitFrac = res.m_hitFractions[a];
-                    }
-                }
-            }
-
-            if(gotHit)
-            {
-                btVector3 start = rayHitPos + btVector3(0,footDown,0) + dir * 0.5;
-
-                btCollisionWorld::AllHitsRayResultCallback res(start,rayHitPos);
-                world->rayTest(start,rayHitPos,res);
-
-                bool gotAnotherHit = false;
-                float highestHeight = -99999.0;
-                const btCollisionObject *lastBody = 0;
-                btVector3 lastHit;
-
-                for(int a = 0; a<res.m_collisionObjects.size(); a++)
-                {
-                    if(res.m_collisionObjects[a] != body && ((btRigidBody*)res.m_collisionObjects[a])->getUserIndex() != userIndex_livingBrick)
-                    {
-                        gotAnotherHit = true;
-                        if(res.m_hitPointWorld[a].y() > highestHeight)
-                        {
-                            highestHeight = res.m_hitPointWorld[a].y();
-                            lastHit = res.m_hitPointWorld[a];
-                            lastBody = res.m_collisionObjects.at(a);
-                        }
-                    }
-                }
-
-                if(gotAnotherHit)
-                {
-                    if(highestHeight - footPosition.y() < 2.9 && highestHeight - footPosition.y() > 0.0)
-                    {
-                        float height = (scale.y * (max.y()-min.y()));
-                        btCollisionWorld::AllHitsRayResultCallback colTest(lastHit,lastHit + btVector3(0,height,0));
-                        world->rayTest(lastHit,lastHit + btVector3(0,height,0),colTest);
-
-                        for(int a = 0; a<colTest.m_collisionObjects.size(); a++)
-                        {
-                            if(colTest.m_collisionObjects[a] != body)
-                            {
-                                if(colTest.m_collisionObjects[a] != lastBody)
-                                {
-                                    std::cout<<"We couldn't fit!\n";
-                                    return;
-                                }
-                            }
-                        }
-
-                        std::cout<<"Setting position: "<<highestHeight - footPosition.y()<<"\n";
-                        btVector3 pos = getPosition();
-                        pos.setY(0.15 + pos.y() + (highestHeight - footPosition.y()));
-                        pos.setX(pos.x() + 1.3 * dir.x());
-                        pos.setZ(pos.z() + 1.3 * dir.z());
-                        setPosition(pos);
-                    }
-                }
-            }
+            if(step)
+                break;
         }
-    }
 
-    btVector3 dynamic::getPosition()
-    {
-        btTransform t = body->getWorldTransform();
-        return t.getOrigin();
-    }
-
-    dynamic::dynamic(btDynamicsWorld *_world,animatedModel *_type,glm::vec3 baseScale)
-    {
-        scale = baseScale;
-        type = _type;
-        bool hasCollision = false;
-        world = _world;
-
-        nodeColors.clear();
-        for(int a = 0; a<type->numPickingIDs; a++)
-            nodeColors.push_back(glm::vec3(1,1,1));
-
-        for(int a = 0; a<type->meshes.size(); a++)
+        if(step)
         {
-            if(type->meshes[a]->detectedCollisionMesh)
+            btVector3 rayStart = hitpos + btVector3(0,finalHalfExtents.y()*2,0) + walkVelocityDontTouch.normalized() * 0.1;
+
+            btVector3 newHitPos;
+            btRigidBody *secondCheck = getClosestBody(rayStart,hitpos,world,body,newHitPos);
+
+            if(secondCheck != step)
+                return false;
+
+            float stepUp = newHitPos.getY() - position.getY();
+            //std::cout<<"Step up: "<<stepUp<<"\n";
+            if(stepUp > 0 && stepUp < 1.75)
             {
-                hasCollision = true;
-                min = glmToBt(type->meshes[a]->detectedColMin);
-                max = glmToBt(type->meshes[a]->detectedColMax);
+                btTransform t = body->getWorldTransform();
+                btVector3 pos = t.getOrigin();
+                pos.setY(pos.getY()+stepUp+0.4);
+                t.setOrigin(pos);
+                body->setWorldTransform(t);
             }
         }
-        btVector3 size = max-min;
-        size /= 2.0;
-        size *= glmToBt(scale);
 
-        btBoxShape *shape = new btBoxShape(size);
-        btVector3 inertia;
-        shape->calculateLocalInertia(1.0,inertia);
-        btTransform startTrans = btTransform::getIdentity();
-        startTrans.setOrigin(btVector3(0,0,0));
-        btMotionState *ms = new btDefaultMotionState(startTrans);
-        body = new btRigidBody(1.0,ms,shape,inertia);
-        body->setActivationState(DISABLE_DEACTIVATION);
-        body->setAngularFactor(btVector3(0,0,0));
-        world->addRigidBody(body);
+
+        return false;
     }
 
-    void dynamic::setPosition(glm::vec3 pos)
-    {
-        btTransform t = body->getWorldTransform();
-        t.setOrigin(btVector3(pos.x,pos.y,pos.z));
-        body->setWorldTransform(t);
-    }
-
-    void dynamic::setPosition(btVector3 pos)
-    {
-        btTransform t = body->getWorldTransform();
-        t.setOrigin(pos);
-        body->setWorldTransform(t);
-    }
-
-    void dynamic::setRotation(glm::quat rot)
-    {
-        btTransform t = body->getWorldTransform();
-        t.setRotation(btQuaternion(rot.x,rot.y,rot.z,rot.w));
-        body->setWorldTransform(t);
-    }
-
-    void dynamic::setRotation(btQuaternion quat)
-    {
-        btTransform t = body->getWorldTransform();
-        t.setRotation(quat);
-        body->setWorldTransform(t);
-    }
-
-    void dynamic::setLinearVelocity(glm::vec3 vel)
-    {
-        body->setLinearVelocity(btVector3(vel.x,vel.y,vel.z));
-    }
-
-    void dynamic::setLinearVelocity(btVector3 vel)
-    {
-        body->setLinearVelocity(vel);
-    }
-
-    void dynamic::render(uniformsHolder *unis,float deltaMS,bool stopInterpolation,bool skipMats)
-    {
-        /*btTransform t;
-        body->getMotionState()->getWorldTransform(t);*/
-        /*btTransform t = body->getWorldTransform();
-        btVector3 o = t.getOrigin();
-        btQuaternion q = t.getRotation();
-        glm::vec3 offset = scale * BtToGlm(max+min) / glm::vec3(2.0);
-        //position = glm::vec3(o.x()-offset.x,o.y()-offset.y,o.z()-offset.z);
-        //rotation = glm::quat(q.w(),q.x(),q.y(),q.z());
-
-        glUniform1i(unis->target->getUniformLocation("useTint"),true);
-        glUniform3f(unis->target->getUniformLocation("tint"),colorTint.r,colorTint.g,colorTint.b);
-        renderInst(unis,deltaMS,stopInterpolation,skipMats);
-        glUniform1i(unis->target->getUniformLocation("useTint"),false);
-    }*/
 
     item::item(btDynamicsWorld *_world,newModel *_type,glm::vec3 baseScale)
         : newDynamic(_type,baseScale)

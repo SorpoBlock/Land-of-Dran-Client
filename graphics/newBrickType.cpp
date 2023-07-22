@@ -54,7 +54,7 @@ namespace syj
 
         if(world)
         {
-            theBrick->body = addBrickToWorld(theBrick->position,rotationID,theBrick->type->type->width,theBrick->type->type->height,theBrick->type->type->length,theBrick->type->type->shape,world);
+            theBrick->body = addBrickToWorld(theBrick->position,rotationID,theBrick->type->type->width,theBrick->type->type->height,theBrick->type->type->length,theBrick->type->type->shape,world,(brickMaterial)theBrick->material);
             theBrick->body->setUserPointer(theBrick);
             theBrick->body->setUserIndex(userIndex_staticSpecialBrick);
         }
@@ -221,7 +221,7 @@ namespace syj
     //END SPECIAL BRICK STUFF
     //BOTH SPECIAL AND BASIC BRICK STUFF:
 
-    btRigidBody *addBrickToWorld(glm::vec3 pos,int rotation,int w,int h,int l,btCollisionShape *shape,btDynamicsWorld *world)
+    btRigidBody *addBrickToWorld(glm::vec3 pos,int rotation,int w,int h,int l,btCollisionShape *shape,btDynamicsWorld *world,brickMaterial material)
     {
         if(!shape)
         {
@@ -264,8 +264,15 @@ namespace syj
         body = new btRigidBody(info);
         body->setCollisionFlags( btCollisionObject::CF_STATIC_OBJECT);
 
-        body->setFriction(1.0);
-        body->setRestitution(0.5);
+        int matAfterUndulo = material;
+        if(matAfterUndulo > 1000)
+            matAfterUndulo -= 1000;
+
+        if(material != 0)
+        std::cout<<"Material: "<<material<<"\n";
+
+        body->setFriction(matAfterUndulo == slippery ? 0.3 : 1.0);
+        body->setRestitution(matAfterUndulo == bob ? 2.1 : 0.0);
         body->forceActivationState(ISLAND_SLEEPING);
         //body->setActivationState(ISLAND_SLEEPING);
         world->addRigidBody(body);
@@ -757,7 +764,7 @@ namespace syj
 
             if(shape)
             {
-                theBrick->body = addBrickToWorld(theBrick->position,rotationID,theBrick->dimensions.x,theBrick->dimensions.y,theBrick->dimensions.z,shape,world);
+                theBrick->body = addBrickToWorld(theBrick->position,rotationID,theBrick->dimensions.x,theBrick->dimensions.y,theBrick->dimensions.z,shape,world,(brickMaterial)theBrick->material);
                 theBrick->body->setUserPointer(theBrick);
                 theBrick->body->setUserIndex(userIndex_staticNormalBrick);
             }

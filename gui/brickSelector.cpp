@@ -94,6 +94,7 @@ namespace syj
         float row = numBricks / columns;
 
         std::string text = "Basic " + std::to_string(width) +"-"+ std::to_string(height) +"-"+ std::to_string(length);
+        //std::cout<<text<<"  |  "<<imageFilePath<<"\n";
         CEGUI::ImageManager::getSingleton().addFromImageFile(text, imageFilePath,"/");
         button->getChild("BrickImage")->setProperty("Image",text);
         button->getChild("BrickText")->setText(text);

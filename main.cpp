@@ -803,6 +803,10 @@ int main(int argc, char *argv[])
     bool hitDebug = true;
     bool justTurnOnChat = false;
 
+    //TODO: remove this, it's for debugging client physics:
+    //ohWow.debugLocations.push_back(glm::vec3(0,0,0));
+    //ohWow.debugColors.push_back(glm::vec3(1,1,1));
+
     bool cont = true;
     while(cont)
     {
@@ -1047,8 +1051,26 @@ int main(int argc, char *argv[])
                     std::cout<<"Direction: "<<ohWow.playerCamera->getDirection().x<<","<<ohWow.playerCamera->getDirection().y<<","<<ohWow.playerCamera->getDirection().z<<"\n";
                 }
 
+                if(event.key.keysym.sym == SDLK_F5)
+                {
+                    if(ohWow.currentPlayer)
+                    {
+                        ohWow.currentPlayer->body->setLinearVelocity(btVector3(0,10,0));
+                    }
+                }
+
                 if(event.key.keysym.sym == SDLK_F2)
                 {
+                    if(ohWow.currentPlayer)
+                    {
+                        btTransform t;
+                        t.setIdentity();
+                        t.setOrigin(btVector3(ohWow.playerCamera->getPosition().x,ohWow.playerCamera->getPosition().y,ohWow.playerCamera->getPosition().z));
+                        ohWow.currentPlayer->body->setWorldTransform(t);
+                        ohWow.currentPlayer->body->setLinearVelocity(btVector3(0,0,0));
+                        ohWow.currentPlayer->body->setAngularVelocity(btVector3(0,0,0));
+                    }
+
                     for(unsigned int a = 0; a<ohWow.newDynamics.size(); a++)
                     {
                         ohWow.newDynamics[a]->modelInterpolator.keyFrames.clear();
@@ -1452,7 +1474,17 @@ int main(int argc, char *argv[])
                     crossHair->setVisible(true);
                     ohWow.playerCamera->thirdPerson = false;
 
-                    glm::vec3 pos = ohWow.cameraTarget->modelInterpolator.getPosition();
+                    glm::vec3 pos;
+                    if(ohWow.currentPlayer)
+                    {
+                        btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                        btVector3 v = t.getOrigin();
+                        pos.x = v.x();
+                        pos.y = v.y();
+                        pos.z = v.z();
+                    }
+                    else
+                        pos = ohWow.cameraTarget->modelInterpolator.getPosition();
                     pos += ohWow.cameraTarget->type->eyeOffset;
                     ohWow.playerCamera->setPosition( pos );
                 }
@@ -1460,10 +1492,27 @@ int main(int argc, char *argv[])
                 {
                     crossHair->setVisible(false);
                     ohWow.playerCamera->thirdPerson = true;
-                    ohWow.playerCamera->thirdPersonTarget = ohWow.cameraTarget->modelInterpolator.getPosition();
-                    ohWow.playerCamera->thirdPersonDistance = 30;
-                    ohWow.playerCamera->setPosition(ohWow.cameraTarget->modelInterpolator.getPosition());
-                    ohWow.playerCamera->turn(0,0);
+
+                    if(ohWow.currentPlayer)
+                    {
+                        btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                        btVector3 v = t.getOrigin();
+                        ohWow.playerCamera->thirdPersonTarget = glm::vec3(v.x(),v.y(),v.z());
+                        ohWow.playerCamera->thirdPersonDistance = 30;
+                        ohWow.playerCamera->setPosition(glm::vec3(v.x(),v.y(),v.z()));
+                        ohWow.playerCamera->turn(0,0);
+                        ohWow.currentPlayer->useGlobalTransform = true;
+                        btQuaternion bulletRot = t.getRotation();
+                        glm::quat rot = glm::quat(bulletRot.w(),bulletRot.x(),bulletRot.y(),bulletRot.z());
+                        ohWow.currentPlayer->globalTransform = glm::translate(glm::vec3(v.x(),v.y(),v.z())) * glm::toMat4(rot);
+                    }
+                    else
+                    {
+                        ohWow.playerCamera->thirdPersonTarget = ohWow.cameraTarget->modelInterpolator.getPosition();
+                        ohWow.playerCamera->thirdPersonDistance = 30;
+                        ohWow.playerCamera->setPosition(ohWow.cameraTarget->modelInterpolator.getPosition());
+                        ohWow.playerCamera->turn(0,0);
+                    }
                 }
             }
             else //static cam
@@ -1575,7 +1624,6 @@ int main(int argc, char *argv[])
                 ohWow.playerCamera->nominalUp = glm::vec3(afterDir.x,afterDir.y,afterDir.z);
             }
 
-
             int netControlState = 0;
             netControlState |= (!states[SDL_SCANCODE_LCTRL] && playerInput.commandKeyDown(walkForward)) ? 1 : 0;
             netControlState |= playerInput.commandKeyDown(walkBackward) ? 2 : 0;
@@ -1586,6 +1634,10 @@ int main(int argc, char *argv[])
               //  netControlState = 0;
             if(evalWindow->isActive() && evalWindow->isVisible())
                 netControlState = 0;
+
+            //Move client player for client physics:
+            if(ohWow.currentPlayer)
+                ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,false);
 
             //SDL's macros are fucked up
             int leftDown = 0, rightDown = 0;
@@ -1649,6 +1701,20 @@ int main(int argc, char *argv[])
                         transPacket.writeFloat(ohWow.playerCamera->getPosition().z);
                     }
                     transPacket.writeBit(chatEditbox->isActive());
+
+                    bool actuallyUseClientPhysics = useClientPhysics;
+                    if(!ohWow.currentPlayer)
+                        actuallyUseClientPhysics = false;
+
+                    transPacket.writeBit(actuallyUseClientPhysics);
+                    if(actuallyUseClientPhysics)
+                    {
+                        btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                        btVector3 o = t.getOrigin();
+                        transPacket.writeFloat(o.x());
+                        transPacket.writeFloat(o.y());
+                        transPacket.writeFloat(o.z());
+                    }
 
                     serverConnection.send(&transPacket,false);
 

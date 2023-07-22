@@ -220,7 +220,7 @@ namespace syj
                 heldClientPhysicsDataPacket tmp;
 
                 tmp.dynamicID = data->readUInt(dynamicObjectIDBits);
-                tmp.deletionTime = SDL_GetTicks() + 10000;
+                tmp.deletionTime = SDL_GetTicks() + 30000;
                 tmp.finalHalfExtents.setX(data->readFloat());
                 tmp.finalHalfExtents.setY(data->readFloat());
                 tmp.finalHalfExtents.setZ(data->readFloat());
