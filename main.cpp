@@ -588,19 +588,6 @@ int main(int argc, char *argv[])
 
     //End connect screen
 
-    ohWow.brickMat = new material("assets/brick/otherBrickMat.txt");
-    ohWow.brickMatSide = new material("assets/brick/sideBrickMat.txt");
-    ohWow.brickMatRamp = new material("assets/brick/rampBrickMat.txt");
-    ohWow.brickMatBottom = new material("assets/brick/bottomBrickMat.txt");
-
-    blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",ohWow.brickSelector,true);
-    ohWow.staticBricks.allocateVertBuffer();
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMat);
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatSide,true,true);
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatBottom,true);
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatRamp);
-    ohWow.staticBricks.blocklandTypes = &blocklandHolder;
-
     info("Trying to connect to server...");
 
     bool connected = false;
@@ -624,6 +611,19 @@ int main(int argc, char *argv[])
     }
     else
         connected = true;
+
+    ohWow.brickMat = new material("assets/brick/otherBrickMat.txt");
+    ohWow.brickMatSide = new material("assets/brick/sideBrickMat.txt");
+    ohWow.brickMatRamp = new material("assets/brick/rampBrickMat.txt");
+    ohWow.brickMatBottom = new material("assets/brick/bottomBrickMat.txt");
+
+    blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",ohWow.brickSelector,true);
+    ohWow.staticBricks.allocateVertBuffer();
+    ohWow.staticBricks.allocatePerTexture(ohWow.brickMat);
+    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatSide,true,true);
+    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatBottom,true);
+    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatRamp);
+    ohWow.staticBricks.blocklandTypes = &blocklandHolder;
 
     packet requestName;
     requestName.writeUInt(clientPacketType_requestName,4);
@@ -802,6 +802,7 @@ int main(int argc, char *argv[])
 
     bool hitDebug = true;
     bool justTurnOnChat = false;
+    float lastPhysicsStep = 0.0;
 
     //TODO: remove this, it's for debugging client physics:
     //ohWow.debugLocations.push_back(glm::vec3(0,0,0));
@@ -881,8 +882,58 @@ int main(int argc, char *argv[])
             }
         }
 
+        Uint32 mouseState = SDL_GetMouseState(NULL,NULL);
+        //SDL's macros are fucked up
+        int leftDown = 0, rightDown = 0;
+        if(mouseState == 1)
+            leftDown = 1;
+        else if(mouseState == 4)
+            rightDown = 1;
+        else if(mouseState == 5)
+        {
+            leftDown = 1;
+            rightDown = 1;
+        }
+
         if(useClientPhysics)
-            world->stepSimulation(deltaT / 1000.0);
+        {
+            //Buoyancy and jetting
+            if(ohWow.currentPlayer)
+            {
+                if(rightDown)
+                {
+                    ohWow.currentPlayer->body->setGravity(btVector3(0,20,0));
+                }
+                else
+                {
+                    btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                    btVector3 o = t.getOrigin();
+
+                    if(o.y() < waterLevel-2.0)
+                    {
+                        ohWow.currentPlayer->body->setDamping(0.4,0.0);
+                        ohWow.currentPlayer->body->setGravity(btVector3(0,-0.5,0) * world->getGravity());
+                    }
+                    else if(o.y() < waterLevel)
+                    {
+                        ohWow.currentPlayer->body->setDamping(0.4,0.0);
+                        ohWow.currentPlayer->body->setGravity(btVector3(0,0,0));
+                    }
+                    else
+                    {
+                        ohWow.currentPlayer->body->setDamping(0.0,0.0);
+                        ohWow.currentPlayer->body->setGravity(world->getGravity());
+                    }
+                }
+            }
+
+            //if(SDL_GetTicks() - lastPhysicsStep >= 15)
+            //{
+                float physicsDeltaT = SDL_GetTicks() - lastPhysicsStep;
+                world->stepSimulation(physicsDeltaT / 1000.0);
+                lastPhysicsStep = SDL_GetTicks();
+            //}
+        }
 
         const Uint8 *states = SDL_GetKeyboardState(NULL);
         playerInput.getKeyStates();
@@ -1514,6 +1565,15 @@ int main(int argc, char *argv[])
                         ohWow.playerCamera->turn(0,0);
                     }
                 }
+                //TODO: Should just store which item is the current held not-hidden item, loop is bad
+                for(int a = 0; a<ohWow.items.size(); a++)
+                {
+                    if(ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden)
+                    {
+                        ohWow.items[a]->updateTransform(true,ohWow.playerCamera->getYaw());
+                        ohWow.items[a]->calculateMeshTransforms(0);
+                    }
+                }
             }
             else //static cam
             {
@@ -1546,7 +1606,6 @@ int main(int argc, char *argv[])
         if(playerInput.commandKeyDown(jump))
             doJump = true;
 
-        Uint32 mouseState = SDL_GetMouseState(NULL,NULL);
         for(unsigned int a = 0; a<ohWow.items.size(); a++)
         {
             heldItemType *type = ohWow.items[a]->itemType;
@@ -1569,7 +1628,8 @@ int main(int argc, char *argv[])
             ohWow.newDynamics[a]->bufferSubData();
         }
         for(int a = 0; a<ohWow.items.size(); a++)
-            ohWow.items[a]->calculateMeshTransforms(0);
+            if(!(ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
+                ohWow.items[a]->calculateMeshTransforms(0);
 
         auto emitterIter = ohWow.emitters.begin();
         while(emitterIter != ohWow.emitters.end())
@@ -1639,18 +1699,6 @@ int main(int argc, char *argv[])
             if(ohWow.currentPlayer)
                 ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,false);
 
-            //SDL's macros are fucked up
-            int leftDown = 0, rightDown = 0;
-            if(mouseState == 1)
-                leftDown = 1;
-            else if(mouseState == 4)
-                rightDown = 1;
-            else if(mouseState == 5)
-            {
-                leftDown = 1;
-                rightDown = 1;
-            }
-
             int fullControlState  = netControlState + (leftDown << 5);
             fullControlState |= ohWow.inventoryOpen ? 0b1000000 : 0;
             fullControlState |= ohWow.selectedSlot << 7;
@@ -1714,6 +1762,10 @@ int main(int argc, char *argv[])
                         transPacket.writeFloat(o.x());
                         transPacket.writeFloat(o.y());
                         transPacket.writeFloat(o.z());
+                        btVector3 v = ohWow.currentPlayer->body->getLinearVelocity();
+                        transPacket.writeFloat(v.x());
+                        transPacket.writeFloat(v.y());
+                        transPacket.writeFloat(v.z());
                     }
 
                     serverConnection.send(&transPacket,false);
@@ -1970,10 +2022,10 @@ int main(int argc, char *argv[])
 
                     for(unsigned int a = 0; a<ohWow.items.size(); a++)
                     {
-                        if(ohWow.items[a]->heldBy == ohWow.cameraTarget)
-                            ohWow.items[a]->render(shadow,true,ohWow.playerCamera->getYaw());
-                        else
-                            ohWow.items[a]->render(shadow);
+                        /*if(ohWow.items[a]->heldBy == ohWow.cameraTarget)
+                            ohWow.items[a]->render(shadow,true,ohWow.playerCamera->getYaw());*/
+                        if(!(ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
+                            ohWow.items[a]->updateTransform();
                     }
 
                     /*for(unsigned int a = 0; a<ohWow.dynamics.size(); a++)
@@ -2067,13 +2119,14 @@ int main(int argc, char *argv[])
 
                 for(unsigned int a = 0; a<ohWow.items.size(); a++)
                 {
-                    if(ohWow.items[a]->heldBy == ohWow.cameraTarget)
+                    /*if(ohWow.items[a]->heldBy == ohWow.cameraTarget)
                     {
                         if(!ohWow.usingPaint)
                             ohWow.items[a]->render(basic,true,ohWow.playerCamera->getYaw());
                     }
-                    else
-                        ohWow.items[a]->render(basic);
+                    else*/
+                    if(!(ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
+                        ohWow.items[a]->updateTransform();
                 }
 
                 if(ohWow.paintCan && ohWow.fixedPaintCanItem && ohWow.usingPaint && ohWow.cameraTarget)
@@ -2081,7 +2134,7 @@ int main(int argc, char *argv[])
                     ohWow.fixedPaintCanItem->pitch = -1.57;
                     ohWow.fixedPaintCanItem->hidden = false;
                     ohWow.fixedPaintCanItem->heldBy = ohWow.cameraTarget;
-                    ohWow.fixedPaintCanItem->render(basic,true,ohWow.playerCamera->getYaw());
+                    ohWow.fixedPaintCanItem->updateTransform(true,ohWow.playerCamera->getYaw());
                 }
                 else
                     ohWow.fixedPaintCanItem->hidden = true;

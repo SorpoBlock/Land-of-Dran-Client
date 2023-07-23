@@ -268,9 +268,6 @@ namespace syj
         if(matAfterUndulo > 1000)
             matAfterUndulo -= 1000;
 
-        if(material != 0)
-        std::cout<<"Material: "<<material<<"\n";
-
         body->setFriction(matAfterUndulo == slippery ? 0.3 : 1.0);
         body->setRestitution(matAfterUndulo == bob ? 2.1 : 0.0);
         body->forceActivationState(ISLAND_SLEEPING);

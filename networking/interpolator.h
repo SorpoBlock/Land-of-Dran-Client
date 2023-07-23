@@ -30,6 +30,8 @@ namespace syj
         static unsigned int serverTimePoint;
 
         public:
+        glm::vec3 lastPositionReturned = glm::vec3(0,0,0);
+        glm::quat lastQuatReturned = glm::quat(1,0,0,0);
         float progressToNextFrame = 0;
         std::vector<modelTransform> keyFrames;
         unsigned int highestProcessed = 0;

@@ -62,7 +62,7 @@ namespace syj
         float pitch = 0;
         bool swinging = false;
         item(btDynamicsWorld *_world,newModel *_type,glm::vec3 baseScale = glm::vec3(1,1,1));
-        void render(uniformsHolder &unis,bool useDir = false,float yaw = 0);
+        void updateTransform(bool useDir = false,float yaw = 0);
         void advance(bool mouseIsDown,float deltaMS);
     };
 }

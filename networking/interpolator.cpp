@@ -109,7 +109,6 @@ namespace syj
             idx = 2;
         if(keyFrames[keyFrames.size() - idx].packetTime < currentServerTime)
         {
-            std::cout<<"Ahead!\n";
             if(keyFrames.size() > 2 && interpolator::useTripleInterpolation)
                 interpolator::serverTimePoint -= (currentServerTime - keyFrames[keyFrames.size()-3].packetTime);
             else
@@ -168,14 +167,20 @@ namespace syj
 
         if(p.size() == 3)
         {
-            glm::vec3 ret = glm::vec3((1.0 - progress) * (1.0 - progress)) * p[0].position + glm::vec3(2.0 * progress * (1.0 - progress)) * p[1].position + glm::vec3(progress * progress) * p[2].position;
+            lastPositionReturned = glm::vec3((1.0 - progress) * (1.0 - progress)) * p[0].position + glm::vec3(2.0 * progress * (1.0 - progress)) * p[1].position + glm::vec3(progress * progress) * p[2].position;
             //std::cout<<p[0].position.x<<","<<p[1].position.x<<","<<p[2].position.x<<" progress = "<<ret.x<<"\n";
-            return ret;
+            return lastPositionReturned;
         }
         else if(p.size() == 2)
-            return glm::mix(p[0].position,p[1].position,progress);
+        {
+            lastPositionReturned = glm::mix(p[0].position,p[1].position,progress);
+            return lastPositionReturned;
+        }
         else
-            std::cout<<"Size was " << std::to_string(p.size()) <<"\n";
+        {
+            //std::cout<<"Size was " << std::to_string(p.size()) <<"\n";
+            return lastPositionReturned;
+        }
     }
 
     glm::quat interpolator::getRotation()
@@ -186,12 +191,17 @@ namespace syj
 
         if(p.size() == 3)
         {
-            return glm::slerp(p[0].rotation,p[2].rotation,progress);
+            lastQuatReturned = glm::slerp(p[0].rotation,p[2].rotation,progress);
+            return lastQuatReturned;
         }
         else if(p.size() == 2)
-            return glm::slerp(p[0].rotation,p[1].rotation,progress);
+        {
+            lastQuatReturned = glm::slerp(p[0].rotation,p[1].rotation,progress);
+            return lastQuatReturned;
+        }
         else
-            std::cout<<"Size was " << std::to_string(p.size()) <<"\n";
+            return lastQuatReturned;
+            //std::cout<<"Size was " << std::to_string(p.size()) <<"\n";
     }
 
     void interpolator::advance(float deltaMS)

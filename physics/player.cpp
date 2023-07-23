@@ -170,7 +170,7 @@ namespace syj
             body->setGravity(gravity);
         }
 
-        float speed = 13.0;
+        float speed = 16.0; //Needs to be a bit faster than the server I've found
         float blendTime = 50;
 
         if(!type)
@@ -342,7 +342,8 @@ namespace syj
         : newDynamic(_type,baseScale)
         {}
 
-    void item::render(uniformsHolder &unis,bool useDir,float yaw)
+    //useDir now means it's a model (player) that has client simulated physics
+    void item::updateTransform(bool useDir,float yaw)
     {
         if(hidden)
             return;
@@ -352,16 +353,29 @@ namespace syj
             float actualPitch = -0.785 * (sin(pitch)+1.0);
             glm::vec4 offset = glm::vec4(itemType->handOffset.x,itemType->handOffset.y,itemType->handOffset.z,1);
             glm::mat4 rot;
-            if(useDir)
+            glm::vec3 playerPos;
+            //YOUR item, on a client physics simulated player model
+            if(useDir && heldBy->body)
+            {
                 rot = glm::toMat4(glm::quat(glm::vec3(0,yaw+3.1415,0)));
-            else
+                btVector3 bulletPos = heldBy->body->getWorldTransform().getOrigin();
+                playerPos.x = bulletPos.x();
+                playerPos.y = bulletPos.y();
+                playerPos.z = bulletPos.z();
+            }
+            else //everyone else's tools
+            {
                 rot = glm::toMat4(heldBy->modelInterpolator.getRotation());
+                playerPos = heldBy->modelInterpolator.getPosition();
+            }
+
             offset = rot * offset;
             useGlobalTransform = true;
             globalTransform =
-                        glm::translate(heldBy->modelInterpolator.getPosition() + glm::vec3(offset.x,offset.y,offset.z)) *
+                        glm::translate(playerPos + glm::vec3(offset.x,offset.y,offset.z)) *
                         rot *
                         glm::toMat4(glm::quat(glm::vec3(actualPitch,0,0)));
+
             /*type->render(&unis,0,
                         glm::translate(heldBy->modelInterpolator.getPosition() + glm::vec3(offset.x,offset.y,offset.z)) *
                         rot *

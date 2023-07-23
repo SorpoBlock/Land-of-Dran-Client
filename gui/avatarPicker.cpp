@@ -506,10 +506,16 @@ namespace syj
                 transPacket.writeUInt(2,4);
                 transPacket.writeUInt(0,5);
                 transPacket.writeBit(false);
+                transPacket.writeBit(false);
+                transPacket.writeBit(false);
                 transPacket.writeFloat(0);
                 transPacket.writeFloat(0);
                 transPacket.writeFloat(0);
                 transPacket.writeUInt(7,3);
+                transPacket.writeBit(false);
+                transPacket.writeBit(false);
+                transPacket.writeBit(false);
+
                 connection->send(&transPacket,false);
 
                 connection->run();
