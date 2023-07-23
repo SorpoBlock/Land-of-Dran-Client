@@ -761,7 +761,7 @@ int main(int argc, char *argv[])
     for(unsigned int a = 0; a<ohWow.prints->names.size(); a++)
         ohWow.staticBricks.allocatePerTexture(ohWow.prints->textures[a],false,false,true);
 
-    model wheelModel("assets/wheel/ball.txt");
+    model wheelModel("assets/ball/ball.txt");
 
     unsigned int last10Secs = SDL_GetTicks();
     unsigned int frames = 0;
@@ -1526,7 +1526,7 @@ int main(int argc, char *argv[])
                     ohWow.playerCamera->thirdPerson = false;
 
                     glm::vec3 pos;
-                    if(ohWow.currentPlayer)
+                    if(ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer)
                     {
                         btTransform t = ohWow.currentPlayer->body->getWorldTransform();
                         btVector3 v = t.getOrigin();
@@ -1535,7 +1535,12 @@ int main(int argc, char *argv[])
                         pos.z = v.z();
                     }
                     else
+                    {
+                        if(ohWow.currentPlayer)
+                            ohWow.currentPlayer->useGlobalTransform = false;
                         pos = ohWow.cameraTarget->modelInterpolator.getPosition();
+                    }
+
                     pos += ohWow.cameraTarget->type->eyeOffset;
                     ohWow.playerCamera->setPosition( pos );
                 }
@@ -1544,7 +1549,7 @@ int main(int argc, char *argv[])
                     crossHair->setVisible(false);
                     ohWow.playerCamera->thirdPerson = true;
 
-                    if(ohWow.currentPlayer)
+                    if(ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer)
                     {
                         btTransform t = ohWow.currentPlayer->body->getWorldTransform();
                         btVector3 v = t.getOrigin();
@@ -1559,6 +1564,9 @@ int main(int argc, char *argv[])
                     }
                     else
                     {
+                        if(ohWow.currentPlayer)
+                            ohWow.currentPlayer->useGlobalTransform = false;
+
                         ohWow.playerCamera->thirdPersonTarget = ohWow.cameraTarget->modelInterpolator.getPosition();
                         ohWow.playerCamera->thirdPersonDistance = 30;
                         ohWow.playerCamera->setPosition(ohWow.cameraTarget->modelInterpolator.getPosition());
@@ -1753,6 +1761,8 @@ int main(int argc, char *argv[])
                     bool actuallyUseClientPhysics = useClientPhysics;
                     if(!ohWow.currentPlayer)
                         actuallyUseClientPhysics = false;
+                    if(ohWow.giveUpControlOfCurrentPlayer)
+                        actuallyUseClientPhysics = false;
 
                     transPacket.writeBit(actuallyUseClientPhysics);
                     if(actuallyUseClientPhysics)
@@ -1889,7 +1899,7 @@ int main(int argc, char *argv[])
                                 wheelModel.render(&basic,
                                                   glm::translate(ohWow.livingBricks[a]->wheels[wheel]->getPosition()) *
                                                   glm::toMat4(ohWow.livingBricks[a]->wheels[wheel]->getRotation()) *
-                                                  glm::scale(glm::vec3(0.09)) *
+                                                  glm::scale(glm::vec3(0.06)) *
                                                   glm::scale(ohWow.livingBricks[a]->wheels[wheel]->scale)
                                                   );
                             }
@@ -1956,7 +1966,7 @@ int main(int argc, char *argv[])
                                 wheelModel.render(&basic,
                                                   glm::translate(ohWow.livingBricks[a]->wheels[wheel]->getPosition()) *
                                                   glm::toMat4(ohWow.livingBricks[a]->wheels[wheel]->getRotation()) *
-                                                  glm::scale(glm::vec3(0.09)) *
+                                                  glm::scale(glm::vec3(0.06)) *
                                                   glm::scale(ohWow.livingBricks[a]->wheels[wheel]->scale)
                                                   );
                             }
@@ -2111,7 +2121,7 @@ int main(int argc, char *argv[])
                         wheelModel.render(&basic,
                                           glm::translate(ohWow.livingBricks[a]->wheels[wheel]->getPosition()) *
                                           glm::toMat4(ohWow.livingBricks[a]->wheels[wheel]->getRotation()) *
-                                          glm::scale(glm::vec3(0.09)) *
+                                          glm::scale(glm::vec3(0.06)) *
                                           glm::scale(ohWow.livingBricks[a]->wheels[wheel]->scale)
                                           );
                     }

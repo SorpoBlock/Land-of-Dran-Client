@@ -8,10 +8,7 @@ namespace syj
         //TODO: Don't reuse motion state or shape for each dynamic!
 
         if(body)
-        {
-            error("newDynamic::createBoxBody body already present!");
             return;
-        }
 
         finalHalfExtents = extents;
         finalOffset = offset;

@@ -64,6 +64,8 @@ namespace syj
 
     struct serverStuff
     {
+        //For example, if you're driving a car:
+        bool giveUpControlOfCurrentPlayer = false;
         newDynamic *currentPlayer = 0;
 
         /*unsigned int serverTimePoint = 0;

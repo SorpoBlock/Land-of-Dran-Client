@@ -190,6 +190,7 @@ namespace syj
                 {
                     newDynamics[a]->createBoxBody(world,tmp.finalHalfExtents,tmp.finalOffset);
                     currentPlayer = newDynamics[a];
+                    giveUpControlOfCurrentPlayer = false;
 
                     used = true;
                     iter3 = clientPhysicsPackets.erase(iter3);
@@ -219,25 +220,70 @@ namespace syj
             {
                 heldClientPhysicsDataPacket tmp;
 
-                tmp.dynamicID = data->readUInt(dynamicObjectIDBits);
-                tmp.deletionTime = SDL_GetTicks() + 30000;
-                tmp.finalHalfExtents.setX(data->readFloat());
-                tmp.finalHalfExtents.setY(data->readFloat());
-                tmp.finalHalfExtents.setZ(data->readFloat());
-                tmp.finalOffset.setX(data->readFloat());
-                tmp.finalOffset.setY(data->readFloat());
-                tmp.finalOffset.setZ(data->readFloat());
+                int subtype = data->readUInt(2);
 
-                for(int a = 0; a<ohWow->clientPhysicsPackets.size(); a++)
+                if(subtype == 0) //create client physics for dynamic or start using client physics for dynamic again
                 {
-                    if(ohWow->clientPhysicsPackets[a].dynamicID == tmp.dynamicID)
+                    tmp.dynamicID = data->readUInt(dynamicObjectIDBits);
+                    tmp.deletionTime = SDL_GetTicks() + 30000;
+                    tmp.finalHalfExtents.setX(data->readFloat());
+                    tmp.finalHalfExtents.setY(data->readFloat());
+                    tmp.finalHalfExtents.setZ(data->readFloat());
+                    tmp.finalOffset.setX(data->readFloat());
+                    tmp.finalOffset.setY(data->readFloat());
+                    tmp.finalOffset.setZ(data->readFloat());
+
+                    for(int a = 0; a<ohWow->clientPhysicsPackets.size(); a++)
                     {
-                        ohWow->clientPhysicsPackets.erase(ohWow->clientPhysicsPackets.begin() + a);
-                        break;
+                        if(ohWow->clientPhysicsPackets[a].dynamicID == tmp.dynamicID)
+                        {
+                            ohWow->clientPhysicsPackets.erase(ohWow->clientPhysicsPackets.begin() + a);
+                            break;
+                        }
+                    }
+
+                    ohWow->clientPhysicsPackets.push_back(tmp);
+                }
+                else if(subtype == 1) //pause using client physics for dynamic
+                {
+                    ohWow->giveUpControlOfCurrentPlayer = true;
+                }
+                else if(subtype == 2) //delete client physics for dynamic
+                {
+                    if(ohWow->currentPlayer && ohWow->currentPlayer->body)
+                    {
+                        ohWow->currentPlayer->world->removeRigidBody(ohWow->currentPlayer->body);
+                        delete ohWow->currentPlayer->defaultMotionState;
+                        delete ohWow->currentPlayer->shape;
+                        ohWow->currentPlayer->body = 0;
+                        ohWow->currentPlayer = 0;
+                    }
+                }
+                else if(subtype == 3) //force update transform for dynamic with client physics
+                {
+                    float posX = data->readFloat();
+                    float posY = data->readFloat();
+                    float posZ = data->readFloat();
+                    float rotW = data->readFloat();
+                    float rotX = data->readFloat();
+                    float rotY = data->readFloat();
+                    float rotZ = data->readFloat();
+                    float velX = data->readFloat();
+                    float velY = data->readFloat();
+                    float velZ = data->readFloat();
+
+                    if(ohWow->currentPlayer && ohWow->currentPlayer->body)
+                    {
+                        btTransform t;
+                        t.setIdentity();
+                        t.setOrigin(btVector3(posX,posY,posZ));
+                        t.setRotation(btQuaternion(rotX,rotY,rotZ,rotW));
+                        ohWow->currentPlayer->body->setWorldTransform(t);
+                        ohWow->currentPlayer->body->setLinearVelocity(btVector3(velX,velY,velZ));
                     }
                 }
 
-                ohWow->clientPhysicsPackets.push_back(tmp);
+                return;
             }
 
             case packetType_addRemoveLight:
