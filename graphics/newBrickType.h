@@ -10,8 +10,10 @@
 namespace syj
 {
     std::string getBrickMatName(brickMaterial mat);
+    int getAngleIDFromRot(glm::quat in);
 
-    btRigidBody *addBrickToWorld(glm::vec3 pos,int rotation,int w,int h,int l,btCollisionShape *shape,btDynamicsWorld *world,brickMaterial mat);
+    btRigidBody *addBrickToWorld(glm::vec3 pos,int rotation,int w,int h,int l,btCollisionShape *shape,btDynamicsWorld *world,brickMaterial mat,bool isModTer);
+    //btRigidBody *addBrickToWorld(brickRenderData *theBrick,btDynamicsWorld *world);
 
     //One *instance* of a brick
     //Basic bricks can have dynamically changing dimensions and specified print faces:
@@ -159,7 +161,7 @@ namespace syj
         void renderEverything(uniformsHolder &unis,bool skipMats = false,material *specialPrintBrickMaterial=0,float deltaT = 0);
         void renderTransparent(uniformsHolder &unis,bool skipMats = false,float deltaT = 0);
 
-        void updateBasicBrick(basicBrickRenderData *theBrick,bool changedAlpha=false);
+        void updateBasicBrick(basicBrickRenderData *theBrick,btDynamicsWorld *world,bool changedAlpha=false);
         void updateSpecialBrick(specialBrickRenderData *theBrick,btDynamicsWorld *world,int rotationID);
 
         void addSpecialBrick(specialBrickRenderData *theBrick,btDynamicsWorld *world,int typeIdx,int rotationID,bool doNotCompile = false);

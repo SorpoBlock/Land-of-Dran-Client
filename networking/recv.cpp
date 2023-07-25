@@ -926,6 +926,8 @@ namespace syj
                 else if(shapeFx == 2)
                     material += 2000;
 
+                bool colliding = data->readBit();
+
                 for(int b = 0; b<ohWow->staticBricks.opaqueBasicBricks.size(); b++)
                 {
                     if(!ohWow->staticBricks.opaqueBasicBricks[b])
@@ -938,7 +940,8 @@ namespace syj
                         ohWow->staticBricks.opaqueBasicBricks[b]->position = glm::vec3(x,y,z);
                         ohWow->staticBricks.opaqueBasicBricks[b]->rotation = ohWow->staticBricks.rotations[angleID];
                         ohWow->staticBricks.opaqueBasicBricks[b]->material = material;
-                        ohWow->staticBricks.updateBasicBrick(ohWow->staticBricks.opaqueBasicBricks[b],changedTrans);
+                        ohWow->staticBricks.opaqueBasicBricks[b]->shouldCollide = colliding;
+                        ohWow->staticBricks.updateBasicBrick(ohWow->staticBricks.opaqueBasicBricks[b],ohWow->world,changedTrans);
                         return;
                     }
                 }
@@ -955,7 +958,8 @@ namespace syj
                         ohWow->staticBricks.transparentBasicBricks[b]->position = glm::vec3(x,y,z);
                         ohWow->staticBricks.transparentBasicBricks[b]->rotation = ohWow->staticBricks.rotations[angleID];
                         ohWow->staticBricks.transparentBasicBricks[b]->material = material;
-                        ohWow->staticBricks.updateBasicBrick(ohWow->staticBricks.transparentBasicBricks[b],changedTrans);
+                        ohWow->staticBricks.transparentBasicBricks[b]->shouldCollide = colliding;
+                        ohWow->staticBricks.updateBasicBrick(ohWow->staticBricks.transparentBasicBricks[b],ohWow->world,changedTrans);
                         return;
                     }
                 }
@@ -970,6 +974,7 @@ namespace syj
                         ohWow->staticBricks.opaqueSpecialBricks[b]->position = glm::vec3(x,y,z);
                         ohWow->staticBricks.opaqueSpecialBricks[b]->rotation = ohWow->staticBricks.rotations[angleID];
                         ohWow->staticBricks.opaqueSpecialBricks[b]->material = material;
+                        ohWow->staticBricks.opaqueSpecialBricks[b]->shouldCollide = colliding;
                         ohWow->staticBricks.updateSpecialBrick(ohWow->staticBricks.opaqueSpecialBricks[b],ohWow->world,angleID);
                         return;
                     }
@@ -985,6 +990,7 @@ namespace syj
                         ohWow->staticBricks.transparentSpecialBricks[b]->position = glm::vec3(x,y,z);
                         ohWow->staticBricks.transparentSpecialBricks[b]->rotation = ohWow->staticBricks.rotations[angleID];
                         ohWow->staticBricks.transparentSpecialBricks[b]->material = material;
+                        ohWow->staticBricks.transparentSpecialBricks[b]->shouldCollide = colliding;
                         ohWow->staticBricks.updateSpecialBrick(ohWow->staticBricks.transparentSpecialBricks[b],ohWow->world,angleID);
                         return;
                     }
@@ -2308,9 +2314,13 @@ namespace syj
                         {
                             if(ohWow->cameraTarget == ohWow->newDynamics[a])
                                 ohWow->cameraTarget = 0;
-
                             if(ohWow->currentPlayer == ohWow->newDynamics[a])
                                 ohWow->currentPlayer = 0;
+
+                            for(int b = 0; b<ohWow->emitters.size(); b++)
+                                if(ohWow->emitters[b]->attachedToModel == ohWow->newDynamics[a])
+                                    ohWow->emitters[b]->attachedToModel = 0;
+
                             delete ohWow->newDynamics[a];
                             ohWow->newDynamics.erase(ohWow->newDynamics.begin() + a);
                             break;

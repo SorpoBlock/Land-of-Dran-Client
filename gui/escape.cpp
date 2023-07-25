@@ -54,6 +54,13 @@ namespace syj
         CEGUI::Window *optionsWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("Options");
         optionsWindow->setVisible(false);
 
+        CEGUI::Window *brickPopup = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("HUD/BrickPopup");
+        CEGUI::UVector2 oldPos = brickPopup->getPosition();
+        CEGUI::UDim x = oldPos.d_x;
+        CEGUI::UDim y = oldPos.d_y;
+        y.d_scale = 100;
+        brickPopup->setPosition(CEGUI::UVector2(x,y));
+
         ohWow->picker->picking = true;
         ohWow->picker->runPickCycle(ohWow->context,basicShader,ohWow->connection,ohWow->prefs);
         ohWow->context->setMouseLock(isMouseLocked);

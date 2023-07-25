@@ -56,8 +56,136 @@ void sayVec3(glm::vec3 a){std::cout<<a.x<<","<<a.y<<","<<a.z<<"\n";}
 
 namespace syj
 {
+    void specialBrickType::initModTerrain(std::string filePath)
+    {
+        std::ifstream file(filePath.c_str());
+        if(!file.is_open())
+        {
+            error("Could not open mod terrain blb file " + filePath);
+            return;
+        }
+
+        //btTriangleMesh *mesh = new btTriangleMesh(false,false);
+        //std::vector<btVector3> verts;
+
+        btConvexHullShape *modTerShape = new btConvexHullShape();
+
+        btVector3 minDim(9999,9999,9999),maxDim(-9999,-9999,-9999);
+
+        bool readingVerts = false;
+        std::string line;
+        std::vector<std::string> words;
+        int vertsReadSincePositionLine = 0;
+        while(!file.eof())
+        {
+            getline(file,line);
+
+            if(!readingVerts)
+            {
+                if(line.find("POSITION:") != std::string::npos)
+                    readingVerts = true;
+            }
+            else
+            {
+                if(line.find("POSITION:") != std::string::npos)
+                {
+                    error("Found POSITION: in mod terrain blb file before a full quad had been specified.");
+                    continue;
+                }
+
+                /*if(verts.size() == 4)
+                {
+                    //mesh->addTriangle(verts[0],verts[1],verts[2]);
+                    //mesh->addTriangle(verts[0],verts[2],verts[3]);
+                    verts.clear();
+                    readingVerts = false;
+                    continue;
+                }*/
+
+                if(line.length() > 2)
+                {
+                    split(line,words);
+                    if(words.size() == 3)
+                    {
+                        float x = atof(words[0].c_str());
+                        float y = atof(words[1].c_str());
+                        float z = atof(words[2].c_str());
+
+                        std::swap(z,y);
+                        y /= 2.5;
+
+                        if(x > maxDim.x())
+                            maxDim.setX(x);
+                        if(y > maxDim.y())
+                            maxDim.setY(y);
+                        if(z > maxDim.z())
+                            maxDim.setZ(z);
+
+                        if(x < minDim.x())
+                            minDim.setX(x);
+                        if(y < minDim.y())
+                            minDim.setY(y);
+                        if(z < minDim.z())
+                            minDim.setZ(z);
+
+                        if(isnanf(x) || isnanf(y) || isnanf(z))
+                        {
+                            error("Invalid coordinate for mod terrain blb file " + filePath + " | " + line);
+                            continue;
+                        }
+
+                        btVector3 vec = btVector3(x,y,z);
+
+                        if(vec.length() > 100)
+                        {
+                            error("Invalid coordinate for mod terrain blb file " + filePath + " | " + line);
+                            continue;
+                        }
+
+                        modTerShape->addPoint(vec,false);
+                        //verts.push_back(vec);
+
+                        vertsReadSincePositionLine++;
+                        if(vertsReadSincePositionLine >= 4)
+                        {
+                            vertsReadSincePositionLine = 0;
+                            readingVerts = false;
+                        }
+                    }
+                    else
+                    {
+                        error(filePath + " line " + line + " was rejected as being malformed?");
+                    }
+                }
+            }
+        }
+
+        modTerShape->recalcLocalAabb();
+        shape = modTerShape;
+
+        /*if(verts.size() != 0)
+            error(blbFile + " finished blb file with incomplete quad!");*/
+
+        //std::cout<<"Compiled mod ter brick type with "<<mesh->getNumTriangles()<<" triangles!\n";
+
+        //modTerShape = new btBvhTriangleMeshShape(mesh,true);
+        //modTerShape = new btConvexHullShape(&verts[0][0],verts.size());
+        isModTerrain = true;
+
+        btVector3 dim = maxDim - minDim;
+        //std::cout<<"Dims: "<<dim.x()<<","<<dim.y()<<","<<dim.z()<<"\n";
+
+        width = maxDim.x() - minDim.x();
+        height = maxDim.y() - minDim.y();
+        length = maxDim.z() - minDim.z();
+
+        file.close();
+    }
+
     specialBrickType::specialBrickType(std::string blbFile)
     {
+        bool shouldBeModTerr = blbFile.find("ModTer") != std::string::npos;
+
         std::fstream theFile(blbFile.c_str(),std::ios::in);
         if(!theFile.is_open())
         {
@@ -90,8 +218,6 @@ namespace syj
         float w = width;
         float l = length;
         float h = height;
-
-        shape = new btBoxShape(btVector3(((float)w)/2.0,((float)h)/(2.0*2.5),((float)l)/2.0));
 
         while(!theFile.eof())
         {
@@ -272,6 +398,11 @@ namespace syj
         initFromVectors(verts,norm,uvsAndTex,blbColor);
 
         theFile.close();
+
+        if(!shouldBeModTerr)
+            shape = new btBoxShape(btVector3(((float)w)/2.0,((float)h)/(2.0*2.5),((float)l)/2.0));
+        else
+            initModTerrain(blbFile);
     }
 
     void specialBrickType::initFromVectors(

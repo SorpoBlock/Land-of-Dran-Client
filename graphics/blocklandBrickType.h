@@ -32,8 +32,11 @@ namespace syj
                              std::vector<glm::vec4> &vertColors);
 
         //Collision data:
+        bool isModTerrain = false;
         btCollisionShape *shape = 0;
         int width,height,length;
+
+        void initModTerrain(std::string filePath);
 
         specialBrickType(std::string blbFile);
     };

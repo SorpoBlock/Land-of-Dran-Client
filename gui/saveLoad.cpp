@@ -79,30 +79,6 @@ bool refreshButton(const CEGUI::EventArgs &e)
     return true;
 }
 
-int getAngleIDFromRot(glm::quat in)
-{
-    glm::quat rotations[4] = {
-
-    glm::quat(0,0,1,0),
-    glm::quat(4.7122,0,1,0),
-    glm::quat(3.1415,0,1,0),
-    glm::quat(1.5708,0,1,0)};
-
-    int idx = 0;
-    float dist = glm::length(in - rotations[0]);
-    for(int i = 1; i<4; i++)
-    {
-        float newdist = glm::length(in-rotations[i]);
-        if(newdist < dist)
-        {
-            dist = newdist;
-            idx = i;
-        }
-    }
-
-    return idx;
-}
-
 #define landOfDranSaveMagic 24653491
 
 bool saveCar(const CEGUI::EventArgs &e)

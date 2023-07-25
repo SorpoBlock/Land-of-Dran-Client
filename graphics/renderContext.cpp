@@ -27,7 +27,8 @@ namespace syj
         scope("renderContext::renderContext");
 
         debug("Initializing SDL");
-        if(SDL_Init(SDL_INIT_EVERYTHING) != 0)
+        //if(SDL_Init(SDL_INIT_EVERYTHING) != 0)
+        if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER))
         {
             error("Could not Initialize SDL: " + std::string(SDL_GetError()));
             return;

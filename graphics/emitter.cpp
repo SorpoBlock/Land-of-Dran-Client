@@ -2,7 +2,7 @@
 
 namespace syj
 {
-    void emitter::update(glm::vec3 eyePos,glm::vec3 eyeDir)
+    void emitter::update(glm::vec3 eyePos,glm::vec3 eyeDir,bool useBodyPos)
     {
         if(!enabled)
         {
@@ -26,7 +26,14 @@ namespace syj
             else if(attachedToModel)
             {
                 emitterRange = glm::vec3(0,0,0);
-                position = attachedToModel->modelInterpolator.getPosition();
+                if(useBodyPos && attachedToModel->body)
+                {
+                    btVector3 o = attachedToModel->body->getWorldTransform().getOrigin();
+                    position = glm::vec3(o.x(),o.y(),o.z());
+                }
+                else
+                    position = attachedToModel->modelInterpolator.getPosition();
+                //TODO: THERE IS (was?) A CRASH HERE
                 if(meshName != "")
                 {
                     for(unsigned int a = 0; a<attachedToModel->type->allMeshes.size(); a++)

@@ -825,7 +825,7 @@ namespace syj
             special.position = glm::vec3(-9999);
             special.color.a = 0;
             basic.color.a = 0;
-            renderer.updateBasicBrick(&basic);
+            renderer.updateBasicBrick(&basic,0);
             renderer.updateSpecialBrick(&special,0,rotationID);
             specialChanged = false;
             basicChanged = false;
@@ -872,7 +872,7 @@ namespace syj
         if(basicChanged)
         {
             basic.color.a -= 0.015;
-            renderer.updateBasicBrick(&basic);
+            renderer.updateBasicBrick(&basic,0);
             basic.color.a += 0.015;
             basicChanged = false;
         }

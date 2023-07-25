@@ -293,25 +293,27 @@ namespace syj
         btRigidBody *body = 0;
         btTransform startTrans = btTransform::getIdentity();
 
-        if(rotation == 0 || rotation == 2)
-            startTrans.setOrigin(btVector3(vx+(w/2.0),vy+(h/2.0),vz+(l/2.0)));
-        else
-            startTrans.setOrigin(btVector3(vx+(l/2.0),vy+(h/2.0),vz+(w/2.0)));
-
         if(isModTer)
         {
-            if(rotation == 0)
+            if(toAdd->angleID == 0)
                 startTrans.setRotation(btQuaternion(0,0,0));
-            if(rotation == 1)
+            if(toAdd->angleID == 1)
                 startTrans.setRotation(btQuaternion(1.5708,0,0));
-            if(rotation == 2)
+            if(toAdd->angleID == 2)
                 startTrans.setRotation(btQuaternion(3.1415,0,0));
-            if(rotation == 3)
+            if(toAdd->angleID == 3)
                 startTrans.setRotation(btQuaternion(4.7122,0,0));
         }
-
-        if(!isModTer && (rotation == 1 || rotation == 3))
-            startTrans.setRotation(btQuaternion(1.57,0,0));
+        else
+        {
+            if(rotation == 0 || rotation == 2)
+                startTrans.setOrigin(btVector3(vx+(w/2.0),vy+(h/2.0),vz+(l/2.0)));
+            else
+            {
+                startTrans.setOrigin(btVector3(vx+(l/2.0),vy+(h/2.0),vz+(w/2.0)));
+                startTrans.setRotation(btQuaternion(1.57,0,0));
+            }
+        }
 
         btMotionState* ms = new btDefaultMotionState(startTrans);
         btRigidBody::btRigidBodyConstructionInfo info(0.0,ms,shape,btVector3(0,0,0));
@@ -720,7 +722,7 @@ namespace syj
 
                 if(shape)
                 {
-                    theBrick->body = addBrickToWorld(theBrick->position,getAngleIDFromRot(theBrick->rotation),theBrick->dimensions.x,theBrick->dimensions.y,theBrick->dimensions.z,shape,world,(brickMaterial)theBrick->material,false);
+                    theBrick->body = addBrickToWorld(theBrick->position,getAngleIDFromRot(theBrick->rotation),theBrick->dimensions.x,theBrick->dimensions.y,theBrick->dimensions.z,shape,world,(brickMaterial)theBrick->material);
                     theBrick->body->setUserPointer(theBrick);
                     theBrick->body->setUserIndex(userIndex_staticNormalBrick);
                 }
@@ -854,7 +856,7 @@ namespace syj
 
             if(shape)
             {
-                theBrick->body = addBrickToWorld(theBrick->position,rotationID,theBrick->dimensions.x,theBrick->dimensions.y,theBrick->dimensions.z,shape,world,(brickMaterial)theBrick->material,false);
+                theBrick->body = addBrickToWorld(theBrick->position,rotationID,theBrick->dimensions.x,theBrick->dimensions.y,theBrick->dimensions.z,shape,world,(brickMaterial)theBrick->material);
                 theBrick->body->setUserPointer(theBrick);
                 theBrick->body->setUserIndex(userIndex_staticNormalBrick);
             }

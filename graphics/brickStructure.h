@@ -22,6 +22,8 @@ namespace syj
         bool markedForDeath = false;
         int serverID = -1;
         btRigidBody *body = 0;
+        //This will be changed first, before body is created or removed
+        bool shouldCollide = true;
         int material = none;
         glm::vec3 position;
         //Warning, this isn't actually a quaternion. It's rotation of W radians around XYZ direction.

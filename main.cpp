@@ -1652,7 +1652,8 @@ int main(int argc, char *argv[])
                     continue;
                 }
             }
-            e->update(ohWow.playerCamera->position,ohWow.playerCamera->direction);
+            bool usePhysicsPos = ohWow.currentPlayer && ohWow.currentPlayer == e->attachedToModel && !ohWow.giveUpControlOfCurrentPlayer;
+            e->update(ohWow.playerCamera->position,ohWow.playerCamera->direction,usePhysicsPos);
             ++emitterIter;
         }
 
@@ -1821,7 +1822,7 @@ int main(int argc, char *argv[])
                 {
                     (*fakeKillIter).basic->position += (*fakeKillIter).linVel;
                     (*fakeKillIter).basic->rotation = glm::slerp((*fakeKillIter).basic->rotation,glm::quat((*fakeKillIter).angVel),progress);
-                    ohWow.staticBricks.updateBasicBrick((*fakeKillIter).basic);
+                    ohWow.staticBricks.updateBasicBrick((*fakeKillIter).basic,ohWow.world);
                 }
                 if((*fakeKillIter).special)
                 {
@@ -2272,7 +2273,14 @@ int main(int argc, char *argv[])
                             continue;
                         if(ohWow.newDynamics[a] == ohWow.cameraTarget && camMode == 0)
                             continue;
-                        defaultFont.naiveRender(fontUnis,ohWow.newDynamics[a]->shapeName,ohWow.newDynamics[a]->modelInterpolator.getPosition()+ohWow.newDynamics[a]->type->eyeOffset+glm::vec3(0,2,0),glm::length(ohWow.newDynamics[a]->scale),ohWow.newDynamics[a]->shapeNameColor);
+
+                        glm::vec3 pos = ohWow.newDynamics[a]->modelInterpolator.getPosition();
+                        if(ohWow.currentPlayer == ohWow.newDynamics[a] && !ohWow.giveUpControlOfCurrentPlayer && ohWow.currentPlayer->body)
+                        {
+                            btVector3 o = ohWow.currentPlayer->body->getWorldTransform().getOrigin();
+                            pos = glm::vec3(o.x(),o.y(),o.z());
+                        }
+                        defaultFont.naiveRender(fontUnis,ohWow.newDynamics[a]->shapeName,pos+ohWow.newDynamics[a]->type->eyeOffset+glm::vec3(0,2,0),glm::length(ohWow.newDynamics[a]->scale),ohWow.newDynamics[a]->shapeNameColor);
                     }
             //glEnable(GL_CULL_FACE);
             glDisable(GL_BLEND);

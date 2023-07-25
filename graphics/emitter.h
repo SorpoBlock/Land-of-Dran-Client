@@ -112,7 +112,7 @@ namespace syj
         float currentPhi = 0;
         unsigned int creationTime = 0;
 
-        void update(glm::vec3 eyePos,glm::vec3 eyeDir);
+        void update(glm::vec3 eyePos,glm::vec3 eyeDir,bool useBodyPos = false);
     };
 }
 
