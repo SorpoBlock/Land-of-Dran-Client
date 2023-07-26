@@ -97,6 +97,14 @@ namespace syj
             ((instancedMesh*)type->allMeshes[a])->instances.push_back(this);
         }
 
+        for(int a = 0; a<type->animations.size(); a++)
+        {
+            animationProgress.push_back(0);
+            animationFrame.push_back(0);
+            animationSpeed.push_back(1.0);
+            animationOn.push_back(false);
+        }
+
         calculateMeshTransforms(0);
         type->compileAll();
     }
@@ -148,10 +156,16 @@ namespace syj
             error("Couldn't find animation " + name);
             return;
         }
-        playingAnimation = idx;
+
+        if(reset)
+            animationProgress[idx] = 0;
+        animationOn[idx] = true;
+        animationSpeed[idx] = speed;
+
+        /*playingAnimation = idx;
         if(reset)
             animationProgress = 0;
-        animationSpeed = speed;
+        animationSpeed = speed;*/
     }
 
     void newDynamic::play(int animID,bool reset,float speed)
@@ -170,15 +184,65 @@ namespace syj
             error("Couldn't find animation " + std::to_string(animID));
             return;
         }
-        playingAnimation = idx;
+
+        if(reset)
+            animationProgress[idx] = 0;
+        animationOn[idx] = true;
+        animationSpeed[idx] = speed;
+
+        /*playingAnimation = idx;
         if(reset)
             animationProgress = 0;
-        animationSpeed = speed;
+        animationSpeed = speed;*/
     }
 
-    void newDynamic::stop()
+    void newDynamic::stop(std::string name)
     {
-        playingAnimation = -1;
+        //TODO: CRASH HERE
+        int idx = -1;
+        for(int a = 0; a<type->animations.size(); a++)
+        {
+            if(type->animations[a].name == name)
+            {
+                idx = a;
+                break;
+            }
+        }
+        if(idx == -1)
+        {
+            error("Couldn't find animation " + name);
+            return;
+        }
+
+        animationOn[idx] = false;
+        //playingAnimation = -1;
+    }
+
+    void newDynamic::stop(int animID)
+    {
+        int idx = -1;
+        for(int a = 0; a<type->animations.size(); a++)
+        {
+            if(type->animations[a].serverID == animID)
+            {
+                idx = a;
+                break;
+            }
+        }
+        if(idx == -1)
+        {
+            error("Couldn't find animation " + std::to_string(animID));
+            return;
+        }
+
+        animationOn[idx] = false;
+        //playingAnimation = -1;
+    }
+
+    void newDynamic::stopAll()
+    {
+        for(int a = 0; a<type->animations.size(); a++)
+            animationOn[a] = false;
     }
 
     void newDynamic::calculateMeshTransforms(float deltaMS,newNode *node,glm::mat4 transform)
@@ -197,14 +261,34 @@ namespace syj
         {
             node = type->rootNode;
 
-            frame = type->defaultFrame;
+            for(int a = 0; a<type->animations.size(); a++)
+            {
+                if(!animationOn[a])
+                    continue;
+
+                animationFrame[a] = type->defaultFrame;
+                animationProgress[a] += deltaMS * type->animations[a].speedDefault * animationSpeed[a];
+                if(animationProgress[a] >= type->animations[a].endFrame)
+                    animationProgress[a] -= type->animations[a].endFrame - type->animations[a].startFrame;
+                animationFrame[a] = animationProgress[a] + type->animations[a].startFrame;
+
+                /*if(type->animations.size() > 0 && playingAnimation != -1)
+                {
+                    animationProgress += deltaMS * type->animations[playingAnimation].speedDefault * animationSpeed;
+                    if(animationProgress >= type->animations[playingAnimation].endFrame)
+                        animationProgress -= type->animations[playingAnimation].endFrame - type->animations[playingAnimation].startFrame;
+                    frame = animationProgress + type->animations[playingAnimation].startFrame;
+                }*/
+            }
+
+            /*frame = type->defaultFrame;
             if(type->animations.size() > 0 && playingAnimation != -1)
             {
                 animationProgress += deltaMS * type->animations[playingAnimation].speedDefault * animationSpeed;
                 if(animationProgress >= type->animations[playingAnimation].endFrame)
                     animationProgress -= type->animations[playingAnimation].endFrame - type->animations[playingAnimation].startFrame;
                 frame = animationProgress + type->animations[playingAnimation].startFrame;
-            }
+            }*/
         }
 
         glm::mat4 newTrans = glm::mat4(1.0);
@@ -214,7 +298,63 @@ namespace syj
                 newTrans = node->defaultTransform;
             else
             {
-                glm::vec3 pos = node->posFrames[0];
+                glm::vec3 pos = glm::vec3(0,0,0);//node->posFrames[0];
+                glm::mat4 rot = glm::mat4(1.0); //glm::toMat4(node->rotFrames[0]);
+
+                for(int i = 0; i<type->animations.size(); i++)
+                {
+                    if(!animationOn[i])
+                        continue;
+
+                    for(unsigned int a = 0; a<node->posFrames.size(); a++)
+                    {
+                        if(node->posTimes[a] >= animationFrame[i])
+                        {
+                            float nextTime = node->posTimes[a];
+                            float prevTime = node->posTimes[node->posTimes.size() - 1];
+                            glm::vec3 nextPos = node->posFrames[a];
+                            glm::vec3 prevPos = node->posFrames[node->posTimes.size() - 1];
+                            if(a > 0)
+                            {
+                                prevTime = node->posTimes[a-1];
+                                prevPos = node->posFrames[a-1];
+                            }
+
+                            float timeAheadPrev = animationFrame[i] - prevTime;
+                            float timeBetween = nextTime - prevTime;
+                            float progress = timeAheadPrev / timeBetween;
+
+                            pos += lerpRedundant(prevPos,nextPos,progress);
+
+                            break;
+                        }
+                    }
+
+                    for(unsigned int a = 1; a<node->rotFrames.size(); a++)
+                    {
+                        if(node->rotTimes[a] >= animationFrame[i])
+                        {
+                            float nextTime = node->rotTimes[a];
+                            float prevTime = node->rotTimes[node->rotTimes.size() - 1];
+                            glm::quat nextRot = node->rotFrames[a];
+                            glm::quat prevRot = node->rotFrames[node->rotTimes.size() - 1];
+                            if(a > 0)
+                            {
+                                prevTime = node->rotTimes[a-1];
+                                prevRot = node->rotFrames[a-1];
+                            }
+
+                            float timeAheadPrev = animationFrame[i] - prevTime;
+                            float timeBetween = nextTime - prevTime;
+                            float progress = timeAheadPrev / timeBetween;
+
+                            rot = glm::toMat4(glm::slerp(prevRot,nextRot,progress)) * rot;
+
+                            break;
+                        }
+                    }
+                }
+                /*glm::vec3 pos = node->posFrames[0];
                 for(unsigned int a = 0; a<node->posFrames.size(); a++)
                 {
                     if(node->posTimes[a] >= frame)
@@ -262,8 +402,10 @@ namespace syj
 
                         break;
                     }
-                }
+                }*/
 
+                //glm::vec3 pos = glm::vec3(0,0,0);
+                //glm::quat rot = glm::quat(1,0,0,0);
                 newTrans = glm::translate(node->rotationPivot) * glm::mat4(rot) * glm::translate(-node->rotationPivot) * glm::translate(pos);
             }
         }

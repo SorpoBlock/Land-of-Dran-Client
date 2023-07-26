@@ -71,10 +71,14 @@ namespace syj
         void setFixedRotation(std::string name,glm::mat4 rotation);
 
         //Optional animation stuff:
-        int playingAnimation = -1; //-1 means no animation
+        /*int playingAnimation = -1; //-1 means no animation
         float animationSpeed = 1;
         float animationProgress = 0;
-        float frame = 0;
+        float frame = 0;*/
+        std::vector<float> animationProgress;
+        std::vector<float> animationFrame;
+        std::vector<float> animationSpeed;
+        std::vector<bool>  animationOn;
 
         //Other option graphics stuff:
         std::string shapeName = "";
@@ -88,7 +92,9 @@ namespace syj
         void bufferSubData();
         void play(std::string name,bool reset = false,float speed = 1.0);
         void play(int animID,bool reset = false,float speed = 1.0);
-        void stop();
+        void stop(int animID);
+        void stop(std::string name);
+        void stopAll();
         void calculateMeshTransforms(float deltaMS,newNode *node = 0,glm::mat4 transform = glm::mat4(1.0));
 
         newDynamic(newModel *_type,glm::vec3 baseScale = glm::vec3(0.02,0.02,0.02));

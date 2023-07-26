@@ -1106,7 +1106,8 @@ int main(int argc, char *argv[])
                 {
                     if(ohWow.currentPlayer)
                     {
-                        ohWow.currentPlayer->body->setLinearVelocity(btVector3(0,10,0));
+                        ohWow.currentPlayer->stop("grab");
+                        ohWow.currentPlayer->play("grab",true);
                     }
                 }
 
@@ -1263,6 +1264,12 @@ int main(int argc, char *argv[])
                     else
                         data.writeUInt(7,3);
                     ohWow.connection->send(&data,true);
+
+                    if(event.button.button == SDL_BUTTON_LEFT)
+                    {
+                        ohWow.currentPlayer->stop("grab");
+                        ohWow.currentPlayer->play("grab",true);
+                    }
                 }
 
                 if(event.button.button == SDL_BUTTON_RIGHT)
@@ -1576,9 +1583,12 @@ int main(int argc, char *argv[])
                 //TODO: Should just store which item is the current held not-hidden item, loop is bad
                 for(int a = 0; a<ohWow.items.size(); a++)
                 {
-                    if(ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden)
+                    if(ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden)
                     {
-                        ohWow.items[a]->updateTransform(true,ohWow.playerCamera->getYaw());
+                        if(ohWow.giveUpControlOfCurrentPlayer)
+                            ohWow.items[a]->updateTransform(false,ohWow.playerCamera->getYaw());
+                        else
+                            ohWow.items[a]->updateTransform(true,ohWow.playerCamera->getYaw());
                         ohWow.items[a]->calculateMeshTransforms(0);
                     }
                 }
@@ -1693,6 +1703,7 @@ int main(int argc, char *argv[])
                 ohWow.playerCamera->nominalUp = glm::vec3(afterDir.x,afterDir.y,afterDir.z);
             }
 
+            bool didJump = false;
             int netControlState = 0;
             netControlState |= (!states[SDL_SCANCODE_LCTRL] && playerInput.commandKeyDown(walkForward)) ? 1 : 0;
             netControlState |= playerInput.commandKeyDown(walkBackward) ? 2 : 0;
@@ -1705,8 +1716,13 @@ int main(int argc, char *argv[])
                 netControlState = 0;
 
             //Move client player for client physics:
-            if(ohWow.currentPlayer)
-                ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,false);
+            if(ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer)
+            {
+                if(ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,false))
+                    didJump = true;
+                if(didJump)
+                    ohWow.speaker->playSound("Jump",false,ohWow.playerCamera->getPosition().x,ohWow.playerCamera->getPosition().y-1.0,ohWow.playerCamera->getPosition().z);
+            }
 
             int fullControlState  = netControlState + (leftDown << 5);
             fullControlState |= ohWow.inventoryOpen ? 0b1000000 : 0;
@@ -1727,6 +1743,7 @@ int main(int argc, char *argv[])
                     if(camMode == 2)
                         netControlState = 0;
                     transPacket.writeUInt(netControlState,5);
+                    transPacket.writeBit(didJump);//This one controls if the sound is played
                     transPacket.writeBit(context.getMouseLocked() && leftDown);
                     transPacket.writeBit(context.getMouseLocked() && rightDown);
                     transPacket.writeBit(ohWow.usingPaint);
@@ -2035,7 +2052,7 @@ int main(int argc, char *argv[])
                     {
                         /*if(ohWow.items[a]->heldBy == ohWow.cameraTarget)
                             ohWow.items[a]->render(shadow,true,ohWow.playerCamera->getYaw());*/
-                        if(!(ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
+                        if(!(!ohWow.giveUpControlOfCurrentPlayer && ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
                             ohWow.items[a]->updateTransform();
                     }
 
@@ -2136,7 +2153,7 @@ int main(int argc, char *argv[])
                             ohWow.items[a]->render(basic,true,ohWow.playerCamera->getYaw());
                     }
                     else*/
-                    if(!(ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
+                    if(!(!ohWow.giveUpControlOfCurrentPlayer && ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
                         ohWow.items[a]->updateTransform();
                 }
 

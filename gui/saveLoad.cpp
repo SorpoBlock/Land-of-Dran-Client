@@ -475,6 +475,7 @@ bool loadCar()
         carFile.read((char*)&intBuf,sizeof(int));
         if(intBuf == 1)
         {
+            tmp->isSpotlight = true;
             carFile.read((char*)&floatBuf,sizeof(float));
             tmp->direction.x = floatBuf;
             carFile.read((char*)&floatBuf,sizeof(float));
@@ -1125,6 +1126,7 @@ namespace syj
             lightPacket.writeFloat(common->ghostCarLights[a]->attachOffset.x);
             lightPacket.writeFloat(common->ghostCarLights[a]->attachOffset.y);
             lightPacket.writeFloat(common->ghostCarLights[a]->attachOffset.z);
+            std::cout<<"\nLight Offset: "<<common->ghostCarLights[a]->attachOffset.x<<","<<common->ghostCarLights[a]->attachOffset.y<<","<<common->ghostCarLights[a]->attachOffset.z<<"\n";
 
             lightPacket.writeBit(common->ghostCarLights[a]->isSpotlight);
             if(common->ghostCarLights[a]->isSpotlight)
@@ -1133,6 +1135,8 @@ namespace syj
                 lightPacket.writeFloat(common->ghostCarLights[a]->direction.y);
                 lightPacket.writeFloat(common->ghostCarLights[a]->direction.z);
                 lightPacket.writeFloat(common->ghostCarLights[a]->direction.w);
+                std::cout<<"Light Direction: "<<common->ghostCarLights[a]->direction.x<<","<<common->ghostCarLights[a]->direction.y<<","<<common->ghostCarLights[a]->direction.z<<"\n";
+                std::cout<<"Spot light width sent: "<<common->ghostCarLights[a]<<"\n";
             }
         }
         common->connection->send(&lightPacket,true);

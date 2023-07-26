@@ -94,8 +94,9 @@ namespace syj
 
         if(keyFrames[0].packetTime > currentServerTime)
         {
-            std::cout<<"Behind\n";
-            interpolator::serverTimePoint += (keyFrames[0].packetTime - currentServerTime);
+            //std::cout<<"Behind "<<keyFrames[0].packetTime<<"-"<<currentServerTime<<"="<<(keyFrames[0].packetTime - currentServerTime)<<"\n";
+            if(fabs((keyFrames[0].packetTime - currentServerTime)) < 400)
+                interpolator::serverTimePoint += (keyFrames[0].packetTime - currentServerTime);
             a = keyFrames[0];
             b = keyFrames[1];
             progress = getProg(a,b);
@@ -109,10 +110,17 @@ namespace syj
             idx = 2;
         if(keyFrames[keyFrames.size() - idx].packetTime < currentServerTime)
         {
+            //std::cout<<"Subtracting... "<<keyFrames[keyFrames.size() - idx].packetTime<<" < "<<currentServerTime<<"\n";
             if(keyFrames.size() > 2 && interpolator::useTripleInterpolation)
-                interpolator::serverTimePoint -= (currentServerTime - keyFrames[keyFrames.size()-3].packetTime);
+            {
+                if(fabs((currentServerTime - keyFrames[keyFrames.size()-3].packetTime)) < 400)
+                    interpolator::serverTimePoint -= (currentServerTime - keyFrames[keyFrames.size()-3].packetTime);
+            }
             else
-                interpolator::serverTimePoint -= (currentServerTime - keyFrames[keyFrames.size()-2].packetTime);
+            {
+                if(fabs((currentServerTime - keyFrames[keyFrames.size()-2].packetTime)) < 400)
+                    interpolator::serverTimePoint -= (currentServerTime - keyFrames[keyFrames.size()-2].packetTime);
+            }
             a = keyFrames[keyFrames.size()-2];
             b = keyFrames[keyFrames.size()-1];
             progress = getProg(a,b);

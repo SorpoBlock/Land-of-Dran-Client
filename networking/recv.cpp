@@ -188,9 +188,20 @@ namespace syj
             {
                 if(newDynamics[a]->serverID == tmp.dynamicID)
                 {
-                    newDynamics[a]->createBoxBody(world,tmp.finalHalfExtents,tmp.finalOffset);
+                    newDynamics[a]->createBoxBody(world,tmp.finalHalfExtents,tmp.finalOffset); //will return it it already has one
                     currentPlayer = newDynamics[a];
                     giveUpControlOfCurrentPlayer = false;
+
+                    //Fix glitch getting out of vehicle:
+                    if(newDynamics[a]->body)
+                    {
+                        btTransform t = newDynamics[a]->body->getWorldTransform();
+                        glm::vec3 o = newDynamics[a]->modelInterpolator.getPosition();
+                        t.setOrigin(btVector3(o.x,o.y,o.z));
+                        newDynamics[a]->body->setLinearVelocity(btVector3(0,0,0));
+                        newDynamics[a]->body->setAngularVelocity(btVector3(0,0,0));
+                        newDynamics[a]->body->setWorldTransform(t);
+                    }
 
                     used = true;
                     iter3 = clientPhysicsPackets.erase(iter3);
@@ -406,7 +417,6 @@ namespace syj
                                 tmp->direction.y = data->readFloat();
                                 tmp->direction.z = data->readFloat();
                                 tmp->direction.w = cos(data->readFloat());
-                                std::cout<<"Is spotlight! "<<tmp->direction.x<<","<<tmp->direction.y<<","<<tmp->direction.z<<","<<tmp->direction.w<<"\n";
                             }
 
                             ohWow->heldLightPackets.push_back(heldTmp);
@@ -418,6 +428,7 @@ namespace syj
                         float y = data->readFloat();
                         float z = data->readFloat();
                         tmp->attachOffset = glm::vec3(x,y,z);
+                        std::cout<<"Recv: offset "<<x<<","<<y<<","<<z<<"\n";
                     }
 
                     float r = data->readFloat();
@@ -434,6 +445,7 @@ namespace syj
                         tmp->direction.y = data->readFloat();
                         tmp->direction.z = data->readFloat();
                         tmp->direction.w = cos(data->readFloat());
+                        std::cout<<"Recv: Is spotlight! "<<tmp->direction.x<<","<<tmp->direction.y<<","<<tmp->direction.z<<","<<tmp->direction.w<<"\n";
                     }
 
                     if(needNewLight)
@@ -684,7 +696,29 @@ namespace syj
                     {
                         tmp->uiName = data->readString();
                         if(tmp->uiName == "Wrench Oil")
+                        {
                             ohWow->wheelDirtEmitter = tmp;
+
+                            for(unsigned int b = 0; b<ohWow->livingBricks.size(); b++)
+                            {
+                                livingBrick *found = ohWow->livingBricks[b];
+
+                                for(unsigned int a = 0; a<found->wheelBrickData.size(); a++)
+                                {
+                                    if(found->wheelBrickData[a].dirtEmitter)
+                                        continue;
+
+                                    emitter *dirtEmitter = new emitter;
+                                    dirtEmitter->creationTime = SDL_GetTicks();
+                                    dirtEmitter->type = ohWow->wheelDirtEmitter;
+                                    dirtEmitter->whichWheel = a;
+                                    dirtEmitter->attachedToCar = found;
+                                    dirtEmitter->serverID = -1;
+                                    found->wheelBrickData[a].dirtEmitter = dirtEmitter;
+                                    ohWow->emitters.push_back(dirtEmitter);
+                                }
+                            }
+                        }
                     }
 
                     if(!foundEmitterType)
@@ -1488,6 +1522,20 @@ namespace syj
                             }
                         }
 
+                        auto lightIter = ohWow->lights.begin();
+                        while(lightIter != ohWow->lights.end())
+                        {
+                            light *l = *lightIter;
+                            if(l->attachedCar == ohWow->livingBricks[a])
+                            {
+                                delete l;
+                                l = 0;
+                                lightIter = ohWow->lights.erase(lightIter);
+                                continue;
+                            }
+                            ++lightIter;
+                        }
+
                         auto emitterIter = ohWow->emitters.begin();
                         while(emitterIter != ohWow->emitters.end())
                         {
@@ -1598,6 +1646,21 @@ namespace syj
                     //std::cout<<"Making new car...\n";
                     found = new livingBrick;
 
+                    found->serverID = id;
+                    ohWow->livingBricks.push_back(found);
+                    found->allocateVertBuffer();
+                    found->allocatePerTexture(ohWow->brickMat);
+                    found->allocatePerTexture(ohWow->brickMatSide,true,true);
+                    found->allocatePerTexture(ohWow->brickMatBottom,true);
+                    found->allocatePerTexture(ohWow->brickMatRamp);
+                    found->addBlocklandCompatibility(ohWow->staticBricks.blocklandTypes);
+                    //for(int a = 0; a<prints.names.size(); a++)
+                        //found->allocatePerTexture(prints.textures[a],false,false,true);
+                }
+
+
+                if(radii)
+                {
                     while(found->wheels.size() < wheels)
                         found->wheels.push_back(new interpolator);
                     for(unsigned int a = 0; a<wheels; a++)
@@ -1619,20 +1682,6 @@ namespace syj
                         found->wheelBrickData.push_back(wheelBrickData[a]);
                     }
 
-                    found->serverID = id;
-                    ohWow->livingBricks.push_back(found);
-                    found->allocateVertBuffer();
-                    found->allocatePerTexture(ohWow->brickMat);
-                    found->allocatePerTexture(ohWow->brickMatSide,true,true);
-                    found->allocatePerTexture(ohWow->brickMatBottom,true);
-                    found->allocatePerTexture(ohWow->brickMatRamp);
-                    found->addBlocklandCompatibility(ohWow->staticBricks.blocklandTypes);
-                    //for(int a = 0; a<prints.names.size(); a++)
-                        //found->allocatePerTexture(prints.textures[a],false,false,true);
-                }
-
-                if(radii)
-                {
                     delete radii;
                     radii = 0;
                     //std::cout<<"Deleted radii\n";
@@ -1889,7 +1938,7 @@ namespace syj
                                         if(walking)
                                             ohWow->newDynamics[i]->play("walk");
                                         else
-                                            ohWow->newDynamics[i]->stop();
+                                            ohWow->newDynamics[i]->stop("walk");
                                     }
 
                                     break;
@@ -2018,8 +2067,8 @@ namespace syj
                                 //std::cout<<"emitterOn["<<wheel<<"] is "<<(emitterOn[i]?"true":"false")<<" for car ID "<<ohWow->livingBricks[i]->serverID<<"\n";
                                 if(ohWow->livingBricks[i]->wheelBrickData[wheel].dirtEmitter)
                                     ((emitter*)ohWow->livingBricks[i]->wheelBrickData[wheel].dirtEmitter)->enabled = emitterOn[i];
-                                else
-                                    std::cout<<"Could not find emitter!\n";
+                                //else
+                                    //std::cout<<"Could not find emitter for car "<<id<<" wheel "<<wheel<<"...\n";
                             }
                             break;
                         }
@@ -2435,6 +2484,15 @@ namespace syj
                 //TODO: Remove this!
                 if(ohWow->newDynamicTypes.size() == 0)
                 {
+                    newAnimation grab;
+                    //grab.endFrame = 51;
+                    //grab.startFrame = 36;
+                    grab.startFrame = 57;
+                    grab.endFrame = 66;
+                    grab.speedDefault = 0.03;
+                    grab.name = "grab";
+                    tmp->animations.push_back(grab);
+
                     newAnimation walk;
                     walk.endFrame = 30;
                     walk.startFrame = 0;
