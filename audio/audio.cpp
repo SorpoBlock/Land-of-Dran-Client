@@ -25,11 +25,8 @@ namespace syj
         else
             error("Weird audio format: " + std::to_string(audioFile.getNumChannels()) + " channels and " + std::to_string(audioFile.getBitDepth()) + " bit depth.");
 
-        /*std::cout<<"Trying to load "<<filename<<"\n";
-        std::cout<<audioFile.getNumChannels()<<" channels\n";
-        std::cout<<audioFile.getBitDepth()<<" bit depth\n";
-        std::cout<<audioFile.getSampleRate()<<" sample rate\n";*/
-
+        debug("Loading audio " + filename + " " + std::to_string(audioFile.getNumChannels()) +"/"+ std::to_string(audioFile.getBitDepth()) +"/"+ std::to_string(audioFile.getSampleRate()));
+        
         alGenBuffers(1,&buffer);
 
         if(audioFile.getBitDepth() == 16)
@@ -44,10 +41,8 @@ namespace syj
         {
             unsigned char *soundData = new unsigned char[audioFile.samples[0].size()];
             for(unsigned int a = 0; a<audioFile.samples[0].size(); a++)
-            {
-                //std::cout<<"8bit sample: "<<audioFile.samples[0][a]<<"\n";
                 soundData[a] = 128+(audioFile.samples[0][a]*127);
-            }
+            
             alBufferData(buffer,format,soundData,audioFile.samples[0].size()*sizeof(unsigned char),audioFile.getSampleRate());
             delete soundData;
         }
@@ -63,13 +58,10 @@ namespace syj
         tmp->serverID = serverID;
         tmp->isMusic = isMusic;
 
-        std::cout<<filepath<<" "<<scriptName<<" "<<(isMusic?"music":"not music")<<"\n";
-
         if(isMusic)
         {
             CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
             CEGUI::Window *wrench = root->getChild("HUD/Wrench");
-            std::cout<<"Adding: "<<scriptName<<" id: "<<serverID<<"\n";
             dropBoxAdd(wrench->getChild("MusicDropdown"),scriptName,serverID);
         }
 
@@ -172,8 +164,6 @@ namespace syj
             return;
         }
 
-        std::cout<<"Loop brick sound: "<<serverID<<" "<<loopID<<"\n";
-
         alSourcef( loopSources[loopID], AL_PITCH, pitch);
         alSourcef( loopSources[loopID], AL_GAIN, 1.0f);
         alSource3f( loopSources[loopID], AL_POSITION, x, y, z);
@@ -232,7 +222,6 @@ namespace syj
             error("1OpenAL error: " + std::to_string(errr));
 
         alSourcei( sources[currentSource], AL_BUFFER, sounds[idx]->buffer);
-        std::cout<<idx<<" "<<sounds[idx]->buffer<<" source: "<<sources[currentSource]<<"\n";
 
         errr = alGetError();
         if(errr != AL_NO_ERROR)
@@ -283,7 +272,6 @@ namespace syj
             error("1OpenAL error: " + std::to_string(errr));
 
         alSourcei( sources[currentSource], AL_BUFFER, sounds[idx]->buffer);
-        std::cout<<idx<<" "<<sounds[idx]->buffer<<" source: "<<sources[currentSource]<<"\n";
 
         errr = alGetError();
         if(errr != AL_NO_ERROR)
