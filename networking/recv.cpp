@@ -2183,6 +2183,9 @@ namespace syj
                         int height = data->readUInt(8);
                         int length = data->readUInt(8);
 
+                        bool collides = data->readBit();
+                        tmp->shouldCollide = collides;
+
                         bool isPrint = data->readBit();
                         if(isPrint)
                         {
@@ -2246,6 +2249,8 @@ namespace syj
                     {
                         int typeID = data->readUInt(10);
 
+                        bool collides = data->readBit();
+
                         int mask = 0;
                         std::string printName = "";
                         bool isPrint = data->readBit();
@@ -2262,6 +2267,7 @@ namespace syj
                             {
                                 foundSpecial = true;
                                 specialBrickRenderData *tmp = new specialBrickRenderData;
+                                tmp->shouldCollide = collides;
                                 tmp->serverID = serverID;
                                 tmp->color = glm::vec4(r,g,b,al);
                                 tmp->position = glm::vec3(x,y,z);

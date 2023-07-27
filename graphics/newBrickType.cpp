@@ -318,12 +318,14 @@ namespace syj
         body = new btRigidBody(info);
         body->setCollisionFlags( btCollisionObject::CF_STATIC_OBJECT);
 
-        int matAfterUndulo = material;
-        if(matAfterUndulo > 1000)
-            matAfterUndulo -= 1000;
+        int matAfterShapeFx = material;
+        if(matAfterShapeFx >= 2000)
+            matAfterShapeFx -= 2000;
+        if(matAfterShapeFx >= 1000)
+            matAfterShapeFx -= 1000;
 
-        body->setFriction(matAfterUndulo == slippery ? 0.3 : 1.0);
-        body->setRestitution(matAfterUndulo == bob ? 2.1 : 0.0);
+        body->setFriction(matAfterShapeFx == slippery ? 0.3 : 1.0);
+        body->setRestitution((material >= 2000) ? 2.0 : 0.0);
         body->forceActivationState(ISLAND_SLEEPING);
         //body->setActivationState(ISLAND_SLEEPING);
         world->addRigidBody(body);

@@ -79,7 +79,206 @@ bool refreshButton(const CEGUI::EventArgs &e)
     return true;
 }
 
-#define landOfDranSaveMagic 24653491
+#define landOfDranCarMagic 24653491
+#define landOfDranBuildMagic 16483534
+
+bool saveBuild(const CEGUI::EventArgs &e)
+{
+    CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
+    CEGUI::Window *saveLoadWindow = root->getChild("SaveLoad");
+    serverStuff *ohWow = (serverStuff*)saveLoadWindow->getUserData();
+
+    std::string fileName = saveLoadWindow->getChild("BuildFilePath")->getText().c_str();
+    if(fileName.length() < 1)
+    {
+        error("Enter in a file name before saving a build!");
+        return false;
+    }
+    fileName = "saves/" + fileName + ".lbs";
+
+    std::ofstream build(fileName.c_str(),std::ios::binary);
+    if(!build.is_open())
+    {
+        error("Could not open " + fileName + " for write!");
+        return false;
+    }
+
+    float floatBuf = 0;
+    unsigned char charBuf = 0;
+    unsigned int uIntBuf = landOfDranBuildMagic;
+    build.write((char*)&uIntBuf,sizeof(unsigned int));
+
+    uIntBuf = ohWow->staticBricks.getBrickCount();
+    build.write((char*)&uIntBuf,sizeof(unsigned int));
+
+    uIntBuf = ohWow->staticBricks.blocklandTypes->specialBrickTypes.size();
+    build.write((char*)&uIntBuf,sizeof(unsigned int));
+
+    for(int a = 0; a<ohWow->staticBricks.blocklandTypes->specialBrickTypes.size(); a++)
+    {
+        std::string name = ohWow->staticBricks.blocklandTypes->specialBrickTypes[a]->fileName;
+        if(name.length() < 1 || name.length() > 255)
+        {
+            charBuf = 0;
+            build.write((char*)&charBuf,sizeof(unsigned char));
+
+            error("Name for a blockland brick type " + name + " had a filename length of " + std::to_string(name.length()));
+            continue;
+        }
+
+        charBuf = name.length();
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        build.write(name.c_str(),name.length());
+    }
+
+    uIntBuf = ohWow->staticBricks.opaqueBasicBricks.size();
+    build.write((char*)&uIntBuf,sizeof(unsigned int));
+
+    for(int a = 0; a<ohWow->staticBricks.opaqueBasicBricks.size(); a++)
+    {
+        basicBrickRenderData *brick = ohWow->staticBricks.opaqueBasicBricks[a];
+
+        charBuf = brick->color.r * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.g * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.b * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.a * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        floatBuf = brick->position.x;
+        build.write((char*)&floatBuf,sizeof(float));
+        floatBuf = brick->position.y;
+        build.write((char*)&floatBuf,sizeof(float));
+        floatBuf = brick->position.z;
+        build.write((char*)&floatBuf,sizeof(float));
+
+        charBuf = brick->dimensions.x;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->dimensions.y;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->dimensions.z;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->dimensions.w;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        charBuf = getAngleIDFromRot(brick->rotation);
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        charBuf = brick->material;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+    }
+
+    uIntBuf = ohWow->staticBricks.transparentBasicBricks.size();
+    build.write((char*)&uIntBuf,sizeof(unsigned int));
+
+    for(int a = 0; a<ohWow->staticBricks.transparentBasicBricks.size(); a++)
+    {
+        basicBrickRenderData *brick = ohWow->staticBricks.transparentBasicBricks[a];
+
+        charBuf = brick->color.r * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.g * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.b * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.a * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        floatBuf = brick->position.x;
+        build.write((char*)&floatBuf,sizeof(float));
+        floatBuf = brick->position.y;
+        build.write((char*)&floatBuf,sizeof(float));
+        floatBuf = brick->position.z;
+        build.write((char*)&floatBuf,sizeof(float));
+
+        charBuf = brick->dimensions.x;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->dimensions.y;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->dimensions.z;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->dimensions.w;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        charBuf = getAngleIDFromRot(brick->rotation);
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        charBuf = brick->material;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+    }
+
+    uIntBuf = ohWow->staticBricks.opaqueSpecialBricks.size();
+    build.write((char*)&uIntBuf,sizeof(unsigned int));
+
+    for(int a = 0; a<ohWow->staticBricks.opaqueSpecialBricks.size(); a++)
+    {
+        specialBrickRenderData *brick = ohWow->staticBricks.opaqueSpecialBricks[a];
+
+        charBuf = brick->color.r * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.g * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.b * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.a * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        floatBuf = brick->position.x;
+        build.write((char*)&floatBuf,sizeof(float));
+        floatBuf = brick->position.y;
+        build.write((char*)&floatBuf,sizeof(float));
+        floatBuf = brick->position.z;
+        build.write((char*)&floatBuf,sizeof(float));
+
+        uIntBuf = brick->typeID;
+        build.write((char*)&uIntBuf,sizeof(unsigned int));
+
+        charBuf = getAngleIDFromRot(brick->rotation);
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        charBuf = brick->material;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+    }
+
+    uIntBuf = ohWow->staticBricks.transparentSpecialBricks.size();
+    build.write((char*)&uIntBuf,sizeof(unsigned int));
+
+    for(int a = 0; a<ohWow->staticBricks.transparentSpecialBricks.size(); a++)
+    {
+        specialBrickRenderData *brick = ohWow->staticBricks.transparentSpecialBricks[a];
+
+        charBuf = brick->color.r * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.g * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.b * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+        charBuf = brick->color.a * 255.0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        floatBuf = brick->position.x;
+        build.write((char*)&floatBuf,sizeof(float));
+        floatBuf = brick->position.y;
+        build.write((char*)&floatBuf,sizeof(float));
+        floatBuf = brick->position.z;
+        build.write((char*)&floatBuf,sizeof(float));
+
+        uIntBuf = brick->typeID;
+        build.write((char*)&uIntBuf,sizeof(unsigned int));
+
+        charBuf = getAngleIDFromRot(brick->rotation);
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        charBuf = brick->material;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+    }
+
+    build.close();
+
+    return true;
+}
 
 bool saveCar(const CEGUI::EventArgs &e)
 {
@@ -129,7 +328,7 @@ bool saveCar(const CEGUI::EventArgs &e)
     int intBuf = 0;
     float floatBuf = 0;
 
-    intBuf = landOfDranSaveMagic;
+    intBuf = landOfDranCarMagic;
     car.write((char*)&intBuf,sizeof(int));
 
     std::vector<light*> carLights;
@@ -428,7 +627,7 @@ bool loadCar()
     float floatBuf;
 
     carFile.read((char*)&intBuf,sizeof(int));
-    if(intBuf != landOfDranSaveMagic)
+    if(intBuf != landOfDranCarMagic)
     {
         error("Invalid or outdated save file version!");
         carFile.close();
@@ -1331,6 +1530,7 @@ namespace syj
 
         saveLoadWindow->getChild("Refresh")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&refreshButton));
         saveLoadWindow->getChild("SaveCar")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&saveCar));
+        saveLoadWindow->getChild("SaveBuild")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&saveBuild));
         saveLoadWindow->getChild("LoadVehicle")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&loadCarAsCar));
         saveLoadWindow->getChild("LoadBricks")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&loadCarAsBricks));
         CEGUI::MultiColumnList *saves = (CEGUI::MultiColumnList*)saveLoadWindow->getChild("SavesList");

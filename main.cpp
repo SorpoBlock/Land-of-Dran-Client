@@ -991,6 +991,7 @@ int main(int argc, char *argv[])
         supress |= ohWow.wheelWrench->isActive() && ohWow.wheelWrench->isVisible();
         supress |= ohWow.wrench->isActive() && ohWow.wrench->isVisible();
         supress |= saveLoadWindow->getChild("CarFilePath")->isActive();
+        supress |= saveLoadWindow->getChild("BuildFilePath")->isActive();
 
         SDL_Event event;
         while(SDL_PollEvent(&event))
@@ -1265,7 +1266,7 @@ int main(int argc, char *argv[])
                         data.writeUInt(7,3);
                     ohWow.connection->send(&data,true);
 
-                    if(event.button.button == SDL_BUTTON_LEFT)
+                    if(event.button.button == SDL_BUTTON_LEFT && ohWow.currentPlayer)
                     {
                         ohWow.currentPlayer->stop("grab");
                         ohWow.currentPlayer->play("grab",true);
@@ -1716,7 +1717,7 @@ int main(int argc, char *argv[])
                 netControlState = 0;
 
             //Move client player for client physics:
-            if(ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer)
+            if(ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer && camMode != cammode_adminCam)
             {
                 if(ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,false))
                     didJump = true;
