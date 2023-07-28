@@ -15,6 +15,9 @@ namespace syj
         basic.color.a = 0.5;
         special.color.a = 0.5;
 
+        basic.isTempBrick = true;
+        special.isTempBrick = true;
+
         renderer.addBasicBrick(&basic,0,0,0);
         renderer.addSpecialBrick(&special,0,0,0);
     }

@@ -11,6 +11,9 @@ namespace syj
     //Holds information that applies to every single brick:
     struct brickRenderData
     {
+        //Needed to avoid crash with clearAllBricks packet
+        bool isTempBrick = false;
+
         //For cars:
         int carPlatesUp = 0;
         bool yHalfPos = false;

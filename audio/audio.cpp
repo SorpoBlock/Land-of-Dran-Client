@@ -25,8 +25,8 @@ namespace syj
         else
             error("Weird audio format: " + std::to_string(audioFile.getNumChannels()) + " channels and " + std::to_string(audioFile.getBitDepth()) + " bit depth.");
 
-        debug("Loading audio " + filename + " " + std::to_string(audioFile.getNumChannels()) +"/"+ std::to_string(audioFile.getBitDepth()) +"/"+ std::to_string(audioFile.getSampleRate()));
-        
+        debug("Loading audio " + fileName + " " + std::to_string(audioFile.getNumChannels()) +"/"+ std::to_string(audioFile.getBitDepth()) +"/"+ std::to_string(audioFile.getSampleRate()));
+
         alGenBuffers(1,&buffer);
 
         if(audioFile.getBitDepth() == 16)
@@ -42,7 +42,7 @@ namespace syj
             unsigned char *soundData = new unsigned char[audioFile.samples[0].size()];
             for(unsigned int a = 0; a<audioFile.samples[0].size(); a++)
                 soundData[a] = 128+(audioFile.samples[0][a]*127);
-            
+
             alBufferData(buffer,format,soundData,audioFile.samples[0].size()*sizeof(unsigned char),audioFile.getSampleRate());
             delete soundData;
         }

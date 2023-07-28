@@ -285,12 +285,14 @@ namespace syj
 
                     if(ohWow->currentPlayer && ohWow->currentPlayer->body)
                     {
+                        std::cout<<"Client physics velocity update: "<<velX<<","<<velY<<","<<velZ<<"\n";
                         btTransform t;
                         t.setIdentity();
                         t.setOrigin(btVector3(posX,posY,posZ));
                         t.setRotation(btQuaternion(rotX,rotY,rotZ,rotW));
                         ohWow->currentPlayer->body->setWorldTransform(t);
                         ohWow->currentPlayer->body->setLinearVelocity(btVector3(velX,velY,velZ));
+                        ohWow->currentPlayer->flingPreventionStartTime = SDL_GetTicks();
                     }
                 }
 
@@ -302,7 +304,7 @@ namespace syj
                 int id = data->readUInt(20);
                 bool addOrRemove = data->readBit();
 
-                if(addOrRemove)
+                if(addOrRemove) //adding or updating light
                 {
                     light *tmp = 0;
                     bool needNewLight = true;
@@ -2122,6 +2124,115 @@ namespace syj
 
             case packetType_skipBricksCompile:
             {
+                bool clearBricks = data->readBit();
+
+                //TODO: CHECKS FOR BOUND LIGHTS AND MUSIC???
+
+                if(clearBricks)
+                {
+                    basicBrickRenderData *basicTempBrick = 0;
+                    specialBrickRenderData *specialTempBrick = 0;
+
+                    for(unsigned int a = 0; a<ohWow->staticBricks.opaqueBasicBricks.size(); a++)
+                    {
+                        basicBrickRenderData *theBrick = ohWow->staticBricks.opaqueBasicBricks[a];
+                        if(!theBrick)
+                            continue;
+
+                        if(theBrick->isTempBrick)
+                        {
+                            basicTempBrick = theBrick;
+                            continue;
+                        }
+
+                        if(theBrick->body && ohWow->world)
+                        {
+                            ohWow->world->removeRigidBody(theBrick->body);
+                            delete theBrick->body;
+                            theBrick->body = 0;
+                        }
+
+                        delete theBrick;
+                    }
+                    for(unsigned int a = 0; a<ohWow->staticBricks.transparentBasicBricks.size(); a++)
+                    {
+                        basicBrickRenderData *theBrick = ohWow->staticBricks.transparentBasicBricks[a];
+                        if(!theBrick)
+                            continue;
+
+                        if(theBrick->isTempBrick)
+                        {
+                            basicTempBrick = theBrick;
+                            continue;
+                        }
+
+                        if(theBrick->body && ohWow->world)
+                        {
+                            ohWow->world->removeRigidBody(theBrick->body);
+                            delete theBrick->body;
+                            theBrick->body = 0;
+                        }
+
+                        delete theBrick;
+                    }
+                    for(unsigned int a = 0; a<ohWow->staticBricks.opaqueSpecialBricks.size(); a++)
+                    {
+                        specialBrickRenderData *theBrick = ohWow->staticBricks.opaqueSpecialBricks[a];
+                        if(!theBrick)
+                            continue;
+
+                        if(theBrick->isTempBrick)
+                        {
+                            specialTempBrick = theBrick;
+                            continue;
+                        }
+
+                        if(theBrick->body && ohWow->world)
+                        {
+                            ohWow->world->removeRigidBody(theBrick->body);
+                            delete theBrick->body;
+                            theBrick->body = 0;
+                        }
+
+                        delete theBrick;
+                    }
+                    for(unsigned int a = 0; a<ohWow->staticBricks.transparentSpecialBricks.size(); a++)
+                    {
+                        specialBrickRenderData *theBrick = ohWow->staticBricks.transparentSpecialBricks[a];
+                        if(!theBrick)
+                            continue;
+
+                        if(theBrick->isTempBrick)
+                        {
+                            specialTempBrick = theBrick;
+                            continue;
+                        }
+
+                        if(theBrick->body && ohWow->world)
+                        {
+                            ohWow->world->removeRigidBody(theBrick->body);
+                            delete theBrick->body;
+                            theBrick->body = 0;
+                        }
+
+                        delete theBrick;
+                    }
+
+                    ohWow->staticBricks.opaqueBasicBricks.clear();
+                    ohWow->staticBricks.transparentBasicBricks.clear();
+                    ohWow->staticBricks.opaqueSpecialBricks.clear();
+                    ohWow->staticBricks.transparentSpecialBricks.clear();
+
+                    if(basicTempBrick)
+                        ohWow->staticBricks.transparentBasicBricks.push_back(basicTempBrick);
+                    if(specialTempBrick)
+                        ohWow->staticBricks.transparentSpecialBricks.push_back(specialTempBrick);
+
+                    ohWow->staticBricks.recompileEverything();
+
+                    return;
+                }
+
                 ohWow->skippingCompileNextBricks = data->readUInt(24);
                 //std::cout<<"Skipping compile for next: "<<ohWow->skippingCompileNextBricks<<" bricks.\n";
                 return;

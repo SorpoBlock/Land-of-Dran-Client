@@ -33,6 +33,7 @@ namespace syj
     struct newDynamic
     {
         //Only used for players at the moment, as result of packetType_clientPhysicsData
+        int flingPreventionStartTime = 0;
         btRigidBody *body = 0;
         btCompoundShape *shape = 0;
         void createBoxBody(btDynamicsWorld *_world,btVector3 extents,btVector3 offset);

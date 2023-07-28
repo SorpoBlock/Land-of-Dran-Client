@@ -24,12 +24,26 @@ namespace syj
         forwardPull->setUserIndex(104);
         backwardPull->setUserIndex(105);
 
+        leftPull->setGravity(btVector3(0,0,0));
+        rightPull->setGravity(btVector3(0,0,0));
+        downPull->setGravity(btVector3(0,0,0));
+        upPull->setGravity(btVector3(0,0,0));
+        forwardPull->setGravity(btVector3(0,0,0));
+        backwardPull->setGravity(btVector3(0,0,0));
+
         world->addRigidBody(leftPull);
         world->addRigidBody(rightPull);
         world->addRigidBody(upPull);
         world->addRigidBody(downPull);
         world->addRigidBody(forwardPull);
         world->addRigidBody(backwardPull);
+
+        leftPull->setActivationState(DISABLE_SIMULATION);
+        rightPull->setActivationState(DISABLE_SIMULATION);
+        upPull->setActivationState(DISABLE_SIMULATION);
+        downPull->setActivationState(DISABLE_SIMULATION);
+        forwardPull->setActivationState(DISABLE_SIMULATION);
+        backwardPull->setActivationState(DISABLE_SIMULATION);
     }
 
             /*glm::vec3 up = middle + glm::vec3(0,1.0 + halfs.y,0);
@@ -202,6 +216,8 @@ namespace syj
         btVector3 raystart = glmToBt(start);
         btVector3 rayend = glmToBt(start + dir * glm::vec3(30.0));
         btCollisionWorld::AllHitsRayResultCallback res(raystart,rayend);
+        res.m_collisionFilterGroup = btBroadphaseProxy::AllFilter;
+        res.m_collisionFilterMask = btBroadphaseProxy::AllFilter;
         world->rayTest(raystart,rayend,res);
 
         int idx = -1;
@@ -212,6 +228,8 @@ namespace syj
         {
             body = (btRigidBody*)res.m_collisionObjects[a];
             if(body == ignore)
+                continue;
+            if(body->getUserIndex() < 100 || body->getUserIndex() > 105)
                 continue;
 
             if(fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-start)) < dist)
@@ -304,6 +322,8 @@ namespace syj
     {
         if(!(currentPhase == selecting || currentPhase == stretching))
             return;
+
+        movePulls();
 
         glBindVertexArray(cubeVAO);
         btVector3 half = btVector3(0.5,0.5,0.5);

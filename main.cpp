@@ -940,6 +940,7 @@ int main(int argc, char *argv[])
 
         box->performRaycast(ohWow.playerCamera->getPosition(),ohWow.playerCamera->getDirection(),0);
 
+        //Clicking ray cast
         btVector3 raystart = glmToBt(ohWow.playerCamera->getPosition());
         btVector3 rayend = glmToBt(ohWow.playerCamera->getPosition() + ohWow.playerCamera->getDirection() * glm::vec3(30.0));
         btCollisionWorld::AllHitsRayResultCallback res(raystart,rayend);
@@ -1557,12 +1558,49 @@ int main(int argc, char *argv[])
                     crossHair->setVisible(false);
                     ohWow.playerCamera->thirdPerson = true;
 
-                    if(ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer)
+                    //3rd person camera follow distance backwards raycast:
+                    btVector3 v;
+                    if(ohWow.currentPlayer && ohWow.currentPlayer->body)
                     {
                         btTransform t = ohWow.currentPlayer->body->getWorldTransform();
-                        btVector3 v = t.getOrigin();
-                        ohWow.playerCamera->thirdPersonTarget = glm::vec3(v.x(),v.y(),v.z());
-                        ohWow.playerCamera->thirdPersonDistance = 30;
+                        v = t.getOrigin();
+                    }
+                    else
+                    {
+                        v = glmToBt(ohWow.cameraTarget->modelInterpolator.getPosition());
+                    }
+
+                    v += glmToBt(ohWow.cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0));
+
+                    btVector3 raystart = glmToBt(glm::vec3(v.x(),v.y(),v.z()));
+                    btVector3 rayend = glmToBt(glm::vec3(v.x(),v.y(),v.z()) - ohWow.playerCamera->getDirection() * glm::vec3(30.0));
+                    btCollisionWorld::ClosestRayResultCallback res(raystart,rayend);
+                    world->rayTest(raystart,rayend,res);
+
+                    /*int idx = -1;
+                    float dist = 9999999;
+
+                    if(ohWow.cameraTarget)
+                    {
+                        for(int a = 0; a<res.m_collisionObjects.size(); a++)
+                        {
+                            if(res.m_collisionObjects[a] != ohWow.cameraTarget->body)
+                            {
+                                if(fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-ohWow.playerCamera->getPosition())) < dist)
+                                {
+                                    dist = fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-ohWow.playerCamera->getPosition()));
+                                    idx = a;
+                                }
+                            }
+                        }
+                    }*/
+
+                    if(ohWow.currentPlayer && ohWow.currentPlayer->body && !ohWow.giveUpControlOfCurrentPlayer)
+                    {
+                        btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                        v = t.getOrigin();
+                        ohWow.playerCamera->thirdPersonTarget = glm::vec3(v.x(),v.y(),v.z()) + ohWow.cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
+                        ohWow.playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
                         ohWow.playerCamera->setPosition(glm::vec3(v.x(),v.y(),v.z()));
                         ohWow.playerCamera->turn(0,0);
                         ohWow.currentPlayer->useGlobalTransform = true;
@@ -1575,8 +1613,8 @@ int main(int argc, char *argv[])
                         if(ohWow.currentPlayer)
                             ohWow.currentPlayer->useGlobalTransform = false;
 
-                        ohWow.playerCamera->thirdPersonTarget = ohWow.cameraTarget->modelInterpolator.getPosition();
-                        ohWow.playerCamera->thirdPersonDistance = 30;
+                        ohWow.playerCamera->thirdPersonTarget = ohWow.cameraTarget->modelInterpolator.getPosition() + ohWow.cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
+                        ohWow.playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
                         ohWow.playerCamera->setPosition(ohWow.cameraTarget->modelInterpolator.getPosition());
                         ohWow.playerCamera->turn(0,0);
                     }
@@ -1719,6 +1757,11 @@ int main(int argc, char *argv[])
             //Move client player for client physics:
             if(ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer && camMode != cammode_adminCam)
             {
+                if(SDL_GetTicks() - ohWow.currentPlayer->flingPreventionStartTime < 1000)
+                {
+                    btVector3 vel = ohWow.currentPlayer->body->getLinearVelocity();
+                    std::cout<<"Speed: "<<vel.length()<<"\n";
+                }
                 if(ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,false))
                     didJump = true;
                 if(didJump)
