@@ -59,13 +59,15 @@ void gotKicked(client *theClient,unsigned int reason,void *userData)
     ohWow->fatalNotify("Disconnected!","Connection with server lost, reason: " + std::to_string(reason) + ".","Exit");
 }
 
-std::ofstream tempFileHandle;
-
-size_t write_data(void *buffer,size_t size,size_t nmemb,void *userp)
+bool godRayButton(const CEGUI::EventArgs &e)
 {
-    if(tempFileHandle.is_open() && nmemb > 0)
-        tempFileHandle.write((const char*)buffer,nmemb);
-    return nmemb;
+    CEGUI::Window *godRayWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("GodRays");
+    serverStuff *ohWow = (serverStuff*)godRayWindow->getUserData();
+
+    ohWow->env->godRayDecay = atof(godRayWindow->getChild("Decay")->getText().c_str());
+    ohWow->env->godRayDensity = atof(godRayWindow->getChild("Density")->getText().c_str());
+    ohWow->env->godRayExposure = atof(godRayWindow->getChild("Exposure")->getText().c_str());
+    ohWow->env->godRayWeight = atof(godRayWindow->getChild("Weight")->getText().c_str());
 }
 
 int main(int argc, char *argv[])
@@ -102,15 +104,18 @@ int main(int argc, char *argv[])
     remove("oldlandofdran.exe");
     int revisionVersion = -1;
     int networkVersion = -1;
+    info("Retrieving version info from master server...");
     getVersions(revisionVersion,networkVersion);
     ohWow.masterRevision = revisionVersion;
     ohWow.masterNetwork = networkVersion;
+    info("Most recent revision available on master server: " + std::to_string(revisionVersion));
     int ourRevisionVersion = -1;
     int ourNetworkVersion = -1;
     if(prefs.getPreference("REVISION"))
         ourRevisionVersion = prefs.getPreference("REVISION")->toInteger();
     if(prefs.getPreference("NETWORK"))
         ourNetworkVersion = prefs.getPreference("NETWORK")->toInteger();
+    info("Our revision: " + std::to_string(ourRevisionVersion));
 
     renderContextOptions renderOptions;
     renderOptions.name = "Rev " + std::to_string(ourRevisionVersion) + " - " + __DATE__;
@@ -196,14 +201,14 @@ int main(int argc, char *argv[])
     CEGUI::Window *crossHair = hud->getChild("Crosshair");
     CEGUI::Window *evalWindow = configureEvalWindow(hud,&ohWow);
     CEGUI::Window *joinServer = loadJoinServer(&ohWow);
+    CEGUI::Window *godRayDebug = addGUIFromFile("godRayDebug.layout");
+    godRayDebug->setUserData(&ohWow);
+    godRayDebug->getChild("Button")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&godRayButton));
     ohWow.evalWindow = evalWindow;
     ohWow.messageBox = initHud(hud);
     ohWow.palette = new paletteGUI(hud);
     ohWow.bottomPrint.textBar = hud->getChild("BottomPrint");
     CEGUI::Window *saveLoadWindow = loadSaveLoadWindow(&ohWow);
-
-    info("Most recent revision available on master server: " + std::to_string(revisionVersion));
-    info("Our revision: " + std::to_string(ourRevisionVersion));
 
     if(ourRevisionVersion == -1 || ourRevisionVersion == 0)
     {
@@ -655,6 +660,12 @@ int main(int argc, char *argv[])
     glEnable(GL_CULL_FACE);
 
     ohWow.env = new environment(shadowRes,shadowRes);
+
+    godRayDebug->getChild("Decay")->setText(std::to_string(ohWow.env->godRayDecay));
+    godRayDebug->getChild("Density")->setText(std::to_string(ohWow.env->godRayDensity));
+    godRayDebug->getChild("Exposure")->setText(std::to_string(ohWow.env->godRayExposure));
+    godRayDebug->getChild("Weight")->setText(std::to_string(ohWow.env->godRayWeight));
+
     /*ohWow.env->loadDaySkyBox("assets/sky/bluecloud_");
     ohWow.env->loadNightSkyBox("assets/sky/space_");*/
     ohWow.env->loadSunModel("assets/sky/sun.txt");
@@ -838,6 +849,7 @@ int main(int argc, char *argv[])
         ohWow.wheelWrench->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
         ohWow.steeringWrench->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
         ohWow.playerList->setAlpha(((float)ohWow.settings->hudOpacity)/100.0);
+        godRayDebug->setAlpha(((float)ohWow.settings->hudOpacity)/100.0);
         //chat->moveToBack();
 
         float gain = ohWow.settings->masterVolume;
@@ -1067,6 +1079,8 @@ int main(int argc, char *argv[])
                             anyVisible = true;
                         if(ohWow.playerList->isVisible())
                             anyVisible = true;
+                        if(godRayDebug->isVisible())
+                            anyVisible = true;
 
 
                         if(anyVisible)
@@ -1081,6 +1095,7 @@ int main(int argc, char *argv[])
                             ohWow.steeringWrench->setVisible(false);
                             saveLoadWindow->setVisible(false);
                             ohWow.playerList->setVisible(false);
+                            godRayDebug->setVisible(false);
                         }
                         else
                         {
@@ -1106,11 +1121,7 @@ int main(int argc, char *argv[])
 
                 if(event.key.keysym.sym == SDLK_F5)
                 {
-                    if(ohWow.currentPlayer)
-                    {
-                        ohWow.currentPlayer->stop("grab");
-                        ohWow.currentPlayer->play("grab",true);
-                    }
+                    godRayDebug->setVisible(true);
                 }
 
                 if(event.key.keysym.sym == SDLK_F2)
@@ -2086,6 +2097,7 @@ int main(int argc, char *argv[])
             //Begin drawing shadows to shadow texture
             glDisable(GL_CULL_FACE);
             glCullFace(GL_FRONT);
+            glEnable(GL_BLEND);
 
             ohWow.env->shadowBuffer->bind();
 
@@ -2117,6 +2129,7 @@ int main(int argc, char *argv[])
 
             ohWow.env->shadowBuffer->unbind();
 
+            glDisable(GL_BLEND);
             glCullFace(GL_BACK);
             glEnable(GL_CULL_FACE);
             //End drawing shadows to shadow texture
@@ -2261,7 +2274,7 @@ int main(int argc, char *argv[])
 
                 //Preview texture:
                 /*glUniform1i(basic.previewTexture,true);
-                waterRefraction->colorResult->bind(normal);
+                //waterRefraction->colorResult->bind(normal);
                 glBindVertexArray(quadVAO);
                 glDrawArrays(GL_TRIANGLES,0,6);
                 glBindVertexArray(0);
@@ -2347,6 +2360,13 @@ int main(int argc, char *argv[])
             glDisable(GL_BLEND);
             glEnable(GL_DEPTH_TEST);
 
+            //Remember, 'god rays' actually includes the underwater texture too
+            basicProgram.use();
+                ohWow.settings->render(basic);
+                ohWow.playerCamera->render(basic);
+                ohWow.env->passUniforms(basic);
+                ohWow.env->renderGodRays(basic);
+
             /*spriteProgram.use();
                 glEnable(GL_CLIP_DISTANCE0);
                 glUniform1f(spriteUnis.clipHeight,waterLevel); //TODO: Only cull plants underwater if camera above water
@@ -2374,6 +2394,7 @@ int main(int argc, char *argv[])
 
             glEnable(GL_CULL_FACE);
 
+            //Just for the transparent blue quad of crappy water, good water is rendered first thing
             if(ohWow.settings->waterQuality == waterStatic || !waterRefraction)
             {
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

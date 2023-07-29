@@ -110,8 +110,9 @@ namespace syj
         renderTarget::renderTargetSettings shadowBufferSettings;
         shadowBufferSettings.resX = resX;
         shadowBufferSettings.resY = resY;
-        shadowBufferSettings.useColor = false;
+        shadowBufferSettings.useColor = true;
         shadowBufferSettings.useDepth = true;
+        shadowBufferSettings.numColorChannels = 4;
         shadowBufferSettings.layers = numShadowLayers;
         shadowBuffer = new renderTarget(shadowBufferSettings);
 
@@ -458,6 +459,7 @@ namespace syj
             shadowNearCamera.render(uniforms);
             shadowFarCamera.render(uniforms);*/
 
+            shadowBuffer->colorResult->bind(shadowColorMap);
             shadowBuffer->depthResult->bind(shadowNearMap);
             passLightMatricies(uniforms);
         }

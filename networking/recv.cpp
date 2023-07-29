@@ -1075,7 +1075,6 @@ namespace syj
                     else
                     {
                         CEGUI::ListboxItem *entry = playerList->findListItemWithText(name,NULL);
-                        std::cout<<name<<" "<<entry<<" "<<entry->getID()<<"\n";
                         if(entry)
                         {
                             //playerList->removeRow(entry->getID());

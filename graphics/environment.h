@@ -90,7 +90,7 @@ namespace syj
         glm::vec3 sunDirection;
 
         //Configuration for crepuscular rays
-        float godRayDecay = 0.99;
+        float godRayDecay = 0.995;
         float godRayDensity = 1.0;
         float godRayWeight = 6.0;
         float godRayExposure = 0.004;

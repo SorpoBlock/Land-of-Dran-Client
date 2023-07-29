@@ -43,7 +43,8 @@ namespace syj
         }
 
         glUniform1i(unis.target->getUniformLocation("useShadows"),shadowResolution != shadowsOff);
-
+        if(unis.target->getUniformLocation("useColoredShadows") != -1)
+            glUniform1i(unis.target->getUniformLocation("useColoredShadows"),coloredShadows);
         glUniform1f(unis.target->getUniformLocation("materialCutoff"),materialCutoff);
     }
 
