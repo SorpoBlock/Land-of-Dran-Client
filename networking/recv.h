@@ -59,6 +59,7 @@ namespace syj
         int dynamicID = -1;
         btVector3 finalHalfExtents;
         btVector3 finalOffset;
+        btVector3 initPos;
         unsigned int deletionTime = 0;
     };
 

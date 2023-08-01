@@ -438,11 +438,26 @@ namespace syj
                             CEGUI::Slider *red = (CEGUI::Slider *)colorPicker->getChild("RedSlider");
                             CEGUI::Slider *green = (CEGUI::Slider *)colorPicker->getChild("GreenSlider");
                             CEGUI::Slider *blue = (CEGUI::Slider *)colorPicker->getChild("BlueSlider");
-                            red->setCurrentValue(nodeColors[selectedMesh].r);
-                            green->setCurrentValue(nodeColors[selectedMesh].g);
-                            blue->setCurrentValue(nodeColors[selectedMesh].b);
-                            colorPicker->getChild("Result")->setProperty("SwatchColour",
-                                                                "FF" + charToHex(nodeColors[selectedMesh].r*255) + charToHex(nodeColors[selectedMesh].g*255) + charToHex(nodeColors[selectedMesh].b*255));
+
+                            CEGUI::ToggleButton *retainBox = (CEGUI::ToggleButton *)colorPicker->getChild("Checkbox");
+                            bool retain = false;
+                            if(retainBox)
+                                retain = retainBox->isSelected();
+
+                            if(!retain)
+                            {
+                                red->setCurrentValue(nodeColors[selectedMesh].r);
+                                green->setCurrentValue(nodeColors[selectedMesh].g);
+                                blue->setCurrentValue(nodeColors[selectedMesh].b);
+                                colorPicker->getChild("Result")->setProperty("SwatchColour",
+                                                                    "FF" + charToHex(nodeColors[selectedMesh].r*255) + charToHex(nodeColors[selectedMesh].g*255) + charToHex(nodeColors[selectedMesh].b*255));
+                            }
+                            else
+                            {
+                                nodeColors[settingColorFor].r = ((CEGUI::Slider*)colorPicker->getChild("RedSlider"))->getCurrentValue();
+                                nodeColors[settingColorFor].g = ((CEGUI::Slider*)colorPicker->getChild("GreenSlider"))->getCurrentValue();
+                                nodeColors[settingColorFor].b = ((CEGUI::Slider*)colorPicker->getChild("BlueSlider"))->getCurrentValue();
+                            }
 
                             sliderEventProtection = false;
                             colorPicker->setVisible(true);
@@ -459,11 +474,26 @@ namespace syj
                             CEGUI::Slider *red = (CEGUI::Slider *)colorPicker->getChild("RedSlider");
                             CEGUI::Slider *green = (CEGUI::Slider *)colorPicker->getChild("GreenSlider");
                             CEGUI::Slider *blue = (CEGUI::Slider *)colorPicker->getChild("BlueSlider");
-                            red->setCurrentValue(nodeColors[selectedMesh].r);
-                            green->setCurrentValue(nodeColors[selectedMesh].g);
-                            blue->setCurrentValue(nodeColors[selectedMesh].b);
-                            colorPicker->getChild("Result")->setProperty("SwatchColour",
-                                                                "FF" + charToHex(nodeColors[selectedMesh].r*255) + charToHex(nodeColors[selectedMesh].g*255) + charToHex(nodeColors[selectedMesh].b*255));
+
+                            CEGUI::ToggleButton *retainBox = (CEGUI::ToggleButton *)colorPicker->getChild("Checkbox");
+                            bool retain = false;
+                            if(retainBox)
+                                retain = retainBox->isSelected();
+
+                            if(!retain)
+                            {
+                                red->setCurrentValue(nodeColors[selectedMesh].r);
+                                green->setCurrentValue(nodeColors[selectedMesh].g);
+                                blue->setCurrentValue(nodeColors[selectedMesh].b);
+                                colorPicker->getChild("Result")->setProperty("SwatchColour",
+                                                                    "FF" + charToHex(nodeColors[selectedMesh].r*255) + charToHex(nodeColors[selectedMesh].g*255) + charToHex(nodeColors[selectedMesh].b*255));
+                            }
+                            else
+                            {
+                                nodeColors[settingColorFor].r = ((CEGUI::Slider*)colorPicker->getChild("RedSlider"))->getCurrentValue();
+                                nodeColors[settingColorFor].g = ((CEGUI::Slider*)colorPicker->getChild("GreenSlider"))->getCurrentValue();
+                                nodeColors[settingColorFor].b = ((CEGUI::Slider*)colorPicker->getChild("BlueSlider"))->getCurrentValue();
+                            }
 
                             sliderEventProtection = false;
                             colorPicker->setVisible(true);
@@ -508,6 +538,7 @@ namespace syj
                 transPacket.writeBit(false);
                 transPacket.writeBit(false);
                 transPacket.writeBit(false);
+                transPacket.writeBit(false);
                 transPacket.writeFloat(0);
                 transPacket.writeFloat(0);
                 transPacket.writeFloat(0);
@@ -520,6 +551,8 @@ namespace syj
 
                 connection->run();
             }
+
+            //Draw the model with node IDs as color for mouse picking purposes to a texture:
 
             glm::mat4 rotMatrix = glm::rotate(modelYaw,glm::vec3(0,1,0));
 
@@ -546,13 +579,15 @@ namespace syj
                 glBindFramebuffer(GL_READ_FRAMEBUFFER,0);
             }
 
+            //Actually draw what's on screen:
             context->clear(0.5,0.5,0.5);
             context->select();
 
             graphics->target->use();
                 pickingCamera.render(*graphics);
-                glUniform1i(graphics->target->getUniformLocation("selectedMesh"),selectedMesh);
+                glUniform1i(graphics->target->getUniformLocation("avatarSelectorLighting"),true);
                 playerModel->render(graphics,rotMatrix * glm::scale(glm::vec3(0.02)),false,&nodeColors,faceDecals.size() > 0 ? faceDecals[chosenDecal] : 0);
+                glUniform1i(graphics->target->getUniformLocation("avatarSelectorLighting"),false);
 
             glDisable(GL_DEPTH_TEST);
             glActiveTexture(GL_TEXTURE0);

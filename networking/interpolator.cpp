@@ -23,11 +23,17 @@ namespace syj
             return;
         }
 
+        if(keyFrames.size() > 1000)
+        {
+            keyFrames.erase(keyFrames.begin()+900);
+        }
+
         if(packetTime <= highestProcessed)
         {
             std::cout<<"HIGHESTPROCESSED\n";
             return;
         }
+
 
         for(unsigned int a = 0; a<keyFrames.size(); a++)
         {

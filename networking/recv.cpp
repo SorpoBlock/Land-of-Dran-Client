@@ -76,8 +76,6 @@ namespace syj
 
                     if(ohWow->newDynamicTypes.size() > 0)
                     {
-                        std::cout<<"Starting avatar customizer...\n";
-
                         //TODO: Update avatar picker code
                         if(!ohWow->picker->playerModel)
                             ohWow->picker->playerModel = (model*)ohWow->newDynamicTypes[0]->oldModelType;
@@ -161,7 +159,6 @@ namespace syj
             {
                 if(livingBricks[a]->serverID == tmp.brickCarID)
                 {
-                    std::cout<<"Attaching light to car from packet: "<<tmp.brickCarID<<"\n";
                     tmp.l->attachToCar(livingBricks[a],tmp.l->attachOffset);
                     lights.push_back(tmp.l);
                     good = true;
@@ -188,13 +185,18 @@ namespace syj
             {
                 if(newDynamics[a]->serverID == tmp.dynamicID)
                 {
-                    newDynamics[a]->createBoxBody(world,tmp.finalHalfExtents,tmp.finalOffset); //will return it it already has one
+                    newDynamics[a]->createBoxBody(world,tmp.finalHalfExtents,tmp.finalOffset,tmp.initPos); //will return it it already has one
                     currentPlayer = newDynamics[a];
                     giveUpControlOfCurrentPlayer = false;
 
                     //Fix glitch getting out of vehicle:
                     if(newDynamics[a]->body)
                     {
+                        if(currentPlayer)
+                        {
+                            currentPlayer->flingPreventionStartTime = SDL_GetTicks();
+                            currentPlayer->lastPlayerControl = SDL_GetTicks();
+                        }
                         btTransform t = newDynamics[a]->body->getWorldTransform();
                         glm::vec3 o = newDynamics[a]->modelInterpolator.getPosition();
                         t.setOrigin(btVector3(o.x,o.y,o.z));
@@ -243,6 +245,9 @@ namespace syj
                     tmp.finalOffset.setX(data->readFloat());
                     tmp.finalOffset.setY(data->readFloat());
                     tmp.finalOffset.setZ(data->readFloat());
+                    tmp.initPos.setX(data->readFloat());
+                    tmp.initPos.setY(data->readFloat());
+                    tmp.initPos.setZ(data->readFloat());
 
                     for(int a = 0; a<ohWow->clientPhysicsPackets.size(); a++)
                     {
@@ -285,7 +290,6 @@ namespace syj
 
                     if(ohWow->currentPlayer && ohWow->currentPlayer->body)
                     {
-                        std::cout<<"Client physics velocity update: "<<velX<<","<<velY<<","<<velZ<<"\n";
                         btTransform t;
                         t.setIdentity();
                         t.setOrigin(btVector3(posX,posY,posZ));
@@ -384,7 +388,6 @@ namespace syj
                     else if(tmp->mode == carBrick)
                     {
                         int carID = data->readUInt(10);
-                        std::cout<<"Attaching light to car id: "<<carID<<"\n";
                         for(int a = 0; a<ohWow->livingBricks.size(); a++)
                         {
                             if(ohWow->livingBricks[a]->serverID == carID)
@@ -396,7 +399,6 @@ namespace syj
 
                         if(!tmp->attachedCar)
                         {
-                            std::cout<<"No attached car!\n";
                             heldLightPacket heldTmp;
                             heldTmp.deletionTime = SDL_GetTicks() + 30000;
                             heldTmp.brickCarID = carID;
@@ -430,7 +432,6 @@ namespace syj
                         float y = data->readFloat();
                         float z = data->readFloat();
                         tmp->attachOffset = glm::vec3(x,y,z);
-                        std::cout<<"Recv: offset "<<x<<","<<y<<","<<z<<"\n";
                     }
 
                     float r = data->readFloat();
@@ -447,7 +448,6 @@ namespace syj
                         tmp->direction.y = data->readFloat();
                         tmp->direction.z = data->readFloat();
                         tmp->direction.w = cos(data->readFloat());
-                        std::cout<<"Recv: Is spotlight! "<<tmp->direction.x<<","<<tmp->direction.y<<","<<tmp->direction.z<<","<<tmp->direction.w<<"\n";
                     }
 
                     if(needNewLight)
@@ -1297,7 +1297,6 @@ namespace syj
                     bool onCar = data->readBit();
                     if(onCar)
                     {
-                        std::cout<<"Received on car music loop packet!\n";
                         int carId = data->readUInt(10);
                         livingBrick *car = 0;
                         for(unsigned int a = 0; a<ohWow->livingBricks.size(); a++)

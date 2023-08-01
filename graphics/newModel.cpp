@@ -2,7 +2,7 @@
 
 namespace syj
 {
-    void newDynamic::createBoxBody(btDynamicsWorld *_world,btVector3 extents,btVector3 offset)
+    void newDynamic::createBoxBody(btDynamicsWorld *_world,btVector3 extents,btVector3 offset,btVector3 initPos)
     {
         world = _world;
         //TODO: Don't reuse motion state or shape for each dynamic!
@@ -27,11 +27,7 @@ namespace syj
         shape->calculatePrincipalAxisTransform(masses,t,defaultInertia);
 
         btTransform startTrans = btTransform::getIdentity();
-        btVector3 startPos;
-        startPos.setX(modelInterpolator.getPosition().x);
-        startPos.setY(modelInterpolator.getPosition().y);
-        startPos.setZ(modelInterpolator.getPosition().z);
-        startTrans.setOrigin(startPos);
+        startTrans.setOrigin(initPos);
         defaultMotionState = new btDefaultMotionState(startTrans);
         mass = 1.0;
 

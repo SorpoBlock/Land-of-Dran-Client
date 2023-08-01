@@ -1768,15 +1768,13 @@ int main(int argc, char *argv[])
             //Move client player for client physics:
             if(ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer && camMode != cammode_adminCam)
             {
-                if(SDL_GetTicks() - ohWow.currentPlayer->flingPreventionStartTime < 1000)
+                if(SDL_GetTicks() - ohWow.currentPlayer->flingPreventionStartTime > 100)
                 {
-                    btVector3 vel = ohWow.currentPlayer->body->getLinearVelocity();
-                    std::cout<<"Speed: "<<vel.length()<<"\n";
+                    if(ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,false))
+                        didJump = true;
+                    if(didJump)
+                        ohWow.speaker->playSound("Jump",false,ohWow.playerCamera->getPosition().x,ohWow.playerCamera->getPosition().y-1.0,ohWow.playerCamera->getPosition().z);
                 }
-                if(ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,false))
-                    didJump = true;
-                if(didJump)
-                    ohWow.speaker->playSound("Jump",false,ohWow.playerCamera->getPosition().x,ohWow.playerCamera->getPosition().y-1.0,ohWow.playerCamera->getPosition().z);
             }
 
             int fullControlState  = netControlState + (leftDown << 5);
@@ -1945,7 +1943,7 @@ int main(int argc, char *argv[])
         //Begin drawing to water textures
 
         waterFrame++;
-        if(waterFrame >= 3)
+        if(waterFrame >= 2)
             waterFrame = 0;
 
         if(ohWow.settings->waterQuality != waterStatic && waterRefraction)
@@ -2014,7 +2012,7 @@ int main(int argc, char *argv[])
 
                 waterReflection->unbind();
             }
-            else if(waterFrame == 2)
+            else if(waterFrame == 1)
             {
                 glEnable(GL_CLIP_DISTANCE0);
                 waterRefraction->bind();
@@ -2110,6 +2108,19 @@ int main(int argc, char *argv[])
                             ohWow.items[a]->render(shadow,true,ohWow.playerCamera->getYaw());*/
                         if(!(!ohWow.giveUpControlOfCurrentPlayer && ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
                             ohWow.items[a]->updateTransform();
+                    }
+
+                    for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
+                    {
+                        for(unsigned int wheel = 0; wheel<ohWow.livingBricks[a]->wheels.size(); wheel++)
+                        {
+                            wheelModel.render(&shadow,
+                                              glm::translate(ohWow.livingBricks[a]->wheels[wheel]->getPosition()) *
+                                              glm::toMat4(ohWow.livingBricks[a]->wheels[wheel]->getRotation()) *
+                                              glm::scale(glm::vec3(0.06)) *
+                                              glm::scale(ohWow.livingBricks[a]->wheels[wheel]->scale),true
+                                              );
+                        }
                     }
 
                     /*for(unsigned int a = 0; a<ohWow.dynamics.size(); a++)

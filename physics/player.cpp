@@ -210,6 +210,12 @@ namespace syj
         }
 
         int deltaMS = SDL_GetTicks() - lastPlayerControl;
+
+        if(deltaMS > 33)
+            deltaMS = 33;
+        if(deltaMS < 0)
+            deltaMS = 0;
+
         lastPlayerControl = SDL_GetTicks();
 
         if(jump && ground && body->getLinearVelocity().y() < 1)
