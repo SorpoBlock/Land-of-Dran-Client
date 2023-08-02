@@ -1309,11 +1309,41 @@ namespace syj
 {
     void sendBrickCarToServer(serverStuff *common,livingBrick *car,glm::vec3 origin)
     {
+        std::vector<basicBrickRenderData*> allBasicBricks;
+        for(int a = 0; a<car->opaqueBasicBricks.size(); a++)
+            allBasicBricks.push_back(car->opaqueBasicBricks[a]);
+        for(int a = 0; a<car->transparentBasicBricks.size(); a++)
+            allBasicBricks.push_back(car->transparentBasicBricks[a]);
+
+        std::vector<specialBrickRenderData*> allSpecialBricks;
+        for(int a = 0; a<car->opaqueSpecialBricks.size(); a++)
+            allSpecialBricks.push_back(car->opaqueSpecialBricks[a]);
+        for(int a = 0; a<car->transparentSpecialBricks.size(); a++)
+            allSpecialBricks.push_back(car->transparentSpecialBricks[a]);
+
+        //A car needs 5 things now
+        //Amounts and settings packet (lights, wheels, bricks, special bricks)
+        //Lights packet
+        //Wheels packet
+        //One or more basic brick packets
+        //One or more special brick packets
+
+        packet amountPacket;
+        amountPacket.writeUInt(11,4); //11 = carPlantRequest
+        amountPacket.writeUInt(0,3);  //0 = amounts packet
+        amountPacket.writeUInt(allBasicBricks.size(),10);
+        amountPacket.writeUInt(allSpecialBricks.size(),10);
+        amountPacket.writeUInt(common->ghostCarLights.size(),6);
+        amountPacket.writeUInt(car->wheelBrickData.size(),6);
+        amountPacket.writeBit(common->loadCarAsCar); //If false, just load the bricks from it
+        amountPacket.writeFloat(origin.x);  //Where we want to load the car
+        amountPacket.writeFloat(origin.y);
+        amountPacket.writeFloat(origin.z);
+        common->connection->send(&amountPacket,true);
+
         packet lightPacket;
-        lightPacket.writeUInt(11,4);
-        lightPacket.writeBit(true); //not a wheel
-        lightPacket.writeBit(true); //not a basic brick
-        lightPacket.writeBit(false); //a light, not a special brick
+        lightPacket.writeUInt(11,4); //11 = carPlantRequest
+        lightPacket.writeUInt(1,3);  //1  = lights packet
         lightPacket.writeUInt(common->ghostCarLights.size(),8);
         for(int a = 0; a<common->ghostCarLights.size(); a++)
         {
@@ -1337,12 +1367,8 @@ namespace syj
         common->connection->send(&lightPacket,true);
 
         packet wheelPacket;
-        wheelPacket.writeUInt(11,4);
-        wheelPacket.writeBit(false); //wheel data
-        wheelPacket.writeBit(common->loadCarAsCar);
-        wheelPacket.writeFloat(origin.x);
-        wheelPacket.writeFloat(origin.y);
-        wheelPacket.writeFloat(origin.z);
+        wheelPacket.writeUInt(11,4); //11 = carPlantRequest
+        wheelPacket.writeUInt(2,3);  //2  = wheels packet
         wheelPacket.writeUInt(car->wheelBrickData.size(),5);
         for(unsigned int a = 0; a<car->wheelBrickData.size(); a++)
         {
@@ -1370,152 +1396,113 @@ namespace syj
         }
         common->connection->send(&wheelPacket,true);
 
-        packet basicBrickPacket;
-        basicBrickPacket.writeUInt(11,4);
-        basicBrickPacket.writeBit(true); //brick data
-        basicBrickPacket.writeBit(false); //basic brick data
-        basicBrickPacket.writeUInt(car->opaqueBasicBricks.size() + car->transparentBasicBricks.size(),8);
-        for(unsigned int a = 0; a<car->opaqueBasicBricks.size(); a++)
+        int bricksLeftToSend = allBasicBricks.size();
+        int bricksSent = 0;
+
+        while(bricksLeftToSend > 0)
         {
-            basicBrickPacket.writeFloat(car->opaqueBasicBricks[a]->position.x);
-            basicBrickPacket.writeFloat(car->opaqueBasicBricks[a]->position.y);
-            basicBrickPacket.writeUInt(car->opaqueBasicBricks[a]->carPlatesUp,10);
-            basicBrickPacket.writeBit(car->opaqueBasicBricks[a]->yHalfPos);
-            basicBrickPacket.writeFloat(car->opaqueBasicBricks[a]->position.z);
+            int bricksSentThisPacket = bricksLeftToSend > 50 ? 50 : bricksLeftToSend;
 
-            basicBrickPacket.writeUInt(car->opaqueBasicBricks[a]->dimensions.x,8);
-            basicBrickPacket.writeUInt(car->opaqueBasicBricks[a]->dimensions.y,8);
-            basicBrickPacket.writeUInt(car->opaqueBasicBricks[a]->dimensions.z,8);
+            packet basicBrickPacket;
+            basicBrickPacket.writeUInt(11,4); //11 = carPlantRequest
+            basicBrickPacket.writeUInt(3,3);  //3  = basic bricks
+            basicBrickPacket.writeUInt(bricksSentThisPacket,6);
 
-            basicBrickPacket.writeUInt(car->opaqueBasicBricks[a]->figuredAngleID,2);
-
-            int tmpMat = car->opaqueBasicBricks[a]->material;
-            int shapeFx = 0;
-            if(tmpMat >= bob)
+            for(int a = bricksSent; a < bricksSent + bricksSentThisPacket; a++)
             {
-                tmpMat -= bob;
-                shapeFx += 2;
-            }
-            else if(tmpMat >= undulo)
-            {
-                tmpMat -= undulo;
-                shapeFx += 1;
-            }
-            basicBrickPacket.writeUInt(shapeFx,4);
-            basicBrickPacket.writeUInt(tmpMat,4);
+                basicBrickRenderData *brick = allBasicBricks[a];
 
-            basicBrickPacket.writeUInt(car->opaqueBasicBricks[a]->color.r*255,8);
-            basicBrickPacket.writeUInt(car->opaqueBasicBricks[a]->color.g*255,8);
-            basicBrickPacket.writeUInt(car->opaqueBasicBricks[a]->color.b*255,8);
-            basicBrickPacket.writeUInt(car->opaqueBasicBricks[a]->color.a*255,8);
+                basicBrickPacket.writeFloat(brick->position.x);
+                basicBrickPacket.writeFloat(brick->position.y);
+                basicBrickPacket.writeUInt(brick->carPlatesUp,10);
+                basicBrickPacket.writeBit(brick->yHalfPos);
+                basicBrickPacket.writeFloat(brick->position.z);
+
+                basicBrickPacket.writeUInt(brick->dimensions.x,8);
+                basicBrickPacket.writeUInt(brick->dimensions.y,8);
+                basicBrickPacket.writeUInt(brick->dimensions.z,8);
+
+                basicBrickPacket.writeUInt(brick->figuredAngleID,2);
+
+                int tmpMat = brick->material;
+                int shapeFx = 0;
+                if(tmpMat >= bob)
+                {
+                    tmpMat -= bob;
+                    shapeFx += 2;
+                }
+                else if(tmpMat >= undulo)
+                {
+                    tmpMat -= undulo;
+                    shapeFx += 1;
+                }
+                basicBrickPacket.writeUInt(shapeFx,4);
+                basicBrickPacket.writeUInt(tmpMat,4);
+
+                basicBrickPacket.writeUInt(brick->color.r*255,8);
+                basicBrickPacket.writeUInt(brick->color.g*255,8);
+                basicBrickPacket.writeUInt(brick->color.b*255,8);
+                basicBrickPacket.writeUInt(brick->color.a*255,8);
+            }
+
+            bricksLeftToSend -= bricksSentThisPacket;
+            bricksSent += bricksSentThisPacket;
+
+            common->connection->send(&basicBrickPacket,true);
         }
-        for(unsigned int a = 0; a<car->transparentBasicBricks.size(); a++)
+
+        bricksLeftToSend = allSpecialBricks.size();
+        bricksSent = 0;
+
+        while(bricksLeftToSend > 0)
         {
-            basicBrickPacket.writeFloat(car->transparentBasicBricks[a]->position.x);
-            basicBrickPacket.writeFloat(car->transparentBasicBricks[a]->position.y);
-            basicBrickPacket.writeUInt(car->transparentBasicBricks[a]->carPlatesUp,10);
-            basicBrickPacket.writeBit(car->transparentBasicBricks[a]->yHalfPos);
-            basicBrickPacket.writeFloat(car->transparentBasicBricks[a]->position.z);
+            int bricksSentThisPacket = bricksLeftToSend > 50 ? 50 : bricksLeftToSend;
 
-            basicBrickPacket.writeUInt(car->transparentBasicBricks[a]->dimensions.x,8);
-            basicBrickPacket.writeUInt(car->transparentBasicBricks[a]->dimensions.y,8);
-            basicBrickPacket.writeUInt(car->transparentBasicBricks[a]->dimensions.z,8);
+            packet specialBrickPacket;
+            specialBrickPacket.writeUInt(11,4); //11 = carPlantRequest
+            specialBrickPacket.writeUInt(4,3);  //4  = special bricks
+            specialBrickPacket.writeUInt(bricksSentThisPacket,6);
 
-            basicBrickPacket.writeUInt(car->transparentBasicBricks[a]->figuredAngleID,2);
-
-            int tmpMat = car->transparentBasicBricks[a]->material;
-            int shapeFx = 0;
-            if(tmpMat >= bob)
+            for(int a = bricksSent; a < bricksSent + bricksSentThisPacket; a++)
             {
-                tmpMat -= bob;
-                shapeFx += 2;
-            }
-            else if(tmpMat >= undulo)
-            {
-                tmpMat -= undulo;
-                shapeFx += 1;
-            }
-            basicBrickPacket.writeUInt(shapeFx,4);
-            basicBrickPacket.writeUInt(tmpMat,4);
+                specialBrickRenderData *brick = allSpecialBricks[a];
 
-            basicBrickPacket.writeUInt(car->transparentBasicBricks[a]->color.r*255,8);
-            basicBrickPacket.writeUInt(car->transparentBasicBricks[a]->color.g*255,8);
-            basicBrickPacket.writeUInt(car->transparentBasicBricks[a]->color.b*255,8);
-            basicBrickPacket.writeUInt(car->transparentBasicBricks[a]->color.a*255,8);
+                specialBrickPacket.writeUInt(brick->type->type->serverID,10);
+
+                specialBrickPacket.writeFloat(brick->position.x);
+                specialBrickPacket.writeFloat(brick->position.y);
+                specialBrickPacket.writeUInt(brick->carPlatesUp,10);
+                specialBrickPacket.writeBit(brick->yHalfPos);
+                specialBrickPacket.writeFloat(brick->position.z);
+
+                specialBrickPacket.writeUInt(brick->figuredAngleID,2);
+
+                int tmpMat = brick->material;
+                int shapeFx = 0;
+                if(tmpMat >= bob)
+                {
+                    tmpMat -= bob;
+                    shapeFx += 2;
+                }
+                else if(tmpMat >= undulo)
+                {
+                    tmpMat -= undulo;
+                    shapeFx += 1;
+                }
+                specialBrickPacket.writeUInt(shapeFx,4);
+                specialBrickPacket.writeUInt(tmpMat,4);
+
+                specialBrickPacket.writeUInt(brick->color.r*255,8);
+                specialBrickPacket.writeUInt(brick->color.g*255,8);
+                specialBrickPacket.writeUInt(brick->color.b*255,8);
+                specialBrickPacket.writeUInt(brick->color.a*255,8);
+            }
+
+            bricksLeftToSend -= bricksSentThisPacket;
+            bricksSent += bricksSentThisPacket;
+
+            common->connection->send(&specialBrickPacket,true);
         }
-        common->connection->send(&basicBrickPacket,true);
-
-        packet specialBrickPacket;
-        specialBrickPacket.writeUInt(11,4);
-        specialBrickPacket.writeBit(true); //brick data
-        specialBrickPacket.writeBit(true); //not basic brick, special brick data
-        specialBrickPacket.writeBit(true); //not a light
-        specialBrickPacket.writeUInt(car->opaqueSpecialBricks.size() + car->transparentSpecialBricks.size(),8);
-        for(unsigned int a = 0; a<car->opaqueSpecialBricks.size(); a++)
-        {
-            specialBrickPacket.writeUInt(car->opaqueSpecialBricks[a]->type->type->serverID,10);
-
-            specialBrickPacket.writeFloat(car->opaqueSpecialBricks[a]->position.x);
-            specialBrickPacket.writeFloat(car->opaqueSpecialBricks[a]->position.y);
-            specialBrickPacket.writeUInt(car->opaqueSpecialBricks[a]->carPlatesUp,10);
-            specialBrickPacket.writeBit(car->opaqueSpecialBricks[a]->yHalfPos);
-            specialBrickPacket.writeFloat(car->opaqueSpecialBricks[a]->position.z);
-
-            specialBrickPacket.writeUInt(car->opaqueSpecialBricks[a]->figuredAngleID,2);
-
-            int tmpMat = car->opaqueSpecialBricks[a]->material;
-            int shapeFx = 0;
-            if(tmpMat >= bob)
-            {
-                tmpMat -= bob;
-                shapeFx += 2;
-            }
-            else if(tmpMat >= undulo)
-            {
-                tmpMat -= undulo;
-                shapeFx += 1;
-            }
-            specialBrickPacket.writeUInt(shapeFx,4);
-            specialBrickPacket.writeUInt(tmpMat,4);
-
-            specialBrickPacket.writeUInt(car->opaqueSpecialBricks[a]->color.r*255,8);
-            specialBrickPacket.writeUInt(car->opaqueSpecialBricks[a]->color.g*255,8);
-            specialBrickPacket.writeUInt(car->opaqueSpecialBricks[a]->color.b*255,8);
-            specialBrickPacket.writeUInt(car->opaqueSpecialBricks[a]->color.a*255,8);
-        }
-        for(unsigned int a = 0; a<car->transparentSpecialBricks.size(); a++)
-        {
-            specialBrickPacket.writeUInt(car->transparentSpecialBricks[a]->type->type->serverID,10);
-
-            specialBrickPacket.writeFloat(car->transparentSpecialBricks[a]->position.x);
-            specialBrickPacket.writeFloat(car->transparentSpecialBricks[a]->position.y);
-            specialBrickPacket.writeUInt(car->transparentSpecialBricks[a]->carPlatesUp,10);
-            specialBrickPacket.writeBit(car->transparentSpecialBricks[a]->yHalfPos);
-            specialBrickPacket.writeFloat(car->transparentSpecialBricks[a]->position.z);
-
-            specialBrickPacket.writeUInt(car->transparentSpecialBricks[a]->figuredAngleID,2);
-
-            int tmpMat = car->transparentSpecialBricks[a]->material;
-            int shapeFx = 0;
-            if(tmpMat >= bob)
-            {
-                tmpMat -= bob;
-                shapeFx += 2;
-            }
-            else if(tmpMat >= undulo)
-            {
-                tmpMat -= undulo;
-                shapeFx += 1;
-            }
-            specialBrickPacket.writeUInt(shapeFx,4);
-            specialBrickPacket.writeUInt(tmpMat,4);
-
-            specialBrickPacket.writeUInt(car->transparentSpecialBricks[a]->color.r*255,8);
-            specialBrickPacket.writeUInt(car->transparentSpecialBricks[a]->color.g*255,8);
-            specialBrickPacket.writeUInt(car->transparentSpecialBricks[a]->color.b*255,8);
-            specialBrickPacket.writeUInt(car->transparentSpecialBricks[a]->color.a*255,8);
-        }
-        common->connection->send(&specialBrickPacket,true);
     }
 
     CEGUI::Window *loadSaveLoadWindow(serverStuff *common)
