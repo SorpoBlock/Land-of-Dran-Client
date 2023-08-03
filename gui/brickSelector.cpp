@@ -95,7 +95,12 @@ namespace syj
 
         std::string text = "Basic " + std::to_string(width) +"-"+ std::to_string(height) +"-"+ std::to_string(length);
         //std::cout<<text<<"  |  "<<imageFilePath<<"\n";
-        CEGUI::ImageManager::getSingleton().addFromImageFile(text, imageFilePath,"/");
+        if(!CEGUI::System::getSingleton().getRenderer()->isTextureDefined(text) && !CEGUI::ImageManager::getSingleton().isImageTypeAvailable(text) && !CEGUI::ImageManager::getSingleton().isDefined(text))
+            CEGUI::ImageManager::getSingleton().addFromImageFile(text, imageFilePath,"/");
+
+        if(brickBox->isChild(text))
+            return brickBox->getChild(text)->getID();
+
         button->getChild("BrickImage")->setProperty("Image",text);
         button->getChild("BrickText")->setText(text);
         button->setName(text);
@@ -111,6 +116,7 @@ namespace syj
         button->setVisible(true);
         button->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&buyBrick));
         button->setArea(CEGUI::UDim(xOffset,0),CEGUI::UDim(yOffset,0),CEGUI::UDim(xSize,0),CEGUI::UDim(0.3,0));
+        button->setID(brickBox->getChildCount());
         brickBox->addChild(button);
 
         return brickBox->getChildCount() - 1;
@@ -131,7 +137,12 @@ namespace syj
         float column = numBricks % columns;
         float row = numBricks / columns;
 
-        CEGUI::ImageManager::getSingleton().addFromImageFile(text, imageFilePath,"/");
+        if(!CEGUI::System::getSingleton().getRenderer()->isTextureDefined(text) && !CEGUI::ImageManager::getSingleton().isImageTypeAvailable(text) && !CEGUI::ImageManager::getSingleton().isDefined(text))
+            CEGUI::ImageManager::getSingleton().addFromImageFile(text, imageFilePath,"/");
+
+        if(brickBox->isChild(text))
+            return;
+
         button->getChild("BrickImage")->setProperty("Image",text);
         button->getChild("BrickText")->setText(text);
         button->setName(text);
@@ -145,6 +156,7 @@ namespace syj
         button->setVisible(true);
         button->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&buyBrick));
         button->setArea(CEGUI::UDim(xOffset,0),CEGUI::UDim(yOffset,0),CEGUI::UDim(xSize,0),CEGUI::UDim(0.3,0));
+        button->setID(brickBox->getChildCount());
         brickBox->addChild(button);
     }
 }

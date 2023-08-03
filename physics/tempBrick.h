@@ -34,7 +34,7 @@ namespace syj
         bool basicChanged = false;
         bool specialChanged = false;
         bool isBasic = false;
-        bool resize = false;
+        int resizeMode = 0; //0 = none, 1 = grow, 2 = shrink
         bool superShiftMode = false;
 
         int brickMoveCooldown = 80;
@@ -44,7 +44,9 @@ namespace syj
         //Returns true if a brick type was selected
         //Doesn't handle changing palette color
         brickMaterial mat = none;
-        bool manipulate(inputMap &controls,CEGUI::Window *brickPopup,CEGUI::Window *brickSelector,float yaw,audioPlayer *speaker,newBrickRenderer &renderer,bool &brickSlotChanged);
+        void scroll(CEGUI::Window *hud,CEGUI::Window *brickSelector,newBrickRenderer &renderer,int mouseWheelChange);
+        void selectBrick(inputMap &controls,CEGUI::Window *hud,CEGUI::Window *brickSelector,newBrickRenderer &renderer,bool &guiOpened,bool &guiClosed);
+        void manipulate(inputMap &controls,CEGUI::Window *brickPopup,CEGUI::Window *brickSelector,float yaw,audioPlayer *speaker,newBrickRenderer &renderer);
         void plant(newBrickRenderer &renderer,btDynamicsWorld *world,serverStuff *serverConnection);
 
         void teleport(glm::vec3 pos);

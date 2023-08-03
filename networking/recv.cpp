@@ -185,10 +185,6 @@ namespace syj
             {
                 if(newDynamics[a]->serverID == tmp.dynamicID)
                 {
-                    newDynamics[a]->createBoxBody(world,tmp.finalHalfExtents,tmp.finalOffset,tmp.initPos); //will return it it already has one
-                    currentPlayer = newDynamics[a];
-                    giveUpControlOfCurrentPlayer = false;
-
                     //Fix glitch getting out of vehicle:
                     if(newDynamics[a]->body)
                     {
@@ -203,7 +199,12 @@ namespace syj
                         newDynamics[a]->body->setLinearVelocity(btVector3(0,0,0));
                         newDynamics[a]->body->setAngularVelocity(btVector3(0,0,0));
                         newDynamics[a]->body->setWorldTransform(t);
+                        //std::cout<<"\nPhysics subpacket 0 "<<o.x<<","<<o.y<<","<<o.z<<"\n";
                     }
+
+                    newDynamics[a]->createBoxBody(world,tmp.finalHalfExtents,tmp.finalOffset,tmp.initPos); //will return it it already has one
+                    currentPlayer = newDynamics[a];
+                    giveUpControlOfCurrentPlayer = false;
 
                     used = true;
                     iter3 = clientPhysicsPackets.erase(iter3);
@@ -248,6 +249,7 @@ namespace syj
                     tmp.initPos.setX(data->readFloat());
                     tmp.initPos.setY(data->readFloat());
                     tmp.initPos.setZ(data->readFloat());
+                    ohWow->canJet = data->readBit();
 
                     for(int a = 0; a<ohWow->clientPhysicsPackets.size(); a++)
                     {
@@ -287,6 +289,9 @@ namespace syj
                     float velX = data->readFloat();
                     float velY = data->readFloat();
                     float velZ = data->readFloat();
+                    ohWow->canJet = data->readBit();
+
+                    //std::cout<<"\nPhysics subtype 3 "<<posX<<","<<posY<<","<<posZ<<"\n";
 
                     if(ohWow->currentPlayer && ohWow->currentPlayer->body)
                     {

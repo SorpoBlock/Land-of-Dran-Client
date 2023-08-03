@@ -63,6 +63,14 @@ namespace syj
         unsigned int deletionTime = 0;
     };
 
+    enum hudType
+    {
+        allClosed = 0,
+        paintCan = 1,
+        brickBar = 2,
+        inventory = 3
+    };
+
     struct serverStuff
     {
         //For example, if you're driving a car:
@@ -78,9 +86,11 @@ namespace syj
         std::vector<std::string> typingPlayersNames;
         std::string typingPlayerNameString = "";
 
+        hudType currentlyOpen = allClosed;
+
         heldItemType *paintCan = 0;
         item *fixedPaintCanItem = 0;
-        bool usingPaint = false;
+        //bool usingPaint = false;
 
         std::vector<particleType*> particleTypes;
         std::vector<emitterType*> emitterTypes;
@@ -130,6 +140,7 @@ namespace syj
         material *brickMatRamp;//("assets/brick/rampBrickMat.txt");
         material *brickMatBottom;//("assets/brick/bottomBrickMat.txt");
 
+        bool canJet = true;
         bool adminCam = false;
         int cameraTargetServerID = -1;
         newDynamic *cameraTarget = 0;
@@ -153,7 +164,7 @@ namespace syj
         bool loadCarAsCar = false;
         std::vector<heldItemType*> itemTypes;
         std::vector<brickFakeKills> fakeKills;
-        bool inventoryOpen = true;
+        //bool inventoryOpen = true;
         unsigned int selectedSlot = 0;
         heldItemType *inventory[inventorySize] = {0,0,0};
 

@@ -235,8 +235,14 @@ namespace syj
 
         if(!ground)
         {
+            if(isJetting)
+            {
+                speed *= 2.0;
+                blendTime = 150;
+            }
+            else
+                blendTime = 600;
             walkVelocity *= speed;
-            blendTime = 600;
         }
         else
         {

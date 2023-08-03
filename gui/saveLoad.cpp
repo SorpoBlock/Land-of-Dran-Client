@@ -1167,7 +1167,6 @@ bool loadCar()
         }
 
         char *fileName = new char[intBuf+1];
-        std::cout<<"File name length: "<<intBuf<<"\n";
         carFile.read(fileName,intBuf);
         if(!fileName)
         {

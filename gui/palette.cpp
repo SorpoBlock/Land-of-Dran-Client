@@ -105,8 +105,8 @@ namespace syj
         x.d_scale = actualLocation;
         window->setPosition(CEGUI::UVector2(x,y));
 
-        if(SDL_GetTicks() - lastSlide > autoClose)
-            close();
+        //if(SDL_GetTicks() - lastSlide > autoClose)
+          //  close();
     }
 
     paletteGUI::paletteGUI(CEGUI::Window *hud)

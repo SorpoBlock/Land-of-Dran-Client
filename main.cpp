@@ -45,6 +45,8 @@
 #include <CURL/curl.h>
 #include "code/gui/updater.h"
 
+#define hardCodedNetworkVersion 10008
+
 #define cammode_firstPerson 0
 #define cammode_thirdPerson 1
 #define cammode_adminCam 2
@@ -56,6 +58,7 @@ using namespace std::chrono;
 void gotKicked(client *theClient,unsigned int reason,void *userData)
 {
     serverStuff *ohWow = (serverStuff*)userData;
+    ohWow->kicked = true;
     ohWow->fatalNotify("Disconnected!","Connection with server lost, reason: " + std::to_string(reason) + ".","Exit");
 }
 
@@ -510,6 +513,11 @@ int main(int argc, char *argv[])
 
     ohWow.picker = new avatarPicker(context.getResolution().x,context.getResolution().y);
 
+    ohWow.brickMat = new material("assets/brick/otherBrickMat.txt");
+    ohWow.brickMatSide = new material("assets/brick/sideBrickMat.txt");
+    ohWow.brickMatRamp = new material("assets/brick/rampBrickMat.txt");
+    ohWow.brickMatBottom = new material("assets/brick/bottomBrickMat.txt");
+
     coolLabel:
 
     hud->setVisible(false);
@@ -617,11 +625,6 @@ int main(int argc, char *argv[])
     else
         connected = true;
 
-    ohWow.brickMat = new material("assets/brick/otherBrickMat.txt");
-    ohWow.brickMatSide = new material("assets/brick/sideBrickMat.txt");
-    ohWow.brickMatRamp = new material("assets/brick/rampBrickMat.txt");
-    ohWow.brickMatBottom = new material("assets/brick/bottomBrickMat.txt");
-
     blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",ohWow.brickSelector,true);
     ohWow.staticBricks.allocateVertBuffer();
     ohWow.staticBricks.allocatePerTexture(ohWow.brickMat);
@@ -632,6 +635,7 @@ int main(int argc, char *argv[])
 
     packet requestName;
     requestName.writeUInt(clientPacketType_requestName,4);
+    requestName.writeUInt(hardCodedNetworkVersion,32);
     requestName.writeString(ohWow.wantedName);
     requestName.writeFloat(ohWow.wantedColor.r);
     requestName.writeFloat(ohWow.wantedColor.g);
@@ -641,11 +645,16 @@ int main(int argc, char *argv[])
     info("Connection established, requesting types...");
 
     while(ohWow.waitingForServerResponse)
-        serverConnection.run();
-    if(ohWow.kicked)
     {
-        error("Kicked or server full or malformed server response.");
-        return 0;
+        serverConnection.run();
+        if(ohWow.kicked)
+        {
+            error("Kicked or server full or outdated client or malformed server response.");
+            joinServer->getChild("StatusText")->setText("Kicked by server!");
+            ohWow.waitingToPickServer = true;
+            goto coolLabel;
+            return 0;
+        }
     }
 
     int shadowRes = 1024;
@@ -807,7 +816,7 @@ int main(int argc, char *argv[])
     int transSendInterval = 30;
     int lastSentTransData = 0;
     bool doJump = false;
-    ohWow.inventoryOpen = hud->getChild("Inventory")->isVisible();
+    //ohWow.inventoryOpen = hud->getChild("Inventory")->isVisible();
 
     info("Starting main game loop!");
 
@@ -839,6 +848,10 @@ int main(int argc, char *argv[])
         }
 
         //Options:
+
+        hud->getChild("Inventory")->setVisible(ohWow.currentlyOpen == inventory);
+        if(ohWow.currentlyOpen != paintCan)
+            ohWow.palette->close();
 
         //ohWow.playerCamera->setFieldOfVision(ohWow.settings->fieldOfView);
         ohWow.brickSelector->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
@@ -912,7 +925,7 @@ int main(int argc, char *argv[])
             //Buoyancy and jetting
             if(ohWow.currentPlayer)
             {
-                if(rightDown)
+                if(rightDown && ohWow.canJet)
                 {
                     ohWow.currentPlayer->body->setGravity(btVector3(0,20,0));
                 }
@@ -1198,7 +1211,7 @@ int main(int argc, char *argv[])
                 {
                     packet data;
                     data.writeUInt(9,4);
-                    if(ohWow.inventoryOpen)
+                    if(ohWow.currentlyOpen == inventory)
                         data.writeUInt(ohWow.selectedSlot,3);
                     else
                         data.writeUInt(7,3);
@@ -1226,7 +1239,7 @@ int main(int argc, char *argv[])
                 //if(!ohWow.brickSelector->isMouseContainedInArea() && !evalWindow->isMouseContainedInArea())
                 if(context.getMouseLocked())
                 {
-                    if(ohWow.inventoryOpen)
+                    if(ohWow.currentlyOpen == inventory)
                     {
                         if(event.wheel.y > 0)
                         {
@@ -1240,6 +1253,10 @@ int main(int argc, char *argv[])
                             if(ohWow.selectedSlot >= inventorySize)
                                 ohWow.selectedSlot = 0;
                         }
+                    }
+                    else if(ohWow.currentlyOpen == brickBar)
+                    {
+                        myTempBrick.scroll(hud,ohWow.brickSelector,ohWow.staticBricks,event.wheel.y);
                     }
                     else
                     {
@@ -1272,7 +1289,7 @@ int main(int argc, char *argv[])
                     data.writeFloat(ohWow.playerCamera->getDirection().x);
                     data.writeFloat(ohWow.playerCamera->getDirection().y);
                     data.writeFloat(ohWow.playerCamera->getDirection().z);
-                    if(ohWow.inventoryOpen)
+                    if(ohWow.currentlyOpen == inventory)
                         data.writeUInt(ohWow.selectedSlot,3);
                     else
                         data.writeUInt(7,3);
@@ -1311,7 +1328,7 @@ int main(int argc, char *argv[])
                     //We actually clicked on something in the world...
                     if(idx != -1 && ohWow.cameraTarget)
                     {
-                        if(stageOfSelection == -1 && !ohWow.inventoryOpen && !ohWow.usingPaint)
+                        if(ohWow.currentlyOpen == brickBar)
                             myTempBrick.teleport(BtToGlm(res.m_hitPointWorld[idx]));
 
                         if(box->currentPhase == selectionBox::selectionPhase::waitingForClick)
@@ -1413,10 +1430,10 @@ int main(int argc, char *argv[])
         }
         if(playerInput.commandPressed(openInventory))
         {
-            ohWow.inventoryOpen = !hud->getChild("Inventory")->isVisible();
-            hud->getChild("Inventory")->setVisible(ohWow.inventoryOpen);
-            if(ohWow.inventory)
-                ohWow.usingPaint = false;
+            if(ohWow.currentlyOpen == inventory)
+                ohWow.currentlyOpen = allClosed;
+            else
+                ohWow.currentlyOpen = inventory;
         }
         if(playerInput.commandPressed(openEvalWindow))
         {
@@ -1440,28 +1457,16 @@ int main(int argc, char *argv[])
             context.setMouseLock(!context.getMouseLocked());
         if(playerInput.commandPressed(changePaintColumn))
         {
-            ohWow.inventoryOpen = false;
-            //if(ohWow.inventoryOpen)
-            //{
-                /*if(!ohWow.usingPaint)
-                {*/
-                    glm::vec3 pos = ohWow.playerCamera->getPosition();
-                    ohWow.speaker->playSound("Rattle",false,pos.x,pos.y,pos.z);
-                //}
-                /*if(myTempBrick.brickSlotSelected != -1)
-                    bottomBarLastAct = SDL_GetTicks();
-                myTempBrick.brickSlotSelected = -1;*/
-                ohWow.usingPaint = true;
-            //}
+            ohWow.currentlyOpen = paintCan;
+            glm::vec3 pos = ohWow.playerCamera->getPosition();
+            ohWow.speaker->playSound("Rattle",false,pos.x,pos.y,pos.z);
             ohWow.palette->advanceColumn();
             myTempBrick.basicChanged = myTempBrick.basicChanged || myTempBrick.isBasic;
             myTempBrick.specialChanged = myTempBrick.specialChanged || !myTempBrick.isBasic;
         }
         CEGUI::Window *brickPopup = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("HUD")->getChild("BrickPopup");
 
-        bottomBarShouldBeOpen = myTempBrick.brickSlotSelected != -1;
-        if(ohWow.inventoryOpen)
-            bottomBarShouldBeOpen = false;
+        bottomBarShouldBeOpen = ohWow.currentlyOpen == brickBar; //myTempBrick.brickSlotSelected != -1;
         float bottomBarPos = std::clamp(((float)SDL_GetTicks() - bottomBarLastAct) / bottomBarOpenTime,0.f,1.f);
         if(bottomBarShouldBeOpen)
             bottomBarPos = bottomBarClose + bottomBarPos * (bottomBarOpen - bottomBarClose);
@@ -1481,17 +1486,24 @@ int main(int argc, char *argv[])
             brickHighlighter->setPosition(CEGUI::UVector2(dx,dy));
         }
 
-        /*if(bottomBarShouldBeOpen)
-            ohWow.usingPaint = false;*/
-
-        if(!ohWow.inventoryOpen)
+        bool guiOpened=false,guiClosed=false;
+        myTempBrick.selectBrick(playerInput,hud,ohWow.brickSelector,ohWow.staticBricks,guiOpened,guiClosed);
+        if(guiOpened && !guiClosed)
         {
-            bool hidePaint = false;
-            if(myTempBrick.manipulate(playerInput,hud,ohWow.brickSelector,ohWow.playerCamera->getYaw(),ohWow.speaker,ohWow.staticBricks,hidePaint))
+            if(ohWow.currentlyOpen != brickBar)
                 bottomBarLastAct = SDL_GetTicks();
-            if(hidePaint)
-                ohWow.usingPaint = false;
+            ohWow.currentlyOpen = brickBar;
+
         }
+        if(guiClosed && !guiOpened)
+        {
+            if(ohWow.currentlyOpen == brickBar)
+                bottomBarLastAct = SDL_GetTicks();
+            ohWow.currentlyOpen = allClosed;
+        }
+
+        if(myTempBrick.brickSlotSelected != -1)
+            myTempBrick.manipulate(playerInput,hud,ohWow.brickSelector,ohWow.playerCamera->getYaw(),ohWow.speaker,ohWow.staticBricks);
 
         if(playerInput.commandPressed(plantBrick))
         {
@@ -1770,7 +1782,7 @@ int main(int argc, char *argv[])
             {
                 if(SDL_GetTicks() - ohWow.currentPlayer->flingPreventionStartTime > 100)
                 {
-                    if(ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,false))
+                    if(ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,ohWow.canJet && rightDown))
                         didJump = true;
                     if(didJump)
                         ohWow.speaker->playSound("Jump",false,ohWow.playerCamera->getPosition().x,ohWow.playerCamera->getPosition().y-1.0,ohWow.playerCamera->getPosition().z);
@@ -1778,10 +1790,10 @@ int main(int argc, char *argv[])
             }
 
             int fullControlState  = netControlState + (leftDown << 5);
-            fullControlState |= ohWow.inventoryOpen ? 0b1000000 : 0;
+            fullControlState |= (ohWow.currentlyOpen == inventory) ? 0b1000000 : 0;
             fullControlState |= ohWow.selectedSlot << 7;
             fullControlState += rightDown << 11;
-            fullControlState |= ohWow.usingPaint ? (1 << 12) : 0;
+            fullControlState |= (ohWow.currentlyOpen == paintCan) ? (1 << 12) : 0;
             fullControlState |= chatEditbox->isActive() ? (1 << 13) : 0;
 
             glm::vec3 playerDirDiff = ohWow.playerCamera->getDirection() - lastPlayerDir;
@@ -1799,8 +1811,8 @@ int main(int argc, char *argv[])
                     transPacket.writeBit(didJump);//This one controls if the sound is played
                     transPacket.writeBit(context.getMouseLocked() && leftDown);
                     transPacket.writeBit(context.getMouseLocked() && rightDown);
-                    transPacket.writeBit(ohWow.usingPaint);
-                    if(ohWow.usingPaint)
+                    transPacket.writeBit(ohWow.currentlyOpen == paintCan);
+                    if(ohWow.currentlyOpen == paintCan)
                     {
                         glm::vec4 paintColor = ohWow.palette->getColor();
                         transPacket.writeFloat(paintColor.r);
@@ -1815,7 +1827,7 @@ int main(int argc, char *argv[])
                     transPacket.writeFloat(ohWow.playerCamera->getDirection().x);
                     transPacket.writeFloat(ohWow.playerCamera->getDirection().y);
                     transPacket.writeFloat(ohWow.playerCamera->getDirection().z);
-                    if(ohWow.inventoryOpen)
+                    if(ohWow.currentlyOpen == inventory)
                         transPacket.writeUInt(ohWow.selectedSlot,3);
                     else
                         transPacket.writeUInt(7,3);
@@ -2225,7 +2237,7 @@ int main(int argc, char *argv[])
                         ohWow.items[a]->updateTransform();
                 }
 
-                if(ohWow.paintCan && ohWow.fixedPaintCanItem && ohWow.usingPaint && ohWow.cameraTarget)
+                if(ohWow.paintCan && ohWow.fixedPaintCanItem && ohWow.currentlyOpen == paintCan && ohWow.cameraTarget)
                 {
                     ohWow.fixedPaintCanItem->pitch = -1.57;
                     ohWow.fixedPaintCanItem->hidden = false;
@@ -2235,7 +2247,7 @@ int main(int argc, char *argv[])
                 else
                     ohWow.fixedPaintCanItem->hidden = true;
 
-                if(ohWow.inventoryOpen)
+                if(ohWow.currentlyOpen == inventory)
                 {
                     for(unsigned int a = 0; a<inventorySize; a++)
                     {

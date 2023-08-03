@@ -22,18 +22,95 @@ namespace syj
         renderer.addSpecialBrick(&special,0,0,0);
     }
 
-    bool tempBrick::manipulate(inputMap &controls,CEGUI::Window *hud,CEGUI::Window *brickSelector,float yaw,audioPlayer *speaker,newBrickRenderer &renderer,bool &brickSlotChanged)
+    void tempBrick::scroll(CEGUI::Window *hud,CEGUI::Window *brickSelector,newBrickRenderer &renderer,int mouseWheelChange)
     {
-        brickSlotChanged = false;
+        if(mouseWheelChange == 0)
+            return;
+
+        brickSlotSelected += mouseWheelChange;
+        if(brickSlotSelected < 1)
+            brickSlotSelected = 9;
+        if(brickSlotSelected > 9)
+            brickSlotSelected = 1;
+
+        CEGUI::Window *brickPopup = hud->getChild("BrickPopup");
+        CEGUI::Window *brickText = brickPopup->getChild("BrickText");
+        cart = brickSelector->getChild("Cart" + std::to_string(brickSlotSelected));
+        brickText->setText(cart->getChild("BrickText")->getText());
+        std::string name = cart->getChild("BrickText")->getText().c_str();
+
+        if(name.length() < 1)
+        {
+            cart = 0;
+            return;
+        }
+
+        bool newIsBasic = name.substr(0,5) == "Basic";
+        if(newIsBasic != isBasic)
+        {
+            basicChanged = true;
+            specialChanged = true;
+        }
+        isBasic = newIsBasic;
+        rotationID = 0;
+        if(isBasic)
+        {
+            int *dims = (int*)cart->getUserData();
+            basic.dimensions = glm::ivec4(dims[0],dims[1],dims[2],0);
+
+            yHalfPos = (basic.dimensions.y % 2);
+            if(rotationID % 2 == 0)
+            {
+                xHalfPos = (basic.dimensions.x % 2);
+                zHalfPos = (basic.dimensions.z % 2);
+            }
+            else
+            {
+                zHalfPos = (basic.dimensions.x % 2);
+                xHalfPos = (basic.dimensions.z % 2);
+            }
+        }
+        else
+        {
+            int *preID = (int*)cart->getUserData();
+            if(preID)
+            {
+                int typeID = preID[0];
+                special.typeID = typeID;
+                special.type = renderer.transparentSpecialBrickTypes[typeID];
+
+                yHalfPos = (special.type->type->height % 2);
+                if(rotationID % 2 == 0)
+                {
+                    xHalfPos = (special.type->type->width % 2);
+                    zHalfPos = (special.type->type->length % 2);
+                }
+                else
+                {
+                    zHalfPos = (special.type->type->width % 2);
+                    xHalfPos = (special.type->type->length % 2);
+                }
+            }
+        }
+    }
+
+    void tempBrick::selectBrick(inputMap &controls,CEGUI::Window *hud,CEGUI::Window *brickSelector,newBrickRenderer &renderer,bool &guiOpened,bool &guiClosed)
+    {
         int oldSelect = brickSlotSelected;
 
         for(int a = 0; a<9; a++)
         {
             if(controls.commandPressed((inputCommand)(useBrick1 + a)))
             {
-                speaker->playSound("ClickChange",false,getX(),getY(),getZ());
+                //Double tapping same brick bar key closes bar
+                if(brickSlotSelected == a+1)
+                {
+                    brickSlotSelected = -1;
+                    guiClosed = true;
+                    guiOpened = false;
+                    return;
+                }
 
-                brickSlotChanged = true;
                 brickSlotSelected = a+1;
 
                 CEGUI::Window *brickPopup = hud->getChild("BrickPopup");
@@ -41,11 +118,15 @@ namespace syj
                 cart = brickSelector->getChild("Cart" + std::to_string(a+1));
                 brickText->setText(cart->getChild("BrickText")->getText());
                 std::string name = cart->getChild("BrickText")->getText().c_str();
+
+                guiOpened = true;
+
                 if(name.length() < 1)
                 {
                     cart = 0;
                     continue;
                 }
+
                 bool newIsBasic = name.substr(0,5) == "Basic";
                 if(newIsBasic != isBasic)
                 {
@@ -98,17 +179,34 @@ namespace syj
 
         if(controls.commandPressed(hideBricks))
         {
-            brickSlotChanged = true;
             basicChanged = true;
             specialChanged = true;
             brickSlotSelected = -1;
             cart = 0;
         }
 
+        if(brickSlotSelected == -1 && !cart)
+            guiClosed = (oldSelect == -1) != (brickSlotSelected == -1);
+    }
+
+    void tempBrick::manipulate(inputMap &controls,CEGUI::Window *hud,CEGUI::Window *brickSelector,float yaw,audioPlayer *speaker,newBrickRenderer &renderer)
+    {
         if(controls.commandPressed(resizeToggle))
         {
-            resize = !resize;
-            hud->getChild("ResizeText")->setVisible(resize);
+            resizeMode++;
+            if(resizeMode > 2)
+                resizeMode = 0;
+
+            if(resizeMode == 0)
+                hud->getChild("ResizeText")->setVisible(false);
+            else
+            {
+                hud->getChild("ResizeText")->setVisible(true);
+                if(resizeMode == 1)
+                    hud->getChild("ResizeText")->setText("Grow Brick");
+                else if(resizeMode == 2)
+                    hud->getChild("ResizeText")->setText("Shrink Brick");
+            }
         }
 
         if(controls.commandPressed(superShift))
@@ -116,9 +214,6 @@ namespace syj
             superShiftMode = !superShiftMode;
             hud->getChild("ShiftText")->setVisible(superShiftMode);
         }
-
-        if(brickSlotSelected == -1 && !cart)
-            return (oldSelect == -1) != (brickSlotSelected == -1);
 
         bool rotateCorrect = false;
 
@@ -175,7 +270,7 @@ namespace syj
                 }
             }
             std::cout<<"Half poses after: "<<(xHalfPos?"t":"f")<<" and "<<(zHalfPos?"t":"f")<<"\n";
-            return (oldSelect == -1) != (brickSlotSelected == -1);
+            return;
         }
 
         //Start movements / resizing
@@ -238,7 +333,7 @@ namespace syj
                     firstPressTime = SDL_GetTicks();
                 lastBrickMove = SDL_GetTicks();
                 speaker->playSound("ClickMove",false,getX(),getY(),getZ());
-                if(resize && isBasic)
+                if(resizeMode == 1 && isBasic)
                 {
                     if(cart)
                     {
@@ -254,6 +349,26 @@ namespace syj
                             yHalfPos = true;
                         }
                         //position.y += (1.2 / 3.0) / 2.0;
+                    }
+                }
+                else if(resizeMode == 2 && isBasic)
+                {
+                    if(cart)
+                    {
+                        if(basic.dimensions.y > 1)
+                        {
+                            basic.dimensions.y--;
+                            basicChanged = true;
+                            if(yHalfPos)
+                            {
+                                yHalfPos = false;
+                            }
+                            else
+                            {
+                                uYPos--;
+                                yHalfPos = true;
+                            }
+                        }
                     }
                 }
                 else if(superShiftMode)
@@ -295,21 +410,41 @@ namespace syj
                     firstPressTime = SDL_GetTicks();
                 lastBrickMove = SDL_GetTicks();
                 speaker->playSound("ClickMove",false,getX(),getY(),getZ());
-                if(resize && isBasic)
+                if(resizeMode == 1 && isBasic)
                 {
-                    if(basic.dimensions.y > 1 && cart)
+                    if(cart)
                     {
-                        basic.dimensions.y--;
+                        basic.dimensions.y++;
                         basicChanged = true;
-                        //position.y -= (1.2 / 3.0) / 2.0;
                         if(yHalfPos)
                         {
+                            uYPos++;
                             yHalfPos = false;
                         }
                         else
                         {
-                            uYPos--;
                             yHalfPos = true;
+                        }
+                        //position.y += (1.2 / 3.0) / 2.0;
+                    }
+                }
+                else if(resizeMode == 2 && isBasic)
+                {
+                    if(cart)
+                    {
+                        if(basic.dimensions.y > 1)
+                        {
+                            basic.dimensions.y--;
+                            basicChanged = true;
+                            if(yHalfPos)
+                            {
+                                yHalfPos = false;
+                            }
+                            else
+                            {
+                                uYPos--;
+                                yHalfPos = true;
+                            }
                         }
                     }
                 }
@@ -392,7 +527,7 @@ namespace syj
             brickMoveDir.x = sin(yawOfBrick);
             brickMoveDir.z = cos(yawOfBrick);
 
-            if(superShiftMode && !(resize && isBasic))
+            if(superShiftMode && !(resizeMode == 1 && isBasic))
             {
                 if(isBasic)
                 {
@@ -406,12 +541,12 @@ namespace syj
                 }
             }
 
-            if(isBasic && resize)
+            if(isBasic && resizeMode == 1)
             {
                 if(fabs(brickMoveDir.x) > 0.01)
                     brickMoveDir.z = 0.0;
 
-                std::cout<<"Resize move: "<<brickMoveDir.x<<","<<brickMoveDir.y<<","<<brickMoveDir.z<<" rot: "<<rotationID<<"\n";
+                //std::cout<<"Resize move: "<<brickMoveDir.x<<","<<brickMoveDir.y<<","<<brickMoveDir.z<<" rot: "<<rotationID<<"\n";
 
                 if(rotationID % 2)
                 {
@@ -548,7 +683,156 @@ namespace syj
                 if(basic.dimensions.z > 255)
                     basic.dimensions.z = 255;
 
-                return (oldSelect == -1) != (brickSlotSelected == -1);
+                return;
+            }
+            else if(isBasic && resizeMode == 2)
+            {
+                if(fabs(brickMoveDir.x) > 0.01)
+                    brickMoveDir.z = 0.0;
+
+                //std::cout<<"Shrink move: "<<brickMoveDir.x<<","<<brickMoveDir.y<<","<<brickMoveDir.z<<" rot: "<<rotationID<<"\n";
+
+                if(rotationID % 2)
+                {
+                    if(fabs(brickMoveDir.x) > 0 && basic.dimensions.x < 1)
+                        return;
+                    if(fabs(brickMoveDir.z) > 0 && basic.dimensions.z < 1)
+                        return;
+
+                    basic.dimensions.x -= fabs(brickMoveDir.z);
+                    basic.dimensions.z -= fabs(brickMoveDir.x);
+
+                    if(brickMoveDir.x > 0)
+                    {
+                        if(xHalfPos)
+                        {
+                            xHalfPos = false;
+                            xPos++;
+                        }
+                        else
+                            xHalfPos = true;
+                    }
+                    if(brickMoveDir.z > 0)
+                    {
+                        if(zHalfPos)
+                        {
+                            zHalfPos = false;
+                            zPos++;
+                        }
+                        else
+                            zHalfPos = true;
+                    }
+                    if(brickMoveDir.x < 0)
+                    {
+                        if(xHalfPos)
+                        {
+                            xHalfPos = false;
+                        }
+                        else
+                        {
+                            xHalfPos = true;
+                            xPos--;
+                        }
+                    }
+                    if(brickMoveDir.z < 0)
+                    {
+                        if(zHalfPos)
+                        {
+                            zHalfPos = false;
+                        }
+                        else
+                        {
+                            zHalfPos = true;
+                            zPos--;
+                        }
+                    }
+                }
+                else
+                {
+                    glm::vec3 adjust = glm::vec3(0.5,0,0.5);
+                    if(brickMoveDir.x < 0)
+                    {
+                        brickMoveDir.x = fabs(brickMoveDir.x);
+                        adjust.x = -adjust.x;
+                    }
+                    if(brickMoveDir.y < 0)
+                        brickMoveDir.x = fabs(brickMoveDir.y);
+                    if(brickMoveDir.z < 0)
+                    {
+                        brickMoveDir.z = fabs(brickMoveDir.z);
+                        adjust.z = - adjust.z;
+                    }
+
+                    if(basic.dimensions.x > 1 || brickMoveDir.x > 0)
+                        basic.dimensions.x -= brickMoveDir.x;
+                    else
+                        brickMoveDir.x = 0;
+                    if(basic.dimensions.y > 1 || brickMoveDir.y > 0)
+                        basic.dimensions.y -= brickMoveDir.y;
+                    else
+                        brickMoveDir.y = 0;
+                    if(basic.dimensions.z > 1 || brickMoveDir.z > 0)
+                        basic.dimensions.z -= brickMoveDir.z;
+                    else
+                        brickMoveDir.z = 0;
+
+                    float moveX = brickMoveDir.x * adjust.x;
+                    float moveZ = brickMoveDir.z * adjust.z;
+                    if(moveX > 0.4)
+                    {
+                        if(xHalfPos)
+                        {
+                            xHalfPos = false;
+                            xPos++;
+                        }
+                        else
+                            xHalfPos = true;
+                    }
+                    if(moveX < -0.4)
+                    {
+                        if(xHalfPos)
+                        {
+                            xHalfPos = false;
+                        }
+                        else
+                        {
+                            xHalfPos = true;
+                            xPos--;
+                        }
+                    }
+                    if(moveZ > 0.4)
+                    {
+                        if(zHalfPos)
+                        {
+                            zHalfPos = false;
+                            zPos++;
+                        }
+                        else
+                            zHalfPos = true;
+                    }
+                    if(moveZ < -0.4)
+                    {
+                        if(zHalfPos)
+                        {
+                            zHalfPos = false;
+                        }
+                        else
+                        {
+                            zHalfPos = true;
+                            zPos--;
+                        }
+                    }
+                    basicChanged = true;
+                }
+
+                if(basic.dimensions.x < 1)
+                    basic.dimensions.x = 1;
+                if(basic.dimensions.y < 1)
+                    basic.dimensions.y = 1;
+                if(basic.dimensions.z < 1)
+                    basic.dimensions.z = 1;
+
+                return;
             }
             else
             {
@@ -618,7 +902,7 @@ namespace syj
         else
             position.z = floor(position.z+0.5)-0.5;*/
 
-        return (oldSelect == -1) != (brickSlotSelected == -1);
+        return;
     }
 
     void tempBrick::teleport(glm::vec3 pos)
