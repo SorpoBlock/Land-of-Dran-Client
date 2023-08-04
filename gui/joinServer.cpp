@@ -27,6 +27,10 @@ namespace syj
 
     size_t getLoginResponse(void *buffer,size_t size,size_t nmemb,void *userp)
     {
+        serverStuff *ohWow = (serverStuff*)userp;
+        if(!ohWow)
+            return nmemb;
+
         if(nmemb > 0)
         {
             CEGUI::Window *statusText = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/StatusText");
@@ -52,6 +56,8 @@ namespace syj
                 CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setText("Join");
                 std::string afterSpace = response.substr(space+1,response.length() - (space+1));
                 std::cout<<"Session token: "<<afterSpace<<"\n";
+                ohWow->loggedIn = true;
+                ohWow->sessionToken = afterSpace;
             }
             else if(beforeSpace == "BAD")
                 statusText->setText("Incorrect password!");
@@ -68,6 +74,7 @@ namespace syj
     bool loginButton(const CEGUI::EventArgs &e)
     {
         CEGUI::Window *joinServerWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer");
+        serverStuff *ohWow = (serverStuff*)joinServerWindow->getUserData();
         std::string username = joinServerWindow->getChild("UsernameBox")->getText().c_str();
         std::string password = joinServerWindow->getChild("PasswordBox")->getText().c_str();
 
@@ -78,9 +85,12 @@ namespace syj
             return true;
         }
 
+        ohWow->loggedName = username;
+
         CURL *curlHandle = curl_easy_init();
         curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYPEER , 0);
         curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYHOST , 0);
+        curl_easy_setopt(curlHandle, CURLOPT_WRITEDATA, ohWow);
         curl_easy_setopt(curlHandle,CURLOPT_WRITEFUNCTION,getLoginResponse);
         std::string url = "https://dran.land/getSessionToken.php";
         std::string args = "pass=" + password + "&name=" + username;

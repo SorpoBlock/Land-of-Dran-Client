@@ -44,6 +44,8 @@
 #include "code/physics/selectionBox.h"
 #include <CURL/curl.h>
 #include "code/gui/updater.h"
+//#include <openssl/sha.h>
+#include <bearssl/bearssl_hash.h>
 
 #define hardCodedNetworkVersion 10008
 
@@ -60,6 +62,16 @@ void gotKicked(client *theClient,unsigned int reason,void *userData)
     serverStuff *ohWow = (serverStuff*)userData;
     ohWow->kicked = true;
     ohWow->fatalNotify("Disconnected!","Connection with server lost, reason: " + std::to_string(reason) + ".","Exit");
+}
+
+std::string GetHexRepresentation(const unsigned char *Bytes, size_t Length) {
+    std::ostringstream os;
+    os.fill('0');
+    os<<std::hex;
+    for(const unsigned char *ptr = Bytes; ptr < Bytes+Length; ++ptr) {
+        os<<std::setw(2)<<(unsigned int)*ptr;
+    }
+    return os.str();
 }
 
 bool godRayButton(const CEGUI::EventArgs &e)
@@ -636,7 +648,25 @@ int main(int argc, char *argv[])
     packet requestName;
     requestName.writeUInt(clientPacketType_requestName,4);
     requestName.writeUInt(hardCodedNetworkVersion,32);
-    requestName.writeString(ohWow.wantedName);
+
+    requestName.writeBit(ohWow.loggedIn);
+    if(ohWow.loggedIn)
+    {
+        requestName.writeString(ohWow.loggedName);
+
+        unsigned char hash[32];
+
+        br_sha256_context shaContext;
+        br_sha256_init(&shaContext);
+        br_sha256_update(&shaContext,ohWow.sessionToken.c_str(),ohWow.sessionToken.length());
+        br_sha256_out(&shaContext,hash);
+
+        std::string hexStr = GetHexRepresentation(hash,32);
+        requestName.writeString(hexStr);
+    }
+    else
+        requestName.writeString(ohWow.wantedName);
+
     requestName.writeFloat(ohWow.wantedColor.r);
     requestName.writeFloat(ohWow.wantedColor.g);
     requestName.writeFloat(ohWow.wantedColor.b);
@@ -652,6 +682,7 @@ int main(int argc, char *argv[])
             error("Kicked or server full or outdated client or malformed server response.");
             joinServer->getChild("StatusText")->setText("Kicked by server!");
             ohWow.waitingToPickServer = true;
+            ohWow.kicked = false;
             goto coolLabel;
             return 0;
         }

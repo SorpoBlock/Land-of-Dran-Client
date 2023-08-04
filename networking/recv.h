@@ -73,6 +73,10 @@ namespace syj
 
     struct serverStuff
     {
+        std::string loggedName = "";
+        bool loggedIn = false;
+        std::string sessionToken = "";
+
         //For example, if you're driving a car:
         bool giveUpControlOfCurrentPlayer = false;
         newDynamic *currentPlayer = 0;
