@@ -89,6 +89,7 @@ namespace syj
         messageBox->setUserData((int*)messageBoxStatus);
         messageBox->subscribeEvent(CEGUI::FrameWindow::EventCloseClicked,CEGUI::Event::Subscriber(&messageBoxAccept));
         hud->getChild("PlayerList")->subscribeEvent(CEGUI::FrameWindow::EventCloseClicked,CEGUI::Event::Subscriber(&closePlayersList));
+
         ((CEGUI::MultiColumnList*)hud->getChild("PlayerList/List"))->addColumn("Name",0,CEGUI::UDim(1,0));
         messageBox->getChild("MessageButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&messageBoxAccept));
         hud->getChild("Chat/Editbox")->subscribeEvent(CEGUI::Editbox::EventTextAccepted,CEGUI::Event::Subscriber(&sendChat));

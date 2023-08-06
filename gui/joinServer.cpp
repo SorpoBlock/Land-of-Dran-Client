@@ -49,7 +49,7 @@ namespace syj
             std::string beforeSpace = response.substr(0,space);
 
             if(beforeSpace == "NOACCOUNT")
-                statusText->setText("No account by that name. Register at http://dran.land");
+                statusText->setText("No account by that name. Register at https://dran.land");
             else if(beforeSpace == "GOOD")
             {
                 statusText->setText(std::string("Welcome, ") + std::string(CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/UsernameBox")->getText().c_str()));
@@ -69,6 +69,95 @@ namespace syj
         }
 
         return nmemb;
+    }
+
+    size_t writeServerList(void *buffer,size_t size,size_t nmemb,void *userp)
+    {
+        if(!userp)
+            return nmemb;
+        if(nmemb == 0)
+            return nmemb;
+        std::ofstream *file = (std::ofstream*)userp;
+        file->write((char*)buffer,nmemb);
+        return nmemb;
+    }
+
+    void refreshServerList()
+    {
+        CEGUI::Window *joinServerWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer");
+        CEGUI::MultiColumnList *serverListGUI = (CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList");
+        serverListGUI->clearAllSelections();
+        serverListGUI->resetList();
+
+        std::ofstream serverList("serverList.tmp");
+        if(!serverList.is_open())
+        {
+            error("Could not open serverList.tmp for writing!");
+            return;
+        }
+
+        CURL *curlHandle = curl_easy_init();
+        curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYPEER , 0);
+        curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYHOST , 0);
+        curl_easy_setopt(curlHandle, CURLOPT_WRITEDATA, &serverList);
+        curl_easy_setopt(curlHandle,CURLOPT_WRITEFUNCTION,writeServerList);
+        std::string url = "https://dran.land/rawList.php";
+        curl_easy_setopt(curlHandle,CURLOPT_URL,url.c_str());
+        CURLcode res = curl_easy_perform(curlHandle);
+        curl_easy_cleanup(curlHandle);
+
+        serverList.close();
+
+        std::ifstream serverListIn("serverList.tmp");
+        if(!serverListIn.is_open())
+        {
+            error("Could not open serverList.tmp for reading!");
+            return;
+        }
+
+        std::string line = "";
+        while(!serverListIn.eof())
+        {
+            getline(serverListIn,line);
+            if(line == "" || line == " ")
+                continue;
+
+            std::vector<std::string> fields;
+            std::istringstream iss(line);
+            std::string token;
+            while(std::getline(iss,token,'\t'))
+                fields.push_back(token);
+            if(fields.size() != 5)
+            {
+                error("Malformed server list entry!");
+                continue;
+            }
+
+            int idx = serverListGUI->getRowCount();
+            serverListGUI->addRow(idx);
+
+            for(int a = 0; a<5; a++)
+            {
+                //Mature 0-1 turns into no-yes:
+                if(a == 4)
+                {
+                    if(fields[a] == "0")
+                        fields[a] = "No";
+                    else if(fields[a] == "1")
+                        fields[a] = "Yes";
+                }
+
+                CEGUI::ListboxTextItem *cell = new CEGUI::ListboxTextItem(fields[a],idx);
+                cell->setTextColours(CEGUI::Colour(0,0,0,1.0));
+                cell->setSelectionBrushImage("GWEN/Input.ListBox.EvenLineSelected");
+                cell->setID(idx);
+                serverListGUI->setItem(cell,a,idx);
+            }
+        }
+
+        serverListIn.close();
+
+        remove("serverList.tmp");
     }
 
     bool loginButton(const CEGUI::EventArgs &e)
@@ -134,6 +223,27 @@ namespace syj
         return true;
     }
 
+    bool copyServerListIP(const CEGUI::EventArgs &e)
+    {
+        CEGUI::Window *joinServerWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer");
+        CEGUI::MultiColumnList *serverListGUI = (CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList");
+        CEGUI::Editbox *ipBox = (CEGUI::Editbox*)joinServerWindow->getChild("IPBox");
+
+        if(serverListGUI->getSelectedCount() < 2)
+            return true;
+
+        CEGUI::ListboxItem *first = serverListGUI->getFirstSelectedItem();
+        if(!first)
+            return true;
+        CEGUI::ListboxItem *second = serverListGUI->getNextSelected(first);
+        if(!second)
+            return true;
+        std::string ip = second->getText().c_str();
+        ipBox->setText(ip);
+
+        return true;
+    }
+
     CEGUI::Window *loadJoinServer(serverStuff *ohWow)
     {
         CEGUI::Window *joinServerWindow = addGUIFromFile("joinServer.layout");
@@ -154,13 +264,24 @@ namespace syj
         joinServerWindow->getChild("OptionsButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&optionsButton));
         joinServerWindow->getChild("UpdateButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&updaterButton));
         joinServerWindow->getChild("LoginButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&loginButton));
+        joinServerWindow->getChild("Refresh")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&refreshServerList));
+
+        joinServerWindow->getChild("ServerList")->subscribeEvent(CEGUI::MultiColumnList::EventSelectionChanged,CEGUI::Event::Subscriber(&copyServerListIP));
 
         joinServerWindow->getChild("RedSlider")->subscribeEvent(CEGUI::Slider::EventValueChanged,CEGUI::Event::Subscriber(&playerColorSlider));
         joinServerWindow->getChild("GreenSlider")->subscribeEvent(CEGUI::Slider::EventValueChanged,CEGUI::Event::Subscriber(&playerColorSlider));
         joinServerWindow->getChild("BlueSlider")->subscribeEvent(CEGUI::Slider::EventValueChanged,CEGUI::Event::Subscriber(&playerColorSlider));
 
+        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Server Name",0,CEGUI::UDim(0.5,0));
+        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("IP Address",1,CEGUI::UDim(0.2,0));
+        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Players",2,CEGUI::UDim(0.1,0));
+        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Max Players",3,CEGUI::UDim(0.1,0));
+        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Mature",4,CEGUI::UDim(0.09,0));
+
         CEGUI::EventArgs empty;
         playerColorSlider(empty);
+
+        refreshServerList();
 
         return joinServerWindow;
     }

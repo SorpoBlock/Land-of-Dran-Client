@@ -392,7 +392,7 @@ namespace syj
 
         if(replacedExe)
         {
-            updateError("You will need to restart for this update to take full effect.");
+            updateError("You will need to restart the game for this update to take full effect.");
             CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/UpdateText")->setText("[colour='FFFF0000']Restart to complete update!");
         }
         else

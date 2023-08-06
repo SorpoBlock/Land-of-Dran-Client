@@ -1062,7 +1062,7 @@ namespace syj
                         return;
                     }
 
-                    if(addOrRemove)
+                    if(addOrRemove) //adding
                     {
                         CEGUI::ListboxItem *entry = playerList->findListItemWithText(name,NULL);
                         if(entry)
@@ -1077,7 +1077,7 @@ namespace syj
                         cell->setID(idx);
                         playerList->setItem(cell,0,idx);
                     }
-                    else
+                    else //removing
                     {
                         CEGUI::ListboxItem *entry = playerList->findListItemWithText(name,NULL);
                         if(entry)
