@@ -47,7 +47,7 @@
 //#include <openssl/sha.h>
 #include <bearssl/bearssl_hash.h>
 
-#define hardCodedNetworkVersion 10008
+#define hardCodedNetworkVersion 10009
 
 #define cammode_firstPerson 0
 #define cammode_thirdPerson 1
@@ -736,9 +736,8 @@ int main(int argc, char *argv[])
     renderTarget *waterReflection = 0;
     renderTarget *waterRefraction = 0;
     renderTarget *waterDepth = 0;
-    double waterLevel = 15.0;
     texture *dudvTexture = 0;
-    tessellation water(waterLevel);
+    tessellation water(0);
 
     if(ohWow.settings->waterQuality != waterStatic)
     {
@@ -965,12 +964,12 @@ int main(int argc, char *argv[])
                     btTransform t = ohWow.currentPlayer->body->getWorldTransform();
                     btVector3 o = t.getOrigin();
 
-                    if(o.y() < waterLevel-2.0)
+                    if(o.y() < ohWow.waterLevel-2.0)
                     {
                         ohWow.currentPlayer->body->setDamping(0.4,0.0);
                         ohWow.currentPlayer->body->setGravity(btVector3(0,-0.5,0) * world->getGravity());
                     }
-                    else if(o.y() < waterLevel)
+                    else if(o.y() < ohWow.waterLevel)
                     {
                         ohWow.currentPlayer->body->setDamping(0.4,0.0);
                         ohWow.currentPlayer->body->setGravity(btVector3(0,0,0));
@@ -1996,8 +1995,8 @@ int main(int argc, char *argv[])
                 waterReflection->bind();
 
                     basicProgram.use();
-                        glUniform1f(basic.clipHeight,waterLevel);
-                        ohWow.playerCamera->renderReflection(basic,waterLevel);
+                        glUniform1f(basic.clipHeight,ohWow.waterLevel);
+                        ohWow.playerCamera->renderReflection(basic,ohWow.waterLevel);
                         ohWow.env->passUniforms(basic);
                         ohWow.settings->render(basic);
                         glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
@@ -2021,9 +2020,9 @@ int main(int argc, char *argv[])
 
 
                     newModelProgram.use();
-                        glUniform1f(newModelUnis.clipHeight,waterLevel);
+                        glUniform1f(newModelUnis.clipHeight,ohWow.waterLevel);
                         ohWow.settings->render(newModelUnis);
-                        ohWow.playerCamera->renderReflection(newModelUnis,waterLevel);
+                        ohWow.playerCamera->renderReflection(newModelUnis,ohWow.waterLevel);
                         ohWow.env->passUniforms(newModelUnis);
                         for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
                             ohWow.newDynamicTypes[a]->render(&newModelUnis);
@@ -2041,8 +2040,8 @@ int main(int argc, char *argv[])
 
                     brickSimpleProgram.use();
 
-                        glUniform1f(brickSimpleUnis.clipHeight,waterLevel);
-                        ohWow.playerCamera->renderReflection(brickSimpleUnis,waterLevel);
+                        glUniform1f(brickSimpleUnis.clipHeight,ohWow.waterLevel);
+                        ohWow.playerCamera->renderReflection(brickSimpleUnis,ohWow.waterLevel);
                         ohWow.env->passUniforms(brickSimpleUnis);
                         ohWow.settings->render(brickSimpleUnis);
 
@@ -2061,7 +2060,7 @@ int main(int argc, char *argv[])
                 waterRefraction->bind();
 
                     newModelProgram.use();
-                        glUniform1f(newModelUnis.clipHeight,-waterLevel);
+                        glUniform1f(newModelUnis.clipHeight,-ohWow.waterLevel);
                         ohWow.settings->render(newModelUnis);
                         ohWow.playerCamera->render(newModelUnis);
                         ohWow.env->passUniforms(newModelUnis);
@@ -2069,7 +2068,7 @@ int main(int argc, char *argv[])
                             ohWow.newDynamicTypes[a]->render(&newModelUnis);
 
                     basicProgram.use();
-                        glUniform1f(basic.clipHeight,-waterLevel);
+                        glUniform1f(basic.clipHeight,-ohWow.waterLevel);
                         ohWow.playerCamera->render(basic);
                         ohWow.env->passUniforms(basic);
 
@@ -2099,7 +2098,7 @@ int main(int argc, char *argv[])
                     brickSimpleProgram.use();
                     ohWow.env->passUniforms(brickSimpleUnis);
                     ohWow.settings->render(brickSimpleUnis);
-                        glUniform1f(brickSimpleUnis.clipHeight,-waterLevel);
+                        glUniform1f(brickSimpleUnis.clipHeight,-ohWow.waterLevel);
                         ohWow.playerCamera->render(brickSimpleUnis);
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2212,6 +2211,7 @@ int main(int argc, char *argv[])
                         ohWow.settings->render(waterUnis);
                         glUniform1f(waterUnis.deltaT,((float)SDL_GetTicks()) / 1000.0);     //why both of these...?
                         glUniform1f(waterUnis.waterDelta,((float)SDL_GetTicks())*0.0001);
+                        glUniform1f(waterUnis.target->getUniformLocation("waterLevel"),ohWow.waterLevel); //TODO: Don't string match this every frame
                         ohWow.env->passUniforms(waterUnis,true);
                         ohWow.playerCamera->render(waterUnis);
 
@@ -2416,6 +2416,7 @@ int main(int argc, char *argv[])
 
             //Remember, 'god rays' actually includes the underwater texture too
             basicProgram.use();
+                glUniform1f(basicProgram.getUniformLocation("waterLevel"),ohWow.waterLevel); //TODO: Don't string match this every frame
                 ohWow.settings->render(basic);
                 ohWow.playerCamera->render(basic);
                 ohWow.env->passUniforms(basic);

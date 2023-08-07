@@ -3,7 +3,6 @@
 enum serverToClientPacketType
 {
     packetType_connectionRepsonse = 0,
-    //packetType_addDynamic = 1,
     packetType_addRemoveDynamic = 1,
     packetType_addDynamicType = 2,
     packetType_addSpecialBrickType = 3,
@@ -12,19 +11,15 @@ enum serverToClientPacketType
     packetType_skipBricksCompile = 6,
     packetType_updateDynamicTransforms = 7,
     packetType_addRemoveLight = 8,
-    //packetType_removeDynamic = 8,
     packetType_removeBrick = 9,
     packetType_addBricksToBuiltCar = 10,
     packetType_luaPasswordResponse = 11,
     packetType_setColorPalette = 12,
-    //packetType_clientLuaConsoleText = 13,
     packetType_clientPhysicsData = 13,
-    //packetType_addGUIText = 14,
     packetType_ping = 14,
     packetType_removeBrickVehicle = 15,
     packetType_setShapeName = 16,
     packetType_addItemType = 17,
-    //packetType_addItem = 18,
     packetType_addRemoveItem = 18,
     packetType_addSoundType = 19,
     packetType_playSound = 20,
@@ -33,11 +28,10 @@ enum serverToClientPacketType
     packetType_addOrRemovePlayer = 23,
     packetType_updateBrick = 24,
     packetType_debugLocations = 25,
-    //packetType_removeItem = 26,
     packetType_addRemoveRope = 26,
     packetType_addMessage = 27,
     packetType_setNodeColors = 28,
-    packetType_otherAsset = 29,
+    packetType_waterOrDecal = 29,
     packetType_newEmitterParticleType = 30,
     packetType_emitterAddRemove = 31
 };
@@ -784,8 +778,19 @@ namespace syj
                 }
                 return;
             }
-            case packetType_otherAsset:
+            case packetType_waterOrDecal:
             {
+                bool water = data->readBit();
+                if(water)
+                {
+                    ohWow->waterLevel = data->readFloat();
+                    if(ohWow->waterLevel < -10000)
+                        ohWow->waterLevel = 10000;
+                    if(ohWow->waterLevel > 10000)
+                        ohWow->waterLevel = 10000;
+                    return;
+                }
+
                 int howMany = data->readUInt(7);
                 //std::cout<<"How many other assets: "<<howMany<<"\n";
                 for(int a = 0; a<howMany; a++)

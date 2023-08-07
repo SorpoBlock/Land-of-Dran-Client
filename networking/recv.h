@@ -73,6 +73,8 @@ namespace syj
 
     struct serverStuff
     {
+        float waterLevel = 15.0;
+
         std::string loggedName = "";
         bool loggedIn = false;
         std::string sessionToken = "";
