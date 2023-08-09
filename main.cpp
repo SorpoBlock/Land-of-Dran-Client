@@ -47,7 +47,7 @@
 //#include <openssl/sha.h>
 #include <bearssl/bearssl_hash.h>
 
-#define hardCodedNetworkVersion 10009
+#define hardCodedNetworkVersion 10010
 
 #define cammode_firstPerson 0
 #define cammode_thirdPerson 1
@@ -1762,7 +1762,7 @@ int main(int argc, char *argv[])
         for(unsigned int a = 0; a<ohWow.particleTypes.size(); a++)
             ohWow.particleTypes[a]->deadParticlesCheck(ohWow.playerCamera->getPosition(),deltaT);
 
-        sortLights(ohWow.lights,ohWow.playerCamera->getPosition());
+        sortLights(ohWow.lights,ohWow.playerCamera->getPosition(),deltaT);
 
         //Networking:
 

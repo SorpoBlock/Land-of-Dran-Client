@@ -127,7 +127,7 @@ namespace syj
             std::string token;
             while(std::getline(iss,token,'\t'))
                 fields.push_back(token);
-            if(fields.size() != 5)
+            if(fields.size() != 6)
             {
                 error("Malformed server list entry!");
                 continue;
@@ -136,10 +136,10 @@ namespace syj
             int idx = serverListGUI->getRowCount();
             serverListGUI->addRow(idx);
 
-            for(int a = 0; a<5; a++)
+            for(int a = 0; a<6; a++)
             {
                 //Mature 0-1 turns into no-yes:
-                if(a == 4)
+                if(a == 5)
                 {
                     if(fields[a] == "0")
                         fields[a] = "No";
@@ -273,10 +273,11 @@ namespace syj
         joinServerWindow->getChild("BlueSlider")->subscribeEvent(CEGUI::Slider::EventValueChanged,CEGUI::Event::Subscriber(&playerColorSlider));
 
         ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Server Name",0,CEGUI::UDim(0.5,0));
-        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("IP Address",1,CEGUI::UDim(0.2,0));
-        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Players",2,CEGUI::UDim(0.1,0));
-        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Max Players",3,CEGUI::UDim(0.1,0));
-        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Mature",4,CEGUI::UDim(0.09,0));
+        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("IP Address",1,CEGUI::UDim(0.12,0));
+        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Bricks",2,CEGUI::UDim(0.1,0));
+        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Players",3,CEGUI::UDim(0.08,0));
+        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Max Players",4,CEGUI::UDim(0.1,0));
+        ((CEGUI::MultiColumnList*)joinServerWindow->getChild("ServerList"))->addColumn("Mature",5,CEGUI::UDim(0.09,0));
 
         CEGUI::EventArgs empty;
         playerColorSlider(empty);

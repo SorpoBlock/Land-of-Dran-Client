@@ -52,8 +52,45 @@ namespace syj
         node = target;
     }
 
-    void light::calcPos()
+    void light::calcPos(float deltaT)
     {
+        if(fabs(yawVel) > 0.001)
+        {
+            glm::vec3 getLength = glm::vec3(direction.x,direction.y,direction.z);
+            float pitch = asin(direction.y / glm::length(getLength));
+            float yaw = atan2(direction.x,direction.z);
+
+            yaw += deltaT * yawVel;
+
+            direction.x = sin(yaw);
+            direction.y = sin(pitch);
+            direction.z = cos(yaw);
+        }
+
+        float ticks = SDL_GetTicks();
+        ticks *= 0.001;
+
+        if(blinkVel.r < 0.001)
+            finalLightColor.r = color.r * fabs(cos(ticks * blinkVel.r));
+        else if(blinkVel.r > 0.001)
+            finalLightColor.r = color.r * fabs(sin(ticks * blinkVel.r));
+        else
+            finalLightColor.r = color.r;
+
+        if(blinkVel.g < 0.001)
+            finalLightColor.g = color.g * fabs(cos(ticks * blinkVel.g));
+        else if(blinkVel.g > 0.001)
+            finalLightColor.g = color.g * fabs(sin(ticks * blinkVel.g));
+        else
+            finalLightColor.g = color.g;
+
+        if(blinkVel.b < 0.001)
+            finalLightColor.b = color.b * fabs(cos(ticks * blinkVel.b));
+        else if(blinkVel.b > 0.001)
+            finalLightColor.b = color.b * fabs(sin(ticks * blinkVel.b));
+        else
+            finalLightColor.b = color.b;
+
         finalDirection = direction;
 
         switch(mode)
@@ -125,10 +162,10 @@ namespace syj
         }
     }
 
-    void sortLights(std::vector<light*> &lightVec,glm::vec3 cameraPos)
+    void sortLights(std::vector<light*> &lightVec,glm::vec3 cameraPos,float deltaT)
     {
         for(unsigned int a = 0; a<lightVec.size(); a++)
-            lightVec[a]->calcPos();
+            lightVec[a]->calcPos(deltaT);
 
         auto iter = lightVec.begin();
         while(iter != lightVec.end())
@@ -156,7 +193,7 @@ namespace syj
         for(int a = 0; a<std::min(8,(int)lightVec.size()); a++)
         {
             glUniform1i(unis.pointLightUsed[a],true);
-            glUniform3vec(unis.pointLightColor[a],lightVec[a]->color);
+            glUniform3vec(unis.pointLightColor[a],lightVec[a]->finalLightColor);
             glUniform3vec(unis.pointLightPos[a],lightVec[a]->position);
             glUniform1i(unis.pointLightIsSpotlight[a],lightVec[a]->isSpotlight);
             if(lightVec[a]->isSpotlight)

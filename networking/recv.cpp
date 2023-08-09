@@ -409,6 +409,12 @@ namespace syj
                             float r = data->readFloat();
                             float g = data->readFloat();
                             float b = data->readFloat();
+                            float rVel = data->readFloat();
+                            float gVel = data->readFloat();
+                            float bVel = data->readFloat();
+                            float yawVel = data->readFloat();
+                            tmp->yawVel = yawVel;
+                            tmp->blinkVel = glm::vec3(rVel,gVel,bVel);
                             tmp->serverID = id;
                             tmp->createdTime = SDL_GetTicks();
                             tmp->color = glm::vec3(r,g,b);
@@ -436,6 +442,12 @@ namespace syj
                     float r = data->readFloat();
                     float g = data->readFloat();
                     float b = data->readFloat();
+                    float rVel = data->readFloat();
+                    float gVel = data->readFloat();
+                    float bVel = data->readFloat();
+                    float yawVel = data->readFloat();
+                    tmp->yawVel = yawVel;
+                    tmp->blinkVel = glm::vec3(rVel,gVel,bVel);
                     tmp->serverID = id;
                     tmp->createdTime = SDL_GetTicks();
                     tmp->color = glm::vec3(r,g,b);
@@ -973,6 +985,15 @@ namespace syj
                     material += 2000;
 
                 bool colliding = data->readBit();
+
+                /*int printMask = 0;
+                std::string printName = "";
+                bool hasPrint = data->readBit();
+                if(hasPrint)
+                {
+                    printMask = data->readUInt(6);
+                    printName = data->readString();
+                }*/
 
                 for(int b = 0; b<ohWow->staticBricks.opaqueBasicBricks.size(); b++)
                 {

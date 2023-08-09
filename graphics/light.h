@@ -23,13 +23,16 @@ namespace syj
         glm::vec4 direction = glm::vec4(0,0,0,0); //w = cosine angle phi
         glm::vec4 finalDirection = glm::vec4(0,0,0,0);
         bool isSpotlight = false;
+        glm::vec3 blinkVel = glm::vec3(0,0,0);
+        glm::vec3 finalLightColor = glm::vec3(0,0,0);
+        float yawVel = 0;
 
         unsigned int createdTime = 0;
         int lifeTimeMS = -1;
 
         int serverID = -1;
         glm::vec3 color = glm::vec3(1,1,1);
-        void calcPos();
+        void calcPos(float deltaT);
         void clearAttachments(glm::vec3 _worldPos = glm::vec3(0,0,0));
         void attachToCar(livingBrick *car,glm::vec3 offset);
         void attachToBrick(brickRenderData *brick);
@@ -37,7 +40,7 @@ namespace syj
         void attachToItem(item *dynamic,std::string target = "");
     };
 
-    void sortLights(std::vector<light*> &lightVec,glm::vec3 cameraPos);
+    void sortLights(std::vector<light*> &lightVec,glm::vec3 cameraPos,float deltaT);
     void renderLights(uniformsHolder &unis,std::vector<light*> &lightVec);
 }
 
