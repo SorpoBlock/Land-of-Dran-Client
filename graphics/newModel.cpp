@@ -44,9 +44,12 @@ namespace syj
 
     void newDynamic::setFixedRotation(std::string name,glm::mat4 rotation)
     {
-        for(int a = 0; a<type->allMeshes.size(); a++)
+        for(int a = 0; a<type->instancedMeshes.size(); a++)
         {
-            if(type->allMeshes[a]->name == name)
+            if(!type->instancedMeshes[a]->isInstanced())
+                continue;
+
+            if(type->instancedMeshes[a]->name == name)
             {
                 meshFixedRotation[a] = rotation;
                 meshFixedRotationUsed[a] = true;
@@ -65,9 +68,24 @@ namespace syj
             delete shape;
         }
 
-        for(int a = 0; a<type->allMeshes.size(); a++)
+        for(unsigned int a = 0; a<type->nonInstancedMeshes.size(); a++)
         {
-            instancedMesh *mesh = (instancedMesh*)type->allMeshes[a];
+            for(int b = 0; b<type->nonInstancedMeshes[a]->instances.size(); b++)
+            {
+                if(type->nonInstancedMeshes[a]->instances[b] == this)
+                {
+                    type->nonInstancedMeshes[a]->instances.erase(type->nonInstancedMeshes[a]->instances.begin() + b);
+                    break;
+                }
+            }
+        }
+
+        for(int a = 0; a<type->instancedMeshes.size(); a++)
+        {
+            if(!type->instancedMeshes[a]->isInstanced())
+                continue;
+
+            instancedMesh *mesh = (instancedMesh*)type->instancedMeshes[a];
             for(int b = 0; b<mesh->instances.size(); b++)
             {
                 if(mesh->instances[b] == this)
@@ -84,13 +102,17 @@ namespace syj
     {
         scale = baseScale;
         type = _type;
-        for(unsigned int a = 0; a<type->allMeshes.size(); a++)
+
+        for(unsigned int a = 0; a<type->nonInstancedMeshes.size(); a++)
+            type->nonInstancedMeshes[a]->instances.push_back(this);
+
+        for(unsigned int a = 0; a<type->instancedMeshes.size(); a++)
         {
             meshColors.push_back(glm::vec3(0,0,1));
             meshTransforms.push_back(glm::mat4(1.0));
             meshFixedRotation.push_back(glm::mat4(1.0));
             meshFixedRotationUsed.push_back(false);
-            ((instancedMesh*)type->allMeshes[a])->instances.push_back(this);
+            ((instancedMesh*)type->instancedMeshes[a])->instances.push_back(this);
         }
 
         for(int a = 0; a<type->animations.size(); a++)
@@ -109,7 +131,7 @@ namespace syj
     {
         for(int a = 0; a<meshColors.size(); a++)
         {
-            if(type->allMeshes[a]->name == nodeName)
+            if(type->instancedMeshes[a]->name == nodeName)
             {
                 meshColors[a] = color;
                 meshColorChanged = true;
@@ -267,24 +289,7 @@ namespace syj
                 if(animationProgress[a] >= type->animations[a].endFrame)
                     animationProgress[a] -= type->animations[a].endFrame - type->animations[a].startFrame;
                 animationFrame[a] = animationProgress[a] + type->animations[a].startFrame;
-
-                /*if(type->animations.size() > 0 && playingAnimation != -1)
-                {
-                    animationProgress += deltaMS * type->animations[playingAnimation].speedDefault * animationSpeed;
-                    if(animationProgress >= type->animations[playingAnimation].endFrame)
-                        animationProgress -= type->animations[playingAnimation].endFrame - type->animations[playingAnimation].startFrame;
-                    frame = animationProgress + type->animations[playingAnimation].startFrame;
-                }*/
             }
-
-            /*frame = type->defaultFrame;
-            if(type->animations.size() > 0 && playingAnimation != -1)
-            {
-                animationProgress += deltaMS * type->animations[playingAnimation].speedDefault * animationSpeed;
-                if(animationProgress >= type->animations[playingAnimation].endFrame)
-                    animationProgress -= type->animations[playingAnimation].endFrame - type->animations[playingAnimation].startFrame;
-                frame = animationProgress + type->animations[playingAnimation].startFrame;
-            }*/
         }
 
         glm::mat4 newTrans = glm::mat4(1.0);
@@ -350,58 +355,7 @@ namespace syj
                         }
                     }
                 }
-                /*glm::vec3 pos = node->posFrames[0];
-                for(unsigned int a = 0; a<node->posFrames.size(); a++)
-                {
-                    if(node->posTimes[a] >= frame)
-                    {
-                        float nextTime = node->posTimes[a];
-                        float prevTime = node->posTimes[node->posTimes.size() - 1];
-                        glm::vec3 nextPos = node->posFrames[a];
-                        glm::vec3 prevPos = node->posFrames[node->posTimes.size() - 1];
-                        if(a > 0)
-                        {
-                            prevTime = node->posTimes[a-1];
-                            prevPos = node->posFrames[a-1];
-                        }
 
-                        float timeAheadPrev = frame - prevTime;
-                        float timeBetween = nextTime - prevTime;
-                        float progress = timeAheadPrev / timeBetween;
-
-                        pos = lerpRedundant(prevPos,nextPos,progress);
-
-                        break;
-                    }
-                }
-
-                glm::quat rot = node->rotFrames[0];
-                for(unsigned int a = 1; a<node->rotFrames.size(); a++)
-                {
-                    if(node->rotTimes[a] >= frame)
-                    {
-                        float nextTime = node->rotTimes[a];
-                        float prevTime = node->rotTimes[node->rotTimes.size() - 1];
-                        glm::quat nextRot = node->rotFrames[a];
-                        glm::quat prevRot = node->rotFrames[node->rotTimes.size() - 1];
-                        if(a > 0)
-                        {
-                            prevTime = node->rotTimes[a-1];
-                            prevRot = node->rotFrames[a-1];
-                        }
-
-                        float timeAheadPrev = frame - prevTime;
-                        float timeBetween = nextTime - prevTime;
-                        float progress = timeAheadPrev / timeBetween;
-
-                        rot = glm::slerp(prevRot,nextRot,progress);
-
-                        break;
-                    }
-                }*/
-
-                //glm::vec3 pos = glm::vec3(0,0,0);
-                //glm::quat rot = glm::quat(1,0,0,0);
                 newTrans = glm::translate(node->rotationPivot) * glm::mat4(rot) * glm::translate(-node->rotationPivot) * glm::translate(pos);
             }
         }
@@ -527,10 +481,20 @@ namespace syj
         for(unsigned int a = 0; a<scene->mNumMeshes; a++)
         {
             aiMesh *src = scene->mMeshes[a];
-            instancedMesh *dest = new instancedMesh(src);
-            dest->materialToUse = allMaterials[src->mMaterialIndex];
-            dest->meshIndex = allMeshes.size();
-            allMeshes.push_back(dest);
+            instancedMesh *dest = 0;
+            dest = new instancedMesh(src);
+            ((instancedMesh*)dest)->materialToUse = allMaterials[src->mMaterialIndex];
+            dest->meshIndex = instancedMeshes.size();
+            instancedMeshes.push_back(dest);
+
+            if(std::string(src->mName.C_Str()) == "Face1")
+            {
+                dest->hidden = true;
+                nonInstancedMesh *tmp = new nonInstancedMesh(src);
+                tmp->counterPart = dest;
+                tmp->parent = this;
+                nonInstancedMeshes.push_back(tmp);
+            }
         }
 
         //Recursive function
@@ -614,8 +578,8 @@ namespace syj
 
         for(unsigned int a = 0; a<source->mNumMeshes; a++)
         {
-            newMesh *toPutBack = parent->allMeshes[source->mMeshes[a]];
-            if(toPutBack->isInstanced)
+            newMesh *toPutBack = parent->instancedMeshes[source->mMeshes[a]];
+            if(toPutBack->isInstanced())
                 instancedMeshes.push_back((instancedMesh*)toPutBack);
         }
 
@@ -644,8 +608,8 @@ namespace syj
 
         for(unsigned int a = 0; a<source->mNumMeshes; a++)
         {
-            newMesh *toPutBack = parent->allMeshes[source->mMeshes[a]];
-            if(toPutBack->isInstanced)
+            newMesh *toPutBack = parent->instancedMeshes[source->mMeshes[a]];
+            if(toPutBack->isInstanced())
                 instancedMeshes.push_back((instancedMesh*)toPutBack);
         }
 
@@ -698,15 +662,15 @@ namespace syj
         glBindVertexArray(0);
     }
 
-    void instancedMesh::fillBuffer(instancedLayout dest,void *data,int size,int elements)
+    void newMesh::fillBuffer(instancedLayout dest,void *data,int size,int elements,bool elementBuffer)
     {
-        scope("instancedMesh::fillBuffer");
+        scope("newMesh::fillBuffer");
 
         GLenum err = glGetError();
 
         glBindVertexArray(vao);
 
-        if(dest == newIndex)
+        if(elementBuffer)
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,buffers[dest]);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER,size,data,GL_STATIC_DRAW);
@@ -733,17 +697,20 @@ namespace syj
 
     void newDynamic::bufferSubData()
     {
-        for(int a = 0; a<type->allMeshes.size(); a++)
+        for(int a = 0; a<type->instancedMeshes.size(); a++)
         {
-            glBindVertexArray(type->allMeshes[a]->vao);
+            if(!type->instancedMeshes[a]->isInstanced())
+                continue;
+
+            glBindVertexArray(type->instancedMeshes[a]->vao);
 
             if(meshColorChanged)
             {
-                glBindBuffer(GL_ARRAY_BUFFER,((instancedMesh*)type->allMeshes[a])->buffers[perMeshColor]);
+                glBindBuffer(GL_ARRAY_BUFFER,((instancedMesh*)type->instancedMeshes[a])->buffers[perMeshColor]);
                 glBufferSubData(GL_ARRAY_BUFFER,sizeof(glm::vec3) * bufferOffset,sizeof(glm::vec3),&meshColors[a][0]);
             }
 
-            glBindBuffer(GL_ARRAY_BUFFER,((instancedMesh*)type->allMeshes[a])->buffers[perMeshTransformA]);
+            glBindBuffer(GL_ARRAY_BUFFER,((instancedMesh*)type->instancedMeshes[a])->buffers[perMeshTransformA]);
             glBufferSubData(GL_ARRAY_BUFFER,sizeof(glm::mat4) * bufferOffset,sizeof(glm::mat4),&meshTransforms[a][0][0]);
 
             glBindVertexArray(0);
@@ -782,6 +749,98 @@ namespace syj
         GLenum err = glGetError();
         if(err != GL_NO_ERROR)
             error("OpenGL error: " + std::to_string(err));
+    }
+
+    nonInstancedMesh::nonInstancedMesh(aiMesh *src)
+    {
+        scope("nonInstancedMesh::nonInstancedMesh");
+
+        GLenum err = glGetError();
+        if(err != GL_NO_ERROR)
+            error("Before anything OpenGL error: " + std::to_string(err));
+
+        glGenVertexArrays(1,&vao);
+        glGenBuffers(6,buffers);
+
+        name = src->mName.C_Str();
+
+        if(src->HasPositions())
+        {
+            fillBuffer(newPositions,src->mVertices,src->mNumVertices * sizeof(aiVector3D),3);
+
+            float maxX = src->mVertices[0].x;
+            float maxY = src->mVertices[0].y;
+            float maxZ = src->mVertices[0].z;
+            float minX = src->mVertices[0].x;
+            float minY = src->mVertices[0].y;
+            float minZ = src->mVertices[0].z;
+            for(unsigned int a = 0; a<src->mNumVertices; a++)
+            {
+                aiVector3D v = src->mVertices[a];
+                if(v.x > maxX)
+                    maxX = v.x;
+                if(v.y > maxY)
+                    maxY = v.y;
+                if(v.z > maxZ)
+                    maxZ = v.z;
+                if(v.x < minX)
+                    minX = v.x;
+                if(v.y < minY)
+                    minY = v.y;
+                if(v.z < minZ)
+                    minZ = v.z;
+            }
+            rawMaxExtents = glm::vec3(maxX,maxY,maxZ);
+            rawMinExtents = glm::vec3(minX,minY,minZ);
+
+            if(name.find("Collision") != std::string::npos)
+            {
+                hidden = true;
+                isCollisionMesh = true;
+            }
+        }
+        else
+            error("Model did not have position data!");
+
+        if(src->HasNormals())//UVS AND NORMALS LAYOUT POSITION ARE REVERSED FOR NONINSTANCED MESHES AHH
+            fillBuffer((instancedLayout)1,src->mNormals,src->mNumVertices * sizeof(aiVector3D),3);
+
+        if(src->HasTangentsAndBitangents())
+        {
+            fillBuffer((instancedLayout)4,src->mTangents,src->mNumVertices * sizeof(aiVector3D),3);
+            fillBuffer((instancedLayout)5,src->mBitangents,src->mNumVertices * sizeof(aiVector3D),3);
+        }
+
+        if(src->GetNumUVChannels() == 1)
+        {//UVS AND NORMALS LAYOUT POSITION ARE REVERSED FOR NONINSTANCED MESHES AHH
+            std::vector<glm::vec2> data;
+            for(unsigned int b = 0; b<src->mNumVertices; b++)
+                data.push_back(glm::vec2(src->mTextureCoords[0][b].x,src->mTextureCoords[0][b].y));
+
+            fillBuffer((instancedLayout)2,&data[0][0],data.size() * sizeof(glm::vec2),2);
+        }
+        else if(src->GetNumUVChannels() > 1)
+            error("File has more than one UV channel which is not supported!");
+
+        if(src->HasFaces())
+        {
+            std::vector<unsigned int> indices;
+            for(unsigned int b = 0; b<src->mNumFaces; b++)
+            {
+                if(src->mFaces[b].mNumIndices != 3)
+                    error("Mesh has non-triangle face, ignoring. Did you know you can specify aiProcess_Triangulate to fix this?");
+                else
+                {
+                    indices.push_back(src->mFaces[b].mIndices[0]);
+                    indices.push_back(src->mFaces[b].mIndices[1]);
+                    indices.push_back(src->mFaces[b].mIndices[2]);
+                }
+            }
+            numVerts = indices.size();
+            fillBuffer((instancedLayout)3,&indices[0],sizeof(unsigned int) * indices.size(),0,true);
+        }
+        else
+            error("Mesh did not have faces / indicies");
     }
 
     instancedMesh::instancedMesh(aiMesh *src)
@@ -895,7 +954,7 @@ namespace syj
                 }
             }
             numVerts = indices.size();
-            fillBuffer(newIndex,&indices[0],sizeof(unsigned int) * indices.size(),0);
+            fillBuffer(newIndex,&indices[0],sizeof(unsigned int) * indices.size(),0,true);
         }
         else
             error("Mesh did not have faces / indicies");
@@ -909,6 +968,14 @@ namespace syj
         glDeleteBuffers(8,buffers);
     }
 
+    nonInstancedMesh::~nonInstancedMesh()
+    {
+        scope("nonInstancedMesh::~nonInstancedMesh");
+
+        glDeleteVertexArrays(1,&vao);
+        glDeleteBuffers(6,buffers);
+    }
+
     glm::vec4 postovec4Redundant(glm::vec3 a){return glm::vec4(a.x,a.y,a.z,1.0);}
 
     void newModel::calculateTotalCollisionExtents(newNode *current,glm::mat4 transform)
@@ -920,13 +987,9 @@ namespace syj
             if(current->instancedMeshes[a]->isCollisionMesh)
             {
                 glm::vec3 s = current->instancedMeshes[a]->rawMaxExtents - current->instancedMeshes[a]->rawMinExtents;
-                /*std::cout<<current->instancedMeshes[a]->name<<" name\n";
-                std::cout<<"Min: "<<current->instancedMeshes[a]->rawMinExtents.x<<","<<current->instancedMeshes[a]->rawMinExtents.y<<","<<current->instancedMeshes[a]->rawMinExtents.z<<"\n";
-                std::cout<<"Max: "<<current->instancedMeshes[a]->rawMaxExtents.x<<","<<current->instancedMeshes[a]->rawMaxExtents.y<<","<<current->instancedMeshes[a]->rawMaxExtents.z<<"\n";*/
+
                 current->instancedMeshes[a]->rawMinExtents = transform * postovec4Redundant(current->instancedMeshes[a]->rawMinExtents);
                 current->instancedMeshes[a]->rawMaxExtents = transform * postovec4Redundant(current->instancedMeshes[a]->rawMaxExtents);
-                /*std::cout<<"Min after: "<<current->instancedMeshes[a]->rawMinExtents.x<<","<<current->instancedMeshes[a]->rawMinExtents.y<<","<<current->instancedMeshes[a]->rawMinExtents.z<<"\n";
-                std::cout<<"Max after: "<<current->instancedMeshes[a]->rawMaxExtents.x<<","<<current->instancedMeshes[a]->rawMaxExtents.y<<","<<current->instancedMeshes[a]->rawMaxExtents.z<<"\n";*/
 
                 if(current->instancedMeshes[a]->rawMinExtents.x > current->instancedMeshes[a]->rawMaxExtents.x)
                     std::swap(current->instancedMeshes[a]->rawMinExtents.x,current->instancedMeshes[a]->rawMaxExtents.x);
@@ -955,21 +1018,56 @@ namespace syj
             calculateTotalCollisionExtents(current->children[a],transform);
     }
 
-    void newModel::render(uniformsHolder *graphics)
+    void newModel::renderInstanced(uniformsHolder *graphics)
     {
-        for(unsigned int a = 0; a<allMeshes.size(); a++)
-            allMeshes[a]->render(graphics);
+        for(unsigned int a = 0; a<instancedMeshes.size(); a++)
+            instancedMeshes[a]->render(graphics);
     }
 
-    void newModel::renderWithoutMaterials()
+    void newModel::renderInstancedWithoutMaterials()
     {
-        for(unsigned int a = 0; a<allMeshes.size(); a++)
-            allMeshes[a]->renderWithoutMaterial();
+        for(unsigned int a = 0; a<instancedMeshes.size(); a++)
+            instancedMeshes[a]->renderWithoutMaterial();
     }
 
     void newModel::compileAll()
     {
-        for(int a = 0; a<allMeshes.size(); a++)
-            ((instancedMesh*)allMeshes[a])->recompile();
+        for(int a = 0; a<instancedMeshes.size(); a++)
+            if(instancedMeshes[a]->isInstanced())
+                ((instancedMesh*)instancedMeshes[a])->recompile();
+    }
+
+    void newModel::renderNonInstanced(uniformsHolder *graphics)
+    {
+        for(int a = 0; a<nonInstancedMeshes.size(); a++)
+            nonInstancedMeshes[a]->render(graphics);
+    }
+
+    void nonInstancedMesh::render(uniformsHolder *graphics)
+    {
+        for(int a = 0; a<instances.size(); a++)
+        {
+            if(name == "Face1")
+            {
+                if(instances[a]->decal)
+                {
+                    glUniform1i(graphics->useAlbedo      ,1);
+                    instances[a]->decal->bind(albedo);
+                }
+            }
+
+            graphics->setModelMatrix(instances[a]->meshTransforms[counterPart->meshIndex]);
+
+            glBindVertexArray(vao);
+
+            glDrawElements(GL_TRIANGLES,numVerts,GL_UNSIGNED_INT,(void*)0);
+
+            glBindVertexArray(0);
+        }
+    }
+
+    void nonInstancedMesh::renderWithoutMaterial()
+    {
+
     }
 }

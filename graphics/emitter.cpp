@@ -36,9 +36,9 @@ namespace syj
                 //TODO: THERE IS (was?) A CRASH HERE
                 if(meshName != "")
                 {
-                    for(unsigned int a = 0; a<attachedToModel->type->allMeshes.size(); a++)
+                    for(unsigned int a = 0; a<attachedToModel->type->instancedMeshes.size(); a++)
                     {
-                        newMesh *tmp = attachedToModel->type->allMeshes[a];
+                        newMesh *tmp = attachedToModel->type->instancedMeshes[a];
                         if(tmp->name == meshName)
                         {
                             glm::vec3 center = tmp->rawMaxExtents - tmp->rawMinExtents;

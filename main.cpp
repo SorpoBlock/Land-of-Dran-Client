@@ -47,7 +47,7 @@
 //#include <openssl/sha.h>
 #include <bearssl/bearssl_hash.h>
 
-#define hardCodedNetworkVersion 10010
+#define hardCodedNetworkVersion 10011
 
 #define cammode_firstPerson 0
 #define cammode_thirdPerson 1
@@ -1705,12 +1705,7 @@ int main(int argc, char *argv[])
         currentZoom += (desiredFov - currentZoom) * deltaT * 0.001;
         ohWow.playerCamera->setFieldOfVision(currentZoom);
 
-        glm::vec3 velPlayer = glm::vec3(0,0,0);
-        if(ohWow.cameraTarget)
-            velPlayer = ohWow.cameraTarget->modelInterpolator.guessVelocity();
-        velPlayer *= glm::vec3(0.4);
-        alListener3f(AL_VELOCITY,velPlayer.x,velPlayer.y,velPlayer.z);
-        glm::vec3 microphoneDir = glm::vec3(sin(ohWow.playerCamera->getYaw()+3.1415),0,cos(ohWow.playerCamera->getYaw()+3.1415));
+        glm::vec3 microphoneDir = glm::vec3(sin(ohWow.playerCamera->getYaw()),0,cos(ohWow.playerCamera->getYaw()));
         ohWow.speaker->microphone(ohWow.playerCamera->getPosition()+glm::vec3(0.05,0.05,0.05),microphoneDir);
 
         if(playerInput.commandKeyDown(jump))
@@ -2025,7 +2020,7 @@ int main(int argc, char *argv[])
                         ohWow.playerCamera->renderReflection(newModelUnis,ohWow.waterLevel);
                         ohWow.env->passUniforms(newModelUnis);
                         for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                            ohWow.newDynamicTypes[a]->render(&newModelUnis);
+                            ohWow.newDynamicTypes[a]->renderInstanced(&newModelUnis);
 
 
                         /*for(unsigned int a = 0; a<ohWow.dynamics.size(); a++)
@@ -2065,7 +2060,7 @@ int main(int argc, char *argv[])
                         ohWow.playerCamera->render(newModelUnis);
                         ohWow.env->passUniforms(newModelUnis);
                         for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                            ohWow.newDynamicTypes[a]->render(&newModelUnis);
+                            ohWow.newDynamicTypes[a]->renderInstanced(&newModelUnis);
 
                     basicProgram.use();
                         glUniform1f(basic.clipHeight,-ohWow.waterLevel);
@@ -2171,7 +2166,7 @@ int main(int argc, char *argv[])
                 newModelShadowProgram.use();
                     ohWow.env->passLightMatricies(newModelShadowUnis);
                     for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                        ohWow.newDynamicTypes[a]->renderWithoutMaterials();
+                        ohWow.newDynamicTypes[a]->renderInstancedWithoutMaterials();
 
 
                 shadowBrickProgram.use();
@@ -2255,6 +2250,10 @@ int main(int argc, char *argv[])
                                           );
                     }
                 }
+
+                for(unsigned int a = 0; a<ohWow.newDynamicTypes.size(); a++)
+                    ohWow.newDynamicTypes[a]->renderNonInstanced(&basic);
+                basic.setModelMatrix(glm::mat4(1.0));
 
                 for(unsigned int a = 0; a<ohWow.items.size(); a++)
                 {
@@ -2351,7 +2350,7 @@ int main(int argc, char *argv[])
                     ohWow.env->passUniforms(newModelUnis);
                     renderLights(newModelUnis,ohWow.lights);
                     for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                        ohWow.newDynamicTypes[a]->render(&newModelUnis);
+                        ohWow.newDynamicTypes[a]->renderInstanced(&newModelUnis);
 
             brickProgram.use();
                 ohWow.playerCamera->render(brickUnis);

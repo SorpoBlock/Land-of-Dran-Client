@@ -8,7 +8,7 @@ enum serverToClientPacketType
     packetType_addSpecialBrickType = 3,
     packetType_cameraDetails = 4,
     packetType_addBricks = 5,
-    packetType_skipBricksCompile = 6,
+    packetType_serverCommand = 6,
     packetType_updateDynamicTransforms = 7,
     packetType_addRemoveLight = 8,
     packetType_removeBrick = 9,
@@ -31,12 +31,146 @@ enum serverToClientPacketType
     packetType_addRemoveRope = 26,
     packetType_addMessage = 27,
     packetType_setNodeColors = 28,
-    packetType_waterOrDecal = 29,
+    packetType_undefined = 29,
     packetType_newEmitterParticleType = 30,
     packetType_emitterAddRemove = 31
 };
 
 #define dynamicObjectIDBits 12
+
+void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
+{
+    if(commandType == "clearAllBricks")
+    {
+        //TODO: CHECKS FOR BOUND LIGHTS AND MUSIC???
+
+        basicBrickRenderData *basicTempBrick = 0;
+        specialBrickRenderData *specialTempBrick = 0;
+
+        for(unsigned int a = 0; a<ohWow->staticBricks.opaqueBasicBricks.size(); a++)
+        {
+            basicBrickRenderData *theBrick = ohWow->staticBricks.opaqueBasicBricks[a];
+            if(!theBrick)
+                continue;
+
+            if(theBrick->isTempBrick)
+            {
+                basicTempBrick = theBrick;
+                continue;
+            }
+
+            if(theBrick->body && ohWow->world)
+            {
+                ohWow->world->removeRigidBody(theBrick->body);
+                delete theBrick->body;
+                theBrick->body = 0;
+            }
+
+            delete theBrick;
+        }
+        for(unsigned int a = 0; a<ohWow->staticBricks.transparentBasicBricks.size(); a++)
+        {
+            basicBrickRenderData *theBrick = ohWow->staticBricks.transparentBasicBricks[a];
+            if(!theBrick)
+                continue;
+
+            if(theBrick->isTempBrick)
+            {
+                basicTempBrick = theBrick;
+                continue;
+            }
+
+            if(theBrick->body && ohWow->world)
+            {
+                ohWow->world->removeRigidBody(theBrick->body);
+                delete theBrick->body;
+                theBrick->body = 0;
+            }
+
+            delete theBrick;
+        }
+        for(unsigned int a = 0; a<ohWow->staticBricks.opaqueSpecialBricks.size(); a++)
+        {
+            specialBrickRenderData *theBrick = ohWow->staticBricks.opaqueSpecialBricks[a];
+            if(!theBrick)
+                continue;
+
+            if(theBrick->isTempBrick)
+            {
+                specialTempBrick = theBrick;
+                continue;
+            }
+
+            if(theBrick->body && ohWow->world)
+            {
+                ohWow->world->removeRigidBody(theBrick->body);
+                delete theBrick->body;
+                theBrick->body = 0;
+            }
+
+            delete theBrick;
+        }
+        for(unsigned int a = 0; a<ohWow->staticBricks.transparentSpecialBricks.size(); a++)
+        {
+            specialBrickRenderData *theBrick = ohWow->staticBricks.transparentSpecialBricks[a];
+            if(!theBrick)
+                continue;
+
+            if(theBrick->isTempBrick)
+            {
+                specialTempBrick = theBrick;
+                continue;
+            }
+
+            if(theBrick->body && ohWow->world)
+            {
+                ohWow->world->removeRigidBody(theBrick->body);
+                delete theBrick->body;
+                theBrick->body = 0;
+            }
+
+            delete theBrick;
+        }
+
+        ohWow->staticBricks.opaqueBasicBricks.clear();
+        ohWow->staticBricks.transparentBasicBricks.clear();
+        ohWow->staticBricks.opaqueSpecialBricks.clear();
+        ohWow->staticBricks.transparentSpecialBricks.clear();
+
+        if(basicTempBrick)
+            ohWow->staticBricks.transparentBasicBricks.push_back(basicTempBrick);
+        if(specialTempBrick)
+            ohWow->staticBricks.transparentSpecialBricks.push_back(specialTempBrick);
+
+        ohWow->staticBricks.recompileEverything();
+
+        return;
+    }
+    else if(commandType == "skipBricksCompile")
+    {
+        ohWow->skippingCompileNextBricks = data->readUInt(24);
+    }
+    else if(commandType == "setWaterLevel")
+    {
+        ohWow->waterLevel = data->readFloat();
+        if(ohWow->waterLevel < -10000)
+            ohWow->waterLevel = 10000;
+        if(ohWow->waterLevel > 10000)
+            ohWow->waterLevel = 10000;
+        return;
+    }
+    else if(commandType == "sendDecals")
+    {
+        int howMany = data->readUInt(7);
+        for(int a = 0; a<howMany; a++)
+        {
+            std::string fileName = data->readString();
+            ohWow->picker->addDecalToPicker(fileName);
+        }
+    }
+    else
+        error("Unrecognized command: " + commandType);
+}
 
 namespace syj
 {
@@ -262,7 +396,8 @@ namespace syj
                 }
                 else if(subtype == 2) //delete client physics for dynamic
                 {
-                    if(ohWow->currentPlayer && ohWow->currentPlayer->body)
+                    unsigned int netID = data->readUInt(dynamicObjectIDBits);
+                    if(ohWow->currentPlayer && ohWow->currentPlayer->body && ohWow->currentPlayer->serverID == netID)
                     {
                         ohWow->currentPlayer->world->removeRigidBody(ohWow->currentPlayer->body);
                         delete ohWow->currentPlayer->defaultMotionState;
@@ -787,29 +922,6 @@ namespace syj
 
                     if(!foundParticleType)
                         ohWow->particleTypes.push_back(tmp);
-                }
-                return;
-            }
-            case packetType_waterOrDecal:
-            {
-                bool water = data->readBit();
-                if(water)
-                {
-                    ohWow->waterLevel = data->readFloat();
-                    if(ohWow->waterLevel < -10000)
-                        ohWow->waterLevel = 10000;
-                    if(ohWow->waterLevel > 10000)
-                        ohWow->waterLevel = 10000;
-                    return;
-                }
-
-                int howMany = data->readUInt(7);
-                //std::cout<<"How many other assets: "<<howMany<<"\n";
-                for(int a = 0; a<howMany; a++)
-                {
-                    std::string fileName = data->readString();
-                    ohWow->picker->addDecalToPicker(fileName);
-                    //std::cout<<a<<" file name: "<<fileName<<"\n";
                 }
                 return;
             }
@@ -1358,7 +1470,8 @@ namespace syj
                 bool flatSound = data->readBit();
                 if(flatSound)
                 {
-                    ohWow->speaker->playSound(id,loop);
+                    float pitch = data->readFloat();
+                    ohWow->speaker->playSound(id,loop,pitch);
                     return;
                 }
 
@@ -1372,7 +1485,8 @@ namespace syj
                     float x = data->readFloat();
                     float y = data->readFloat();
                     float z = data->readFloat();
-                    ohWow->speaker->playSound(id,loop,x,y,z);
+                    float pitch = data->readFloat();
+                    ohWow->speaker->playSound(id,loop,x,y,z,pitch);
                 }
                 return;
             }
@@ -1591,7 +1705,6 @@ namespace syj
             case packetType_setColorPalette:
             {
                 int howMany = data->readUInt(8);
-                //std::cout<<"Colors: "<<howMany<<"\n";
                 for(int a = 0; a<howMany; a++)
                 {
                     int paletteIdx = data->readUInt(6);
@@ -1603,7 +1716,6 @@ namespace syj
                     b /= 255;
                     g /= 255;
                     al /= 255;
-                    //std::cout<<paletteIdx<<" is: "<<r<<","<<g<<","<<b<<","<<al<<"\n";
                     if(paletteIdx >= 40)
                         continue;
                     ohWow->palette->setColor(paletteIdx,glm::vec4(r,g,b,al));
@@ -1966,6 +2078,7 @@ namespace syj
                                         ohWow->newDynamics[i]->setExtraTransform("Face1",final);*/
                                         ohWow->newDynamics[i]->setFixedRotation("Head",final);
                                         ohWow->newDynamics[i]->setFixedRotation("Face1",final);
+
                                         if(walking)
                                             ohWow->newDynamics[i]->play("walk");
                                         else
@@ -2151,119 +2264,12 @@ namespace syj
                 return;
             }
 
-            case packetType_skipBricksCompile:
+            case packetType_serverCommand:
             {
-                bool clearBricks = data->readBit();
+                std::string commandType = data->readString();
 
-                //TODO: CHECKS FOR BOUND LIGHTS AND MUSIC???
+                processCommand(ohWow,commandType,data);
 
-                if(clearBricks)
-                {
-                    basicBrickRenderData *basicTempBrick = 0;
-                    specialBrickRenderData *specialTempBrick = 0;
-
-                    for(unsigned int a = 0; a<ohWow->staticBricks.opaqueBasicBricks.size(); a++)
-                    {
-                        basicBrickRenderData *theBrick = ohWow->staticBricks.opaqueBasicBricks[a];
-                        if(!theBrick)
-                            continue;
-
-                        if(theBrick->isTempBrick)
-                        {
-                            basicTempBrick = theBrick;
-                            continue;
-                        }
-
-                        if(theBrick->body && ohWow->world)
-                        {
-                            ohWow->world->removeRigidBody(theBrick->body);
-                            delete theBrick->body;
-                            theBrick->body = 0;
-                        }
-
-                        delete theBrick;
-                    }
-                    for(unsigned int a = 0; a<ohWow->staticBricks.transparentBasicBricks.size(); a++)
-                    {
-                        basicBrickRenderData *theBrick = ohWow->staticBricks.transparentBasicBricks[a];
-                        if(!theBrick)
-                            continue;
-
-                        if(theBrick->isTempBrick)
-                        {
-                            basicTempBrick = theBrick;
-                            continue;
-                        }
-
-                        if(theBrick->body && ohWow->world)
-                        {
-                            ohWow->world->removeRigidBody(theBrick->body);
-                            delete theBrick->body;
-                            theBrick->body = 0;
-                        }
-
-                        delete theBrick;
-                    }
-                    for(unsigned int a = 0; a<ohWow->staticBricks.opaqueSpecialBricks.size(); a++)
-                    {
-                        specialBrickRenderData *theBrick = ohWow->staticBricks.opaqueSpecialBricks[a];
-                        if(!theBrick)
-                            continue;
-
-                        if(theBrick->isTempBrick)
-                        {
-                            specialTempBrick = theBrick;
-                            continue;
-                        }
-
-                        if(theBrick->body && ohWow->world)
-                        {
-                            ohWow->world->removeRigidBody(theBrick->body);
-                            delete theBrick->body;
-                            theBrick->body = 0;
-                        }
-
-                        delete theBrick;
-                    }
-                    for(unsigned int a = 0; a<ohWow->staticBricks.transparentSpecialBricks.size(); a++)
-                    {
-                        specialBrickRenderData *theBrick = ohWow->staticBricks.transparentSpecialBricks[a];
-                        if(!theBrick)
-                            continue;
-
-                        if(theBrick->isTempBrick)
-                        {
-                            specialTempBrick = theBrick;
-                            continue;
-                        }
-
-                        if(theBrick->body && ohWow->world)
-                        {
-                            ohWow->world->removeRigidBody(theBrick->body);
-                            delete theBrick->body;
-                            theBrick->body = 0;
-                        }
-
-                        delete theBrick;
-                    }
-
-                    ohWow->staticBricks.opaqueBasicBricks.clear();
-                    ohWow->staticBricks.transparentBasicBricks.clear();
-                    ohWow->staticBricks.opaqueSpecialBricks.clear();
-                    ohWow->staticBricks.transparentSpecialBricks.clear();
-
-                    if(basicTempBrick)
-                        ohWow->staticBricks.transparentBasicBricks.push_back(basicTempBrick);
-                    if(specialTempBrick)
-                        ohWow->staticBricks.transparentSpecialBricks.push_back(specialTempBrick);
-
-                    ohWow->staticBricks.recompileEverything();
-
-                    return;
-                }
-
-                ohWow->skippingCompileNextBricks = data->readUInt(24);
-                //std::cout<<"Skipping compile for next: "<<ohWow->skippingCompileNextBricks<<" bricks.\n";
                 return;
             }
 

@@ -120,7 +120,7 @@ namespace syj
     struct newMesh
     {
         //Lets us know how we can down-cast it
-        bool isInstanced = true;
+        virtual bool isInstanced() = 0;
 
         //Essential to rendering it:
         GLuint vao = 0;
@@ -128,11 +128,19 @@ namespace syj
         //Used to identify the mesh:
         std::string name = "";
         int meshIndex = 0;  //Used for updating instance transforms, and also for the picking render pass
+        int numVerts = 0; //Actually the number of indicies for verts, i.e. after vertex duplication
 
         //Might not actually be raw
         glm::vec3 rawMinExtents,rawMaxExtents;
         bool hidden = false;
         bool isCollisionMesh = false;
+
+        //Essential to rendering it:
+        GLuint buffers[8];
+        //instanced uses all 8, noninstanced uses 6
+
+        //Called upon loading the given model file at start-up:
+        void fillBuffer(instancedLayout dest,void *data,int size,int elements,bool elementBuffer = false);
 
         virtual void render(uniformsHolder *graphics) = 0;
         virtual void renderWithoutMaterial() = 0;
@@ -140,9 +148,8 @@ namespace syj
 
     struct instancedMesh : newMesh
     {
-        //Essential to rendering it:
-        GLuint buffers[8];
-        int numVerts = 0; //Actually the number of indicies for verts, i.e. after vertex duplication
+        bool isInstanced(){return true;}
+
         //non-instanced meshes can change material per instance:
         material *materialToUse = 0;
 
@@ -156,11 +163,21 @@ namespace syj
         void render(uniformsHolder *graphics);
         void renderWithoutMaterial();
 
-        //Called upon loading the given model file at start-up:
-        void fillBuffer(instancedLayout dest,void *data,int size,int elements);
-
         instancedMesh(aiMesh *src);
         ~instancedMesh();
+    };
+
+    struct nonInstancedMesh : newMesh
+    {
+        instancedMesh *counterPart = 0;
+        newModel *parent = 0;
+        bool isInstanced(){return false;}
+        std::vector<newDynamic*> instances;
+        void render(uniformsHolder *graphics);
+        void renderWithoutMaterial();
+
+        nonInstancedMesh(aiMesh *src);
+        ~nonInstancedMesh();
     };
 
     struct newNode
@@ -199,7 +216,8 @@ namespace syj
 
         //Rendering data:
         std::vector<newNode*> allNodes;
-        std::vector<newMesh*> allMeshes;
+        std::vector<instancedMesh*> instancedMeshes;
+        std::vector<nonInstancedMesh*> nonInstancedMeshes;
         std::vector<material*> allMaterials;
         newNode *rootNode = 0;
 
@@ -211,6 +229,9 @@ namespace syj
         //Used for icon size adjustment and I guess collision?
         glm::vec3 totalColMin,totalColMax;
 
+        //Keeps track of where to get meshTransforms and per mesh colors from in big array, excludes non instanced meshes
+        int instancedMeshCount = 0;
+
         //Animations:
         std::vector<newAnimation> animations;
         int defaultFrame = 0;
@@ -218,8 +239,9 @@ namespace syj
         newModel(std::string textFilePath);
 
         void calculateTotalCollisionExtents(newNode *current,glm::mat4 transform);
-        void render(uniformsHolder *graphics);
-        void renderWithoutMaterials();
+        void renderInstanced(uniformsHolder *graphics);
+        void renderInstancedWithoutMaterials();
+        void renderNonInstanced(uniformsHolder *graphics);
         void compileAll();
     };
 }

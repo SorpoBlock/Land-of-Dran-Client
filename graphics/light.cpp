@@ -121,9 +121,9 @@ namespace syj
                     position = attachedDynamic->modelInterpolator.getPosition();
                     if(node != "")
                     {
-                        for(unsigned int a = 0; a<attachedDynamic->type->allMeshes.size(); a++)
+                        for(unsigned int a = 0; a<attachedDynamic->type->instancedMeshes.size(); a++)
                         {
-                            newMesh *tmp = attachedDynamic->type->allMeshes[a];
+                            newMesh *tmp = attachedDynamic->type->instancedMeshes[a];
                             if(tmp->name == node)
                             {
                                 glm::vec3 center = tmp->rawMaxExtents - tmp->rawMinExtents;
@@ -143,9 +143,9 @@ namespace syj
                     position = attachedItem->modelInterpolator.getPosition();
                     if(node != "")
                     {
-                        for(unsigned int a = 0; a<attachedItem->type->allMeshes.size(); a++)
+                        for(unsigned int a = 0; a<attachedItem->type->instancedMeshes.size(); a++)
                         {
-                            newMesh *tmp = attachedItem->type->allMeshes[a];
+                            newMesh *tmp = attachedItem->type->instancedMeshes[a];
                             if(tmp->name == node)
                             {
                                 glm::vec3 center = tmp->rawMaxExtents - tmp->rawMinExtents;

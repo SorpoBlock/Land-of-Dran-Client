@@ -204,7 +204,7 @@ namespace syj
             return;
         }
 
-        alSourcef( sources[currentSource], AL_PITCH, 1);
+        alSourcef( sources[currentSource], AL_PITCH, 1.0f);
         alSourcef( sources[currentSource], AL_GAIN, 1.0f);
         alSource3f( sources[currentSource], AL_POSITION, x, y, z);
         alSource3f( sources[currentSource], AL_VELOCITY, 0, 0, 0);
@@ -238,7 +238,7 @@ namespace syj
             error("3OpenAL error: " + std::to_string(errr));
     }
 
-    void audioPlayer::playSound(int serverID,bool loop)
+    void audioPlayer::playSound(int serverID,bool loop,float pitch)
     {
         int idx = -1;
         for(unsigned int a = 0; a<sounds.size(); a++)
@@ -255,7 +255,7 @@ namespace syj
             return;
         }
 
-        alSourcef( sources[currentSource], AL_PITCH, 1);
+        alSourcef( sources[currentSource], AL_PITCH, pitch);
         alSourcef( sources[currentSource], AL_GAIN, 1.0f);
         alSource3f( sources[currentSource], AL_POSITION, lastPos.x,lastPos.y,lastPos.z);
         alSource3f( sources[currentSource], AL_VELOCITY, 0, 0, 0);
@@ -289,7 +289,7 @@ namespace syj
             error("3OpenAL error: " + std::to_string(errr));
     }
 
-    void audioPlayer::playSound(int serverID,bool loop,float x,float y,float z)
+    void audioPlayer::playSound(int serverID,bool loop,float x,float y,float z,float pitch)
     {
         int idx = -1;
         for(unsigned int a = 0; a<sounds.size(); a++)
@@ -306,7 +306,7 @@ namespace syj
             return;
         }
 
-        alSourcef( sources[currentSource], AL_PITCH, 1);
+        alSourcef( sources[currentSource], AL_PITCH, pitch);
         alSourcef( sources[currentSource], AL_GAIN, 1.0f);
         alSource3f( sources[currentSource], AL_POSITION, x, y, z);
         alSource3f( sources[currentSource], AL_VELOCITY, 0, 0, 0);

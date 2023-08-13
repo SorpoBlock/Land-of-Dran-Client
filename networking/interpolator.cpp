@@ -67,8 +67,8 @@ namespace syj
         unsigned int totdiff = b.packetTime - a.packetTime;
         unsigned int progress = currentServerTime - a.packetTime;
         float res = ((double)progress) / ((double)totdiff);
-        if(res < 0 || res > 1)
-            std::cout<<"Progress: "<<res<<"\n";
+        /*if(res < 0 || res > 1)
+            std::cout<<"Progress: "<<res<<"\n";*/
         return res;
     }
 
