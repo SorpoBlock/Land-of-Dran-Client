@@ -1098,14 +1098,14 @@ namespace syj
 
                 bool colliding = data->readBit();
 
-                /*int printMask = 0;
+                int printMask = 0;
                 std::string printName = "";
                 bool hasPrint = data->readBit();
                 if(hasPrint)
                 {
                     printMask = data->readUInt(6);
                     printName = data->readString();
-                }*/
+                }
 
                 for(int b = 0; b<ohWow->staticBricks.opaqueBasicBricks.size(); b++)
                 {
@@ -1120,6 +1120,20 @@ namespace syj
                         ohWow->staticBricks.opaqueBasicBricks[b]->rotation = ohWow->staticBricks.rotations[angleID];
                         ohWow->staticBricks.opaqueBasicBricks[b]->material = material;
                         ohWow->staticBricks.opaqueBasicBricks[b]->shouldCollide = colliding;
+
+                        if(hasPrint)
+                        {
+                            ohWow->staticBricks.opaqueBasicBricks[b]->printID = ohWow->prints->getPrintID(printName);
+                            if(ohWow->staticBricks.opaqueBasicBricks[b]->printID != 0)
+                            {
+                                ohWow->staticBricks.opaqueBasicBricks[b]->hasPrint = true;
+                                ohWow->staticBricks.opaqueBasicBricks[b]->printMask = printMask;
+                                ohWow->staticBricks.opaqueBasicBricks[b]->dimensions.w = printMask;
+                            }
+                        }
+                        else
+                            ohWow->staticBricks.opaqueBasicBricks[b]->dimensions.w = 0;
+
                         ohWow->staticBricks.updateBasicBrick(ohWow->staticBricks.opaqueBasicBricks[b],ohWow->world,changedTrans);
                         return;
                     }
@@ -1138,6 +1152,17 @@ namespace syj
                         ohWow->staticBricks.transparentBasicBricks[b]->rotation = ohWow->staticBricks.rotations[angleID];
                         ohWow->staticBricks.transparentBasicBricks[b]->material = material;
                         ohWow->staticBricks.transparentBasicBricks[b]->shouldCollide = colliding;
+
+                        if(hasPrint)
+                        {
+                            ohWow->staticBricks.transparentBasicBricks[b]->printID = ohWow->prints->getPrintID(printName);
+                            if(ohWow->staticBricks.transparentBasicBricks[b]->printID != 0)
+                            {
+                                ohWow->staticBricks.transparentBasicBricks[b]->hasPrint = true;
+                                ohWow->staticBricks.transparentBasicBricks[b]->printMask = printMask;
+                            }
+                        }
+
                         ohWow->staticBricks.updateBasicBrick(ohWow->staticBricks.transparentBasicBricks[b],ohWow->world,changedTrans);
                         return;
                     }
@@ -2289,16 +2314,6 @@ namespace syj
                     float al = data->readUInt(8);
                     al /= 255.0;
 
-                    /*float x = data->readUInt(13);
-                    x -= 2048;
-                    x /= 2;
-                    float y = data->readUInt(16);
-                    y -= 2048;
-                    y /= 10;
-                    float z = data->readUInt(13);
-                    z -= 2048;
-                    z /= 2;*/
-
                     float x = data->readUInt(14);
                     x -= 8192;
                     x += data->readBit() ? 0.5 : 0;
@@ -2338,41 +2353,12 @@ namespace syj
                             int mask = data->readUInt(6);
                             std::string printName = data->readString();
 
-                            //TODO: Anything but this:
-                            printAlias *printType = 0;
-                            for(unsigned int a = 0; a<ohWow->staticBricks.blocklandTypes->printTypes.size(); a++)
+                            //TODO: Replace with server sending printID?
+                            tmp->printID = ohWow->prints->getPrintID(printName);
+                            if(tmp->printID != 0)
                             {
-                                printAlias *comp = ohWow->staticBricks.blocklandTypes->printTypes[a];
-                                if(comp->faceMask == mask)
-                                {
-                                    if(comp->width == width)
-                                    {
-                                        if(comp->length == length)
-                                        {
-                                            if(comp->height == height)
-                                            {
-                                                printType = comp;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            if(!printType)
-                                error("Failed to find compatible print brick type!");
-                            else
-                            {
-                                //TODO: Replace with server sending printID
-                                for(unsigned int a = 0; a<ohWow->prints->names.size(); a++)
-                                {
-                                    if(ohWow->prints->names[a] == printName)
-                                    {
-                                        tmp->printFaces = printType;
-                                        tmp->printID = a;
-                                        break;
-                                    }
-                                }
+                                tmp->hasPrint = true;
+                                tmp->printMask = mask;
                             }
                         }
 

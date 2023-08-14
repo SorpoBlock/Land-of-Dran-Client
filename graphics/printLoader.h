@@ -13,6 +13,16 @@ namespace syj
         std::vector<std::string> names;
         std::vector<material*> textures;
 
+        unsigned int getPrintID(std::string name)
+        {
+            for(int a = 0; a<names.size(); a++)
+            {
+                if(name == names[a])
+                    return a;
+            }
+            return 0;
+        }
+
         printLoader(std::string loadDir);
         ~printLoader();
     };

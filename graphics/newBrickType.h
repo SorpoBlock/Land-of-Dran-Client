@@ -33,12 +33,18 @@ namespace syj
             color = toCopy.color;
             dimensions = toCopy.dimensions;
             printID = toCopy.printID;
-            printFaces = toCopy.printFaces;
+            //printFaces = toCopy.printFaces;
+            printMask = toCopy.printMask;
+            hasPrint = toCopy.hasPrint;
         }
 
-        int printBufferOffset = 0;
+        int printBufferOffset = -1;
         int printID = 0;
-        printAlias *printFaces = 0;
+        bool hasPrint = false;
+        //Only to be used by updateBasicBrick
+        int oldPrintID = -1;
+        unsigned char printMask = 0;
+        //printAlias *printFaces = 0;
     };
 
     struct newBrickRenderer

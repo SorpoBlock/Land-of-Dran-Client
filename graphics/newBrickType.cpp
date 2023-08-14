@@ -333,218 +333,6 @@ namespace syj
         return body;
     }
 
-    void newBrickRenderer::loadBlocklandSave(std::string filePath,btDynamicsWorld *world,printLoader &prints,paletteGUI *pallete)
-    {
-        int startTime = SDL_GetTicks();
-
-        std::ifstream bls(filePath.c_str());
-
-        if(!bls.is_open())
-        {
-            error("Could not open save file " + filePath);
-            return;
-        }
-        else
-            debug("Opened save file!");
-
-        std::string line = "";
-        std::vector<std::string> words;
-
-        getline(bls,line); //don't screw it up message
-        getline(bls,line); //1
-
-        int lines = atoi(line.c_str());
-        for(int a = 0; a<lines; a++)
-            getline(bls,line);
-
-
-        std::vector<glm::vec4> colorset;
-        for(int a = 0; a<64; a++)
-        {
-            getline(bls,line);
-            split(line,words);
-            colorset.push_back(glm::vec4(atof(words[0].c_str()),atof(words[1].c_str()),atof(words[2].c_str()),atof(words[3].c_str())));
-            if(a < 35 && pallete)
-                pallete->setColor(a,colorset[colorset.size()-1]);
-        }
-
-        getline(bls,line); //linecount
-
-        int expectedBricks = atoi(line.c_str());
-        info("Loading " + std::to_string(expectedBricks));
-
-        int basicBrickCount = 0;
-        int specialBricks = 0;
-        int printBricks = 0;
-
-        while(!bls.eof())
-        {
-            //if(bricks % 1000 == 0)
-              //  std::cout<<bricks<<" loaded.\n";
-
-            getline(bls,line);
-            if(line.substr(0,2) == "+-")
-                continue;
-
-            int quote = line.find('\"');
-            if(quote == std::string::npos)
-                continue;
-
-            std::string name = lowercase(line.substr(0,quote));
-            line = line.substr(quote+2);
-
-            if(line.find("  ") != std::string::npos)
-                line.insert(line.find("  ")+1,"!");
-
-            split(line,words);
-
-            float x = atof(words[0].c_str());
-            float y = atof(words[1].c_str());
-            float z = atof(words[2].c_str());
-
-            //std::cout<<line<<"\n";
-            int colorFx = atoi(words[7].c_str());
-            int shapeFx = atoi(words[8].c_str());
-            int brickMat = brickMaterial::none;
-            if(shapeFx == 1)
-                brickMat = brickMaterial::undulo;
-            switch(colorFx)
-            {
-                case 1: brickMat += brickMaterial::peral; break;
-                case 2: brickMat += brickMaterial::chrome; break;
-                case 3: brickMat += brickMaterial::glow; break;
-                case 4: brickMat += brickMaterial::blink; break;
-                case 5: brickMat += brickMaterial::swirl; break;
-                case 6: brickMat += brickMaterial::rainbow; break;
-            }
-
-            std::swap(y,z);
-            x *= 2.0;
-            y *= 2.0;
-            z *= 2.0;
-            y += 10.0;
-            glm::vec4 color = colorset[atoi(words[5].c_str())];
-
-            int foundPrint = -1;
-            for(int a = 0; a<blocklandTypes->printTypes.size(); a++)
-            {
-                if(blocklandTypes->printTypes[a]->uiName == name)
-                {
-                    foundPrint = a;
-                    break;
-                }
-            }
-
-            if(foundPrint != -1)
-            {
-                printBricks++;
-                printAlias *alias = blocklandTypes->printTypes[foundPrint];
-                basicBrickRenderData *tmp = new basicBrickRenderData;
-                tmp->material = brickMat;
-                tmp->printFaces = alias;
-                tmp->position = glm::vec3(x,y,z);
-                tmp->dimensions = glm::uvec4(alias->width,alias->height,alias->length,alias->faceMask);
-                tmp->color = color;
-                tmp->rotation = rotations[atoi(words[3].c_str())];
-                //Todo: add prints!
-                for(int a = 0; a<prints.names.size(); a++)
-                    if(prints.names[a] == words[6])
-                        tmp->printID = a;
-                addBasicBrick(tmp,atoi(words[3].c_str()),0,world,true);
-                continue;
-            }
-
-            int foundDims = -1;
-            for(int a = 0; a < blocklandTypes->blocklandUINames.size(); a++)
-            {
-                if(blocklandTypes->blocklandUINames[a] == name)
-                {
-                    foundDims = a;
-                    break;
-                }
-            }
-            if(foundDims == -1)
-            {
-                for(int a = 0; a < blocklandTypes->blocklandDatablockNames.size(); a++)
-                {
-                    if(blocklandTypes->blocklandDatablockNames[a] == name)
-                    {
-                        foundDims = a;
-                        break;
-                    }
-                }
-            }
-            if(foundDims == -1)
-            {
-                error("Could not find brick type: " + name);
-                continue;
-            }
-
-            //if(glm::length(blocklandTypes->blocklandDimensions[foundDims]) == 0)
-            if(!blocklandTypes->basicTypes[foundDims].shape)
-            {
-                specialBrickRenderData *tmp = new specialBrickRenderData;
-                int typeIdx = -1;
-                for(int a = 0; a<blocklandTypes->specialBrickTypes.size(); a++)
-                {
-                    if(blocklandTypes->specialBrickTypes[a]->fileName == name || blocklandTypes->specialBrickTypes[a]->fileName == blocklandTypes->blocklandUINames[foundDims])
-                    {
-                        typeIdx = a;
-                        break;
-                    }
-                }
-
-                if(typeIdx != -1)
-                {
-                    specialBricks++;
-                    tmp->color = color;
-                    tmp->position = glm::vec3(x,y,z);
-                    tmp->rotation = rotations[atoi(words[3].c_str())];
-
-                    addSpecialBrick(tmp,world,typeIdx,atoi(words[3].c_str()),true);
-                }
-                else
-                    error("Special brick " + name + " not found!");
-
-                continue;
-            }
-
-            //std::cout<<blocklandDatablockNames[foundDims]<<" "<<blocklandDimensions[foundDims].x<<","<<blocklandDimensions[foundDims].y<<","<<blocklandDimensions[foundDims].z<<"\n";
-
-            basicBrickCount++;
-            //scale
-
-            //x -= 1500;
-            //y += 461;
-            //y += 550;
-            //z -= 1500;
-
-            //omittedFaces += addBrick(name,glm::vec3(x,y,z),(brickRotation)atoi(words[3].c_str()),color,world,printID);
-            basicBrickRenderData *tmp = new basicBrickRenderData;
-            tmp->position = glm::vec3(x,y,z);
-            tmp->dimensions = glm::uvec4(blocklandTypes->basicTypes[foundDims].width,blocklandTypes->basicTypes[foundDims].height,blocklandTypes->basicTypes[foundDims].length,0);
-            tmp->color = color;
-            tmp->material = brickMat;
-            tmp->rotation = rotations[atoi(words[3].c_str())];
-            addBasicBrick(tmp,atoi(words[3].c_str()),blocklandTypes->basicTypes[foundDims].shape,world,true);
-            /*
-            if(tmp->color.a > 0.01 && tmp->color.a < 0.99)
-                transparentBasicBricks.push_back(tmp);
-            else
-                opaqueBasicBricks.push_back(tmp);
-
-            tmp->body = addBrickToWorld(tmp->position,atoi(words[3].c_str()),tmp->dimensions.x,tmp->dimensions.y,tmp->dimensions.z,blocklandTypes->basicTypes[foundDims].shape,world);
-            tmp->body->setUserPointer(tmp);
-            tmp->body->setUserIndex(userIndex_staticNormalBrick);*/
-        }
-
-        bls.close();
-
-        info("Loaded " + std::to_string(basicBrickCount) + " basic bricks and " + std::to_string(printBricks) +" print bricks and " + std::to_string(specialBricks) + " special bricks in " + std::to_string(SDL_GetTicks() - startTime) + "ms");
-
-        recompileEverything();
-    }
-
     void newBrickRenderer::renderTransparent(uniformsHolder &unis,bool skipMats,float deltaT)
     {
         glEnable(GL_BLEND);
@@ -638,7 +426,6 @@ namespace syj
                 theTextures[a]->use(unis);
 
             glBindVertexArray(perTextureVAO[a]);
-            //glDrawArraysInstanced(GL_TRIANGLES, 0,6,perTextureInstances[a]);
             glDrawArraysInstanced(GL_TRIANGLE_FAN,0,4,perTextureInstances[a]);
         }
 
@@ -749,8 +536,8 @@ namespace syj
             }
 
             glm::uvec4 dimensions = theBrick->dimensions;
-            if(theBrick->printFaces)
-                dimensions.w = theBrick->printFaces->faceMask;
+            if(theBrick->hasPrint)
+                dimensions.w = theBrick->printMask;
 
             glBindVertexArray(transparentPerTextureVAO[BRICKTEX_STUDS]);
 
@@ -766,26 +553,84 @@ namespace syj
             glBindBuffer(GL_ARRAY_BUFFER,transparentPerTextureDimensionBuffer[BRICKTEX_STUDS]);
             glBufferSubData(GL_ARRAY_BUFFER,theBrick->bufferOffset * sizeof(glm::uvec4),sizeof(glm::uvec4),&dimensions);
 
-            if(theBrick->printFaces)
+
+            if(theBrick->hasPrint)
             {
                 dimensions.w = dimensions.w ^ 0b111111;
 
-                glBindVertexArray(transparentPerTextureVAO[theBrick->printID+4]);
+                if(theBrick->oldPrintID != theBrick->printID)
+                {
+                    if(theBrick->printBufferOffset != -1)
+                    {
+                        if(theBrick->oldPrintID != -1)
+                        {
+                            glm::vec4 noColor = glm::vec4(0,0,0,0);
+                            glm::uvec4 noDims = dimensions;
+                            noDims.w = 0b11111111;
 
-                glBindBuffer(GL_ARRAY_BUFFER,transparentPerTexturePositionMatBuffer[theBrick->printID+4]);
-                glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&pos);
+                            glBindVertexArray(transparentPerTextureVAO[theBrick->oldPrintID+4]);
 
-                glBindBuffer(GL_ARRAY_BUFFER,transparentPerTextureRotationBuffer[theBrick->printID+4]);
-                glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::quat),sizeof(glm::quat),&theBrick->rotation);
+                            glBindBuffer(GL_ARRAY_BUFFER,transparentPerTexturePositionMatBuffer[theBrick->oldPrintID+4]);
+                            glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&pos);
 
-                glBindBuffer(GL_ARRAY_BUFFER,transparentPerTexturePaintColorBuffer[theBrick->printID+4]);
-                glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&theBrick->color);
+                            glBindBuffer(GL_ARRAY_BUFFER,transparentPerTextureRotationBuffer[theBrick->oldPrintID+4]);
+                            glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::quat),sizeof(glm::quat),&theBrick->rotation);
 
-                glBindBuffer(GL_ARRAY_BUFFER,transparentPerTextureDimensionBuffer[theBrick->printID+4]);
-                glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::uvec4),sizeof(glm::uvec4),&dimensions);
+                            glBindBuffer(GL_ARRAY_BUFFER,transparentPerTexturePaintColorBuffer[theBrick->oldPrintID+4]);
+                            glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&noColor);
+
+                            glBindBuffer(GL_ARRAY_BUFFER,transparentPerTextureDimensionBuffer[theBrick->oldPrintID+4]);
+                            glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::uvec4),sizeof(glm::uvec4),&noDims);
+
+                            glBindVertexArray(0);
+                        }
+                    }
+
+                    theBrick->oldPrintID = theBrick->printID;
+
+                    if(perTextureInstances[theBrick->printID+4]/6 < opaqueBasicAlloc[theBrick->printID+4])
+                    {
+                        theBrick->printBufferOffset = perTextureInstances[theBrick->printID+4]/6;
+                        perTextureInstances[theBrick->printID+4]+=6;
+
+                        glBindVertexArray(transparentPerTextureVAO[theBrick->printID+4]);
+
+                        glBindBuffer(GL_ARRAY_BUFFER,transparentPerTexturePositionMatBuffer[theBrick->printID+4]);
+                        glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&pos);
+
+                        glBindBuffer(GL_ARRAY_BUFFER,transparentPerTextureRotationBuffer[theBrick->printID+4]);
+                        glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::quat),sizeof(glm::quat),&theBrick->rotation);
+
+                        glBindBuffer(GL_ARRAY_BUFFER,transparentPerTexturePaintColorBuffer[theBrick->printID+4]);
+                        glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&theBrick->color);
+
+                        glBindBuffer(GL_ARRAY_BUFFER,transparentPerTextureDimensionBuffer[theBrick->printID+4]);
+                        glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::uvec4),sizeof(glm::uvec4),&dimensions);
+
+                        glBindVertexArray(0);
+                    }
+                    else
+                        recompileOpaqueBasicBricks();
+                }
+                else
+                {
+                    glBindVertexArray(transparentPerTextureVAO[theBrick->printID+4]);
+
+                    glBindBuffer(GL_ARRAY_BUFFER,transparentPerTexturePositionMatBuffer[theBrick->printID+4]);
+                    glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&pos);
+
+                    glBindBuffer(GL_ARRAY_BUFFER,transparentPerTextureRotationBuffer[theBrick->printID+4]);
+                    glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::quat),sizeof(glm::quat),&theBrick->rotation);
+
+                    glBindBuffer(GL_ARRAY_BUFFER,transparentPerTexturePaintColorBuffer[theBrick->printID+4]);
+                    glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&theBrick->color);
+
+                    glBindBuffer(GL_ARRAY_BUFFER,transparentPerTextureDimensionBuffer[theBrick->printID+4]);
+                    glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::uvec4),sizeof(glm::uvec4),&dimensions);
+
+                    glBindVertexArray(0);
+                }
             }
-
-            glBindVertexArray(0);
         }
         else
         {
@@ -797,8 +642,8 @@ namespace syj
             }
 
             glm::uvec4 dimensions = theBrick->dimensions;
-            if(theBrick->printFaces)
-                dimensions.w = theBrick->printFaces->faceMask;
+            if(theBrick->hasPrint)
+                dimensions.w = theBrick->printMask;
 
             glBindVertexArray(perTextureVAO[BRICKTEX_STUDS]);
 
@@ -814,31 +659,93 @@ namespace syj
             glBindBuffer(GL_ARRAY_BUFFER,perTextureDimensionBuffer[BRICKTEX_STUDS]);
             glBufferSubData(GL_ARRAY_BUFFER,theBrick->bufferOffset * sizeof(glm::uvec4),sizeof(glm::uvec4),&theBrick->dimensions);
 
-            if(theBrick->printFaces)
+            glBindVertexArray(0);
+
+            if(theBrick->hasPrint)
             {
                 dimensions.w = dimensions.w ^ 0b111111;
 
-                glBindVertexArray(perTextureVAO[theBrick->printID+4]);
+                if(theBrick->oldPrintID != theBrick->printID)
+                {
+                    if(theBrick->printBufferOffset != -1)
+                    {
+                        if(theBrick->oldPrintID != -1)
+                        {
+                            glm::vec4 noColor = glm::vec4(0,0,0,0);
+                            glm::uvec4 noDims = dimensions;
+                            noDims.w = 0b11111111;
 
-                glBindBuffer(GL_ARRAY_BUFFER,perTexturePositionMatBuffer[theBrick->printID+4]);
-                glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&pos);
+                            glBindVertexArray(perTextureVAO[theBrick->oldPrintID+4]);
 
-                glBindBuffer(GL_ARRAY_BUFFER,perTextureRotationBuffer[theBrick->printID+4]);
-                glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::quat),sizeof(glm::quat),&theBrick->rotation);
+                            glBindBuffer(GL_ARRAY_BUFFER,perTexturePositionMatBuffer[theBrick->oldPrintID+4]);
+                            glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&pos);
 
-                glBindBuffer(GL_ARRAY_BUFFER,perTexturePaintColorBuffer[theBrick->printID+4]);
-                glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&theBrick->color);
+                            glBindBuffer(GL_ARRAY_BUFFER,perTextureRotationBuffer[theBrick->oldPrintID+4]);
+                            glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::quat),sizeof(glm::quat),&theBrick->rotation);
 
-                glBindBuffer(GL_ARRAY_BUFFER,perTextureDimensionBuffer[theBrick->printID+4]);
-                glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::uvec4),sizeof(glm::uvec4),&dimensions);
+                            glBindBuffer(GL_ARRAY_BUFFER,perTexturePaintColorBuffer[theBrick->oldPrintID+4]);
+                            glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&noColor);
+
+                            glBindBuffer(GL_ARRAY_BUFFER,perTextureDimensionBuffer[theBrick->oldPrintID+4]);
+                            glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::uvec4),sizeof(glm::uvec4),&noDims);
+
+                            glBindVertexArray(0);
+                        }
+                    }
+
+                    theBrick->oldPrintID = theBrick->printID;
+
+                    if(perTextureInstances[theBrick->printID+4]/6 < opaqueBasicAlloc[theBrick->printID+4])
+                    {
+
+                        theBrick->printBufferOffset = perTextureInstances[theBrick->printID+4]/6;
+                        perTextureInstances[theBrick->printID+4]+=6;
+
+                        glBindVertexArray(perTextureVAO[theBrick->printID+4]);
+
+                        glBindBuffer(GL_ARRAY_BUFFER,perTexturePositionMatBuffer[theBrick->printID+4]);
+                        glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&pos);
+
+                        glBindBuffer(GL_ARRAY_BUFFER,perTextureRotationBuffer[theBrick->printID+4]);
+                        glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::quat),sizeof(glm::quat),&theBrick->rotation);
+
+                        glBindBuffer(GL_ARRAY_BUFFER,perTexturePaintColorBuffer[theBrick->printID+4]);
+                        glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&theBrick->color);
+
+                        glBindBuffer(GL_ARRAY_BUFFER,perTextureDimensionBuffer[theBrick->printID+4]);
+                        glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::uvec4),sizeof(glm::uvec4),&dimensions);
+
+                        glBindVertexArray(0);
+                    }
+                    else
+                        recompileOpaqueBasicBricks();
+                }
+                else
+                {
+                    glBindVertexArray(perTextureVAO[theBrick->printID+4]);
+
+                    glBindBuffer(GL_ARRAY_BUFFER,perTexturePositionMatBuffer[theBrick->printID+4]);
+                    glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&pos);
+
+                    glBindBuffer(GL_ARRAY_BUFFER,perTextureRotationBuffer[theBrick->printID+4]);
+                    glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::quat),sizeof(glm::quat),&theBrick->rotation);
+
+                    glBindBuffer(GL_ARRAY_BUFFER,perTexturePaintColorBuffer[theBrick->printID+4]);
+                    glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::vec4),sizeof(glm::vec4),&theBrick->color);
+
+                    glBindBuffer(GL_ARRAY_BUFFER,perTextureDimensionBuffer[theBrick->printID+4]);
+                    glBufferSubData(GL_ARRAY_BUFFER,theBrick->printBufferOffset * sizeof(glm::uvec4),sizeof(glm::uvec4),&dimensions);
+
+                    glBindVertexArray(0);
+                }
             }
-
-            glBindVertexArray(0);
         }
     }
 
     void newBrickRenderer::addBasicBrick(basicBrickRenderData *theBrick,int rotationID,btCollisionShape *shape,btDynamicsWorld *world,bool doNotCompile)
     {
+        theBrick->oldPrintID = theBrick->printID;
+
         if(world && theBrick->shouldCollide)
         {
             if(!shape)
@@ -881,13 +788,13 @@ namespace syj
                 //Uh, except for this one lol:
                 transparentPerTextureInstances[BRICKTEX_SIDES]+=4;
                 transparentPerTextureInstances[BRICKTEX_BOTTOM]++;
-                if(!theBrick->printFaces)
+                if(!theBrick->hasPrint)
                     updateBasicBrick(theBrick,world);
             }
             else
                 recompileTransparentBasicBricks();
 
-            if(theBrick->printFaces)
+            if(theBrick->hasPrint)
             {
                 if(transparentPerTextureInstances[theBrick->printID+4]/6 < transparentBasicAlloc[theBrick->printID+4])
                 {
@@ -914,13 +821,13 @@ namespace syj
                 perTextureInstances[BRICKTEX_STUDS]++;
                 perTextureInstances[BRICKTEX_SIDES]+=4;
                 perTextureInstances[BRICKTEX_BOTTOM]++;
-                if(!theBrick->printFaces)
+                if(!theBrick->hasPrint)
                     updateBasicBrick(theBrick,world);
             }
             else
                 recompileOpaqueBasicBricks();
 
-            if(theBrick->printFaces)
+            if(theBrick->hasPrint)
             {
                 if(perTextureInstances[theBrick->printID+4]/6 < opaqueBasicAlloc[theBrick->printID+4])
                 {
@@ -1200,14 +1107,14 @@ namespace syj
             {
                 basicBrickRenderData *brick = opaqueBasicBricks[i];
 
-                if(!brick->printFaces)
+                if(!brick->hasPrint)
                     continue;
 
                 if(brick->printID+4 != tex)
                     continue;
 
                 glm::uvec4 dimension = brick->dimensions;
-                dimension.w = brick->printFaces->faceMask ^ 0b111111;
+                dimension.w = brick->printMask ^ 0b111111;
 
                 //This is set so we can easily update just this bricks attributes later
                 //The offset doesn't tell you if it's transparent or opaque
@@ -1271,14 +1178,14 @@ namespace syj
             {
                 basicBrickRenderData *brick = transparentBasicBricks[i];
 
-                if(!brick->printFaces)
+                if(!brick->hasPrint)
                     continue;
 
                 if(brick->printID+4 != tex)
                     continue;
 
                 glm::uvec4 dimension = brick->dimensions;
-                dimension.w = ~brick->printFaces->faceMask;
+                dimension.w = ~brick->printMask;
 
                 //This is set so we can easily update just this bricks attributes later
                 //The offset doesn't tell you if it's transparent or opaque
@@ -1355,8 +1262,8 @@ namespace syj
         for(unsigned int i = 0; i<opaqueBasicBricks.size(); i++)
         {
             basicBrickRenderData *brick = opaqueBasicBricks[i];
-            if(brick->printFaces)
-                brick->dimensions.w = brick->printFaces->faceMask;
+            if(brick->hasPrint)
+                brick->dimensions.w = brick->printMask;
 
             //This is set so we can easily update just this bricks attributes later
             //The offset doesn't tell you if it's transparent or opaque
