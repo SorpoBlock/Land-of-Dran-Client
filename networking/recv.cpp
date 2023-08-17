@@ -1496,7 +1496,8 @@ namespace syj
                 if(flatSound)
                 {
                     float pitch = data->readFloat();
-                    ohWow->speaker->playSound(id,loop,pitch);
+                    float vol = data->readFloat();
+                    ohWow->speaker->playSound(id,loop,pitch,vol);
                     return;
                 }
 
@@ -1511,7 +1512,8 @@ namespace syj
                     float y = data->readFloat();
                     float z = data->readFloat();
                     float pitch = data->readFloat();
-                    ohWow->speaker->playSound(id,loop,x,y,z,pitch);
+                    float vol = data->readFloat();
+                    ohWow->speaker->playSound(id,loop,x,y,z,pitch,vol);
                 }
                 return;
             }

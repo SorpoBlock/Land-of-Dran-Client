@@ -47,7 +47,7 @@
 //#include <openssl/sha.h>
 #include <bearssl/bearssl_hash.h>
 
-#define hardCodedNetworkVersion 10011
+#define hardCodedNetworkVersion 10012
 
 #define cammode_firstPerson 0
 #define cammode_thirdPerson 1
@@ -250,8 +250,8 @@ int main(int argc, char *argv[])
     bool shaderFailedToCompile = false;
 
     program basicProgram;
-    shader basicVertex("shaders/basicVertex.glsl",GL_VERTEX_SHADER);
-    shader basicFragment("shaders/basicFragment.glsl",GL_FRAGMENT_SHADER);
+    shader basicVertex("shaders/oldModel.vert.glsl",GL_VERTEX_SHADER);
+    shader basicFragment("shaders/oldModel.frag.glsl",GL_FRAGMENT_SHADER);
     basicProgram.bindShader(basicVertex);
     basicProgram.bindShader(basicFragment);
     basicProgram.compile();
@@ -266,9 +266,10 @@ int main(int argc, char *argv[])
     CEGUI::Window *escapeMenu = addEscapeMenu(&ohWow,&basic);
 
     program newModelProgram;
-    shader newModelVertex("shaders/newModelVertex.glsl",GL_VERTEX_SHADER);
+    shader newModelVertex("shaders/model.vert.glsl",GL_VERTEX_SHADER);
+    shader newModelFrag("shaders/model.frag.glsl",GL_FRAGMENT_SHADER);
     newModelProgram.bindShader(newModelVertex);
-    newModelProgram.bindShader(basicFragment);
+    newModelProgram.bindShader(newModelFrag);
     newModelProgram.compile();
     uniformsHolder newModelUnis(newModelProgram);
     newModelUnis.name = "newModel";
@@ -278,7 +279,7 @@ int main(int argc, char *argv[])
         shaderFailedToCompile = true;
     }
 
-    program shadowProgram;
+    /*program shadowProgram;
     shader shadowVertex("shaders/shadowVertex.glsl",GL_VERTEX_SHADER);
     shader shadowGeometry("shaders/shadowGeometry.glsl",GL_GEOMETRY_SHADER);
     shader shadowFragment("shaders/shadowFragment.glsl",GL_FRAGMENT_SHADER);
@@ -292,13 +293,15 @@ int main(int argc, char *argv[])
     {
         notify("Shader Failed to Compile","Shadow shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
         shaderFailedToCompile = true;
-    }
+    }*/
 
     program newModelShadowProgram;
-    shader newModelShadowVertex("shaders/newModelShadow.glsl",GL_VERTEX_SHADER);
+    shader newModelShadowVertex("shaders/modelShadow.vert.glsl",GL_VERTEX_SHADER);
+    shader newModelShadowGeometry("shaders/modelShadow.geom.glsl",GL_GEOMETRY_SHADER);
+    shader newModelShadowFrag("shaders/modelShadow.frag.glsl",GL_FRAGMENT_SHADER);
     newModelShadowProgram.bindShader(newModelShadowVertex);
-    newModelShadowProgram.bindShader(shadowGeometry);
-    newModelShadowProgram.bindShader(shadowFragment);
+    newModelShadowProgram.bindShader(newModelShadowGeometry);
+    newModelShadowProgram.bindShader(newModelShadowFrag);
     newModelShadowProgram.compile();
     uniformsHolder newModelShadowUnis(newModelShadowProgram);
     newModelShadowUnis.name = "newModelShadow";
@@ -309,8 +312,10 @@ int main(int argc, char *argv[])
     }
 
     program shadowProgramNoGeo;
-    shadowProgramNoGeo.bindShader(shadowVertex);
-    shadowProgramNoGeo.bindShader(shadowFragment);
+    shader godPrePassSunVert("shaders/godPrePassSun.vert.glsl",GL_VERTEX_SHADER);
+    shader godPrePassSunFrag("shaders/godPrePassSun.frag.glsl",GL_FRAGMENT_SHADER);
+    shadowProgramNoGeo.bindShader(godPrePassSunVert);
+    shadowProgramNoGeo.bindShader(godPrePassSunFrag);
     shadowProgramNoGeo.compile();
     uniformsHolder shadowNoGeoUnis(shadowProgramNoGeo);
     shadowNoGeoUnis.name = "shadowNoGeo";
@@ -321,8 +326,8 @@ int main(int argc, char *argv[])
     }
 
     program emitterProgram;
-    shader emitterVertex("shaders/emitterVertex.glsl",GL_VERTEX_SHADER);
-    shader emitterFragment("shaders/emitterFragment.glsl",GL_FRAGMENT_SHADER);
+    shader emitterVertex("shaders/emitter.vert.glsl",GL_VERTEX_SHADER);
+    shader emitterFragment("shaders/emitter.frag.glsl",GL_FRAGMENT_SHADER);
     emitterProgram.bindShader(emitterVertex);
     emitterProgram.bindShader(emitterFragment);
     emitterProgram.compile();
@@ -335,7 +340,7 @@ int main(int argc, char *argv[])
     }
 
     //program tessProgram;
-    shader tessVertex("shaders/tessVertex.glsl",GL_VERTEX_SHADER);
+    //shader tessVertex("shaders/tessVertex.glsl",GL_VERTEX_SHADER);
     /*shader tessControl("shaders/tessControl.glsl",GL_TESS_CONTROL_SHADER);
     shader tessEval("shaders/tessEval.glsl",GL_TESS_EVALUATION_SHADER);
     tessProgram.bindShader(tessVertex);
@@ -384,10 +389,11 @@ int main(int argc, char *argv[])
         return 0;*/
 
     program waterProgram;
-    shader waterControl("shaders/waterControl.glsl",GL_TESS_CONTROL_SHADER);
-    shader waterEval("shaders/waterEval.glsl",GL_TESS_EVALUATION_SHADER);
-    shader waterFragment("shaders/waterFragment.glsl",GL_FRAGMENT_SHADER);
-    waterProgram.bindShader(tessVertex);
+    shader waterVertex("shaders/water.vert.glsl",GL_VERTEX_SHADER);
+    shader waterControl("shaders/water.tesc.glsl",GL_TESS_CONTROL_SHADER);
+    shader waterEval("shaders/water.tese.glsl",GL_TESS_EVALUATION_SHADER);
+    shader waterFragment("shaders/water.frag.glsl",GL_FRAGMENT_SHADER);
+    waterProgram.bindShader(waterVertex);
     waterProgram.bindShader(waterControl);
     waterProgram.bindShader(waterEval);
     waterProgram.bindShader(waterFragment);
@@ -401,8 +407,8 @@ int main(int argc, char *argv[])
     }
 
     program brickProgram;
-    shader brickVertex("shaders/brickVertex.glsl",GL_VERTEX_SHADER);
-    shader brickFragment("shaders/brickFragment.glsl",GL_FRAGMENT_SHADER);
+    shader brickVertex("shaders/brick.vert.glsl",GL_VERTEX_SHADER);
+    shader brickFragment("shaders/brick.frag.glsl",GL_FRAGMENT_SHADER);
     brickProgram.bindShader(brickVertex);
     brickProgram.bindShader(brickFragment);
     brickProgram.compile();
@@ -415,8 +421,8 @@ int main(int argc, char *argv[])
     }
 
     program brickSimpleProgram;
-    shader brickSimpleVertex("shaders/simpleBrickVertex.glsl",GL_VERTEX_SHADER);
-    shader brickSimpleFragment("shaders/simpleBrickFragment.glsl",GL_FRAGMENT_SHADER);
+    shader brickSimpleVertex("shaders/simpleBrick.vert.glsl",GL_VERTEX_SHADER);
+    shader brickSimpleFragment("shaders/simpleBrick.frag.glsl",GL_FRAGMENT_SHADER);
     brickSimpleProgram.bindShader(brickSimpleVertex);
     brickSimpleProgram.bindShader(brickSimpleFragment);
     brickSimpleProgram.compile();
@@ -429,10 +435,12 @@ int main(int argc, char *argv[])
     }
 
     program shadowBrickProgram;
-    shader shadowBrickVertex("shaders/shadowBrickVertex.glsl",GL_VERTEX_SHADER);
+    shader shadowBrickVertex("shaders/shadowBrick.vert.glsl",GL_VERTEX_SHADER);
+    shader shadowBrickGeometry("shaders/shadowBrick.geom.glsl",GL_GEOMETRY_SHADER);
+    shader shadowBrickFragment("shaders/shadowBrick.frag.glsl",GL_FRAGMENT_SHADER);
     shadowBrickProgram.bindShader(shadowBrickVertex);
-    shadowBrickProgram.bindShader(shadowGeometry);
-    shadowBrickProgram.bindShader(shadowFragment);
+    shadowBrickProgram.bindShader(shadowBrickGeometry);
+    shadowBrickProgram.bindShader(shadowBrickFragment);
     shadowBrickProgram.compile();
     uniformsHolder shadowBrickUnis(shadowBrickProgram);
     shadowBrickUnis.name = "shadowBrick";
@@ -443,8 +451,10 @@ int main(int argc, char *argv[])
     }
 
     program shadowBrickProgramNoGeo;
-    shadowBrickProgramNoGeo.bindShader(shadowBrickVertex);
-    shadowBrickProgramNoGeo.bindShader(shadowFragment);
+    shader godPrePassVertex("shaders/godPrePassBrick.vert.glsl",GL_VERTEX_SHADER);
+    shader godPrePassFrag("shaders/godPrePassBrick.frag.glsl",GL_FRAGMENT_SHADER);
+    shadowBrickProgramNoGeo.bindShader(godPrePassVertex);
+    shadowBrickProgramNoGeo.bindShader(godPrePassFrag);
     shadowBrickProgramNoGeo.compile();
     uniformsHolder shadowBrickNoGeoUnis(shadowBrickProgramNoGeo);
     shadowBrickNoGeoUnis.name = "shadowBrick";
@@ -455,8 +465,8 @@ int main(int argc, char *argv[])
     }
 
     program boxEdgesProgram;
-    shader boxEdgesVertex("shaders/boxEdgesVertex.glsl",GL_VERTEX_SHADER);
-    shader boxEdgesFragment("shaders/boxEdgesFragment.glsl",GL_FRAGMENT_SHADER);
+    shader boxEdgesVertex("shaders/boxEdges.vert.glsl",GL_VERTEX_SHADER);
+    shader boxEdgesFragment("shaders/boxEdges.frag.glsl",GL_FRAGMENT_SHADER);
     boxEdgesProgram.bindShader(boxEdgesVertex);
     boxEdgesProgram.bindShader(boxEdgesFragment);
     boxEdgesProgram.compile();
@@ -469,8 +479,8 @@ int main(int argc, char *argv[])
     }
 
     program rectToCubeProgram;
-    shader rectToCubeVert("shaders/rectToCubeVert.glsl",GL_VERTEX_SHADER);
-    shader rectToCubeFrag("shaders/rectToCubeFrag.glsl",GL_FRAGMENT_SHADER);
+    shader rectToCubeVert("shaders/rectToCube.vert.glsl",GL_VERTEX_SHADER);
+    shader rectToCubeFrag("shaders/rectToCube.frag.glsl",GL_FRAGMENT_SHADER);
     rectToCubeProgram.bindShader(rectToCubeVert);
     rectToCubeProgram.bindShader(rectToCubeFrag);
     rectToCubeProgram.compile();
@@ -481,8 +491,8 @@ int main(int argc, char *argv[])
     }
 
     program fontProgram;
-    shader fontVert("shaders/fontVertex.glsl",GL_VERTEX_SHADER);
-    shader fontFrag("shaders/fontFragment.glsl",GL_FRAGMENT_SHADER);
+    shader fontVert("shaders/font.vert.glsl",GL_VERTEX_SHADER);
+    shader fontFrag("shaders/font.frag.glsl",GL_FRAGMENT_SHADER);
     fontProgram.bindShader(fontVert);
     fontProgram.bindShader(fontFrag);
     fontProgram.compile();
@@ -491,6 +501,20 @@ int main(int argc, char *argv[])
     if(!fontProgram.isCompiled())
     {
         notify("Shader Failed to Compile","Font shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
+        shaderFailedToCompile = true;
+    }
+
+    program screenOverlaysProgram;
+    shader screenOverlaysVert("shaders/screenOverlays.vert.glsl",GL_VERTEX_SHADER);
+    shader screenOverlaysFrag("shaders/screenOverlays.frag.glsl",GL_FRAGMENT_SHADER);
+    screenOverlaysProgram.bindShader(screenOverlaysVert);
+    screenOverlaysProgram.bindShader(screenOverlaysFrag);
+    screenOverlaysProgram.compile();
+    uniformsHolder screenOverlaysUnis(screenOverlaysProgram);
+    screenOverlaysUnis.name = "screenOverlays";
+    if(!screenOverlaysProgram.isCompiled())
+    {
+        notify("Shader Failed to Compile","Screen overlays shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
         shaderFailedToCompile = true;
     }
     /*std::vector<glm::vec3> shape = defaultSquareShape();
@@ -850,6 +874,7 @@ int main(int argc, char *argv[])
 
     info("Starting main game loop!");
 
+    bool showPreview = false;
     bool hitDebug = true;
     bool justTurnOnChat = false;
     float lastPhysicsStep = 0.0;
@@ -1086,6 +1111,9 @@ int main(int argc, char *argv[])
                         chatEditbox->setMousePassThroughEnabled(false);
                     }
                 }
+
+                if(event.key.keysym.sym == SDLK_END)
+                    showPreview = !showPreview;
 
                 if(event.key.keysym.sym == SDLK_RETURN && chatEditbox->isActive())
                 {
@@ -1907,6 +1935,12 @@ int main(int argc, char *argv[])
                 ohWow.livingBricks[a]->wheels[wheel]->advance(deltaT);
         }
 
+        for(unsigned int a = 0; a<ohWow.items.size(); a++)
+        {
+            if(!(!ohWow.giveUpControlOfCurrentPlayer && ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
+                ohWow.items[a]->updateTransform();
+        }
+
         //std::cout<<ohWow.staticBricks.opaqueBasicBricks.size()<<" bricks\n";
 
         auto fakeKillIter = ohWow.fakeKills.begin();
@@ -2124,7 +2158,6 @@ int main(int argc, char *argv[])
             waterDepth->unbind();
         }
 
-
         //End drawing to water textures
 
         if(ohWow.settings->shadowResolution != shadowsOff)
@@ -2136,16 +2169,8 @@ int main(int argc, char *argv[])
 
             ohWow.env->shadowBuffer->bind();
 
-                shadowProgram.use();
+                /*shadowProgram.use();
                     ohWow.env->passLightMatricies(shadow);
-
-                    for(unsigned int a = 0; a<ohWow.items.size(); a++)
-                    {
-                        /*if(ohWow.items[a]->heldBy == ohWow.cameraTarget)
-                            ohWow.items[a]->render(shadow,true,ohWow.playerCamera->getYaw());*/
-                        if(!(!ohWow.giveUpControlOfCurrentPlayer && ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
-                            ohWow.items[a]->updateTransform();
-                    }
 
                     for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
                     {
@@ -2158,10 +2183,7 @@ int main(int argc, char *argv[])
                                               glm::scale(ohWow.livingBricks[a]->wheels[wheel]->scale),true
                                               );
                         }
-                    }
-
-                    /*for(unsigned int a = 0; a<ohWow.dynamics.size(); a++)
-                        ohWow.dynamics[a]->render(&shadow);*/
+                    }*/
 
                 newModelShadowProgram.use();
                     ohWow.env->passLightMatricies(newModelShadowUnis);
@@ -2326,12 +2348,15 @@ int main(int argc, char *argv[])
                   //  ohWow.livingBricks[a]->renderWheels(&basic,&sphere);
 
                 //Preview texture:
-                /*glUniform1i(basic.previewTexture,true);
-                //waterRefraction->colorResult->bind(normal);
-                glBindVertexArray(quadVAO);
-                glDrawArrays(GL_TRIANGLES,0,6);
-                glBindVertexArray(0);
-                glUniform1i(basic.previewTexture,false);*/
+                if(showPreview)
+                {
+                    glUniform1i(basic.previewTexture,true);
+                    ohWow.env->godRayPass->colorResult->bind(normal);
+                    glBindVertexArray(quadVAO);
+                    glDrawArrays(GL_TRIANGLES,0,6);
+                    glBindVertexArray(0);
+                    glUniform1i(basic.previewTexture,false);
+                }
                 //end preview texture
 
                 drawDebugLocations(basic,cubeVAO,ohWow.debugLocations,ohWow.debugColors);
@@ -2414,12 +2439,12 @@ int main(int argc, char *argv[])
             glEnable(GL_DEPTH_TEST);
 
             //Remember, 'god rays' actually includes the underwater texture too
-            basicProgram.use();
-                glUniform1f(basicProgram.getUniformLocation("waterLevel"),ohWow.waterLevel); //TODO: Don't string match this every frame
-                ohWow.settings->render(basic);
-                ohWow.playerCamera->render(basic);
-                ohWow.env->passUniforms(basic);
-                ohWow.env->renderGodRays(basic);
+            screenOverlaysProgram.use();
+                glUniform1f(screenOverlaysProgram.getUniformLocation("waterLevel"),ohWow.waterLevel); //TODO: Don't string match this every frame
+                ohWow.settings->render(screenOverlaysUnis);
+                ohWow.playerCamera->render(screenOverlaysUnis);
+                ohWow.env->passUniforms(screenOverlaysUnis);
+                ohWow.env->renderGodRays(screenOverlaysUnis);
 
             /*spriteProgram.use();
                 glEnable(GL_CLIP_DISTANCE0);

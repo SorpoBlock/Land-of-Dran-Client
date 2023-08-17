@@ -7,8 +7,8 @@ namespace syj
         debug("Creating BDRF look-up texture.");
 
         program bdrfProgram;
-        shader bdrfVertex("shaders/bdrfVertex.glsl",GL_VERTEX_SHADER);
-        shader bdrfFragment("shaders/bdrfFragment.glsl",GL_FRAGMENT_SHADER);
+        shader bdrfVertex("shaders/bdrf.vert.glsl",GL_VERTEX_SHADER);
+        shader bdrfFragment("shaders/bdrf.frag.glsl",GL_FRAGMENT_SHADER);
         bdrfProgram.bindShader(bdrfVertex);
         bdrfProgram.bindShader(bdrfFragment);
         bdrfProgram.compile();

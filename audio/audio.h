@@ -27,10 +27,10 @@ namespace syj
         glm::vec3 lastPos = glm::vec3(0,0,0);
         std::vector<sound*> sounds;
         void loadSound(int serverID,std::string filepath,std::string scriptName,bool isMusic);
-        void playSound(int serverID,bool loop,float x,float y,float z,float pitch = 1.0);
+        void playSound(int serverID,bool loop,float x,float y,float z,float pitch = 1.0,float vol = 1.0);
         void loopSound(int serverID,int loopID,float x,float y,float z,float pitch = 1.0);
         void loopSound(int serverID,int loopID,livingBrick *car,float pitch = 1.0);
-        void playSound(int serverID,bool loop,float pitch = 1.0);
+        void playSound(int serverID,bool loop,float pitch = 1.0,float vol = 1.0);
         void playSound(std::string name,bool loop,float x,float y,float z);
         void microphone(glm::vec3 pos,glm::vec3 dir);
         void setVolumes(float master,float music);
