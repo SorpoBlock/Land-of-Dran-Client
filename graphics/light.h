@@ -7,6 +7,7 @@
 #include "code/graphics/uniformsBasic.h"
 #include "code/physics/player.h"
 #include "code/physics/brickPhysics.h"
+#include "code/networking/location.h"
 
 namespace syj
 {

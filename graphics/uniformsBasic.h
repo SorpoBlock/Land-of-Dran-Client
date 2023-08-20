@@ -7,15 +7,6 @@
 
 namespace syj
 {
-    enum attachMode
-    {
-        worldPos = 0,
-        brickPos = 1,
-        carBrick = 2,
-        dynamicNode = 3,
-        itemNode = 4
-    };
-
     struct uniformsHolder
     {
         std::string name = "";

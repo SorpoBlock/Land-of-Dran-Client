@@ -168,6 +168,16 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
             ohWow->picker->addDecalToPicker(fileName);
         }
     }
+    else if(commandType == "stopLoop")
+    {
+        int loopId = data->readUInt(24);
+        ohWow->speaker->removeLoop(loopId);
+    }
+    else if(commandType == "audioEffect")
+    {
+        std::string effect = data->readString();
+        ohWow->speaker->setEffect(effect);
+    }
     else
         error("Unrecognized command: " + commandType);
 }
@@ -1460,7 +1470,7 @@ namespace syj
 
                 if(loop)
                 {
-                    int loopId = data->readUInt(5);
+                    int loopId = data->readUInt(24);
                     float pitch = data->readFloat();
                     bool onCar = data->readBit();
                     if(onCar)
@@ -1480,14 +1490,16 @@ namespace syj
                             error("Could not find car " + std::to_string(carId) + " to attach music!");
                             return;
                         }
-                        ohWow->speaker->loopSound(id,loopId,car,pitch);
+                        //ohWow->speaker->loopSound(id,loopId,car,pitch);
+                        ohWow->speaker->playSound3D(id,location(car),pitch,1.0,loopId);
                     }
                     else
                     {
                         float x = data->readFloat();
                         float y = data->readFloat();
                         float z = data->readFloat();
-                        ohWow->speaker->loopSound(id,loopId,x,y,z,pitch);
+                        ohWow->speaker->playSound3D(id,location(glm::vec3(x,y,z)),pitch,1.0,loopId);
+                        //ohWow->speaker->loopSound(id,loopId,x,y,z,pitch);
                     }
                     return;
                 }
@@ -1497,7 +1509,8 @@ namespace syj
                 {
                     float pitch = data->readFloat();
                     float vol = data->readFloat();
-                    ohWow->speaker->playSound(id,loop,pitch,vol);
+                    //ohWow->speaker->playSound(id,loop,pitch,vol);
+                    ohWow->speaker->playSound2D(id,pitch,vol);
                     return;
                 }
 
@@ -1513,7 +1526,8 @@ namespace syj
                     float z = data->readFloat();
                     float pitch = data->readFloat();
                     float vol = data->readFloat();
-                    ohWow->speaker->playSound(id,loop,x,y,z,pitch,vol);
+                    //ohWow->speaker->playSound(id,loop,x,y,z,pitch,vol);
+                    ohWow->speaker->playSound3D(id,location(glm::vec3(x,y,z)),pitch,vol);
                 }
                 return;
             }
@@ -1555,6 +1569,12 @@ namespace syj
                     {
                         if(ohWow->items[a]->serverID == itemId)
                         {
+                            for(int l = 0; l<location::locations.size(); l++)
+                            {
+                                if(location::locations[l]->dynamic == ohWow->items[a])
+                                    location::locations[l]->dynamic = 0;
+                            }
+
                             delete ohWow->items[a];
                             ohWow->items[a] = 0;
                             ohWow->items.erase(ohWow->items.begin() + a);
@@ -1685,14 +1705,14 @@ namespace syj
                 {
                     if(ohWow->livingBricks[a]->serverID == id)
                     {
-                        for(unsigned int b = 0; b<32; b++)
+                        /*for(unsigned int b = 0; b<32; b++)
                         {
                             if(ohWow->speaker->carToTrack[b] == ohWow->livingBricks[a])
                             {
                                 alSourceStop(ohWow->speaker->sources[b]);
                                 ohWow->speaker->carToTrack[b] = 0;
                             }
-                        }
+                        }*/
 
                         auto lightIter = ohWow->lights.begin();
                         while(lightIter != ohWow->lights.end())
@@ -1720,6 +1740,12 @@ namespace syj
                                 continue;
                             }
                             ++emitterIter;
+                        }
+
+                        for(int l = 0; l<location::locations.size(); l++)
+                        {
+                            if(location::locations[l]->car == ohWow->livingBricks[a])
+                                location::locations[l]->car = 0;
                         }
 
                         delete ohWow->livingBricks[a];
@@ -2509,6 +2535,12 @@ namespace syj
                             for(int b = 0; b<ohWow->emitters.size(); b++)
                                 if(ohWow->emitters[b]->attachedToModel == ohWow->newDynamics[a])
                                     ohWow->emitters[b]->attachedToModel = 0;
+
+                            for(int l = 0; l<location::locations.size(); l++)
+                            {
+                                if(location::locations[l]->dynamic == ohWow->newDynamics[a])
+                                    location::locations[l]->dynamic = 0;
+                            }
 
                             delete ohWow->newDynamics[a];
                             ohWow->newDynamics.erase(ohWow->newDynamics.begin() + a);

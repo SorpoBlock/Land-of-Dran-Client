@@ -237,7 +237,8 @@ namespace syj
 
         if(rotateCorrect)
         {
-            speaker->playSound("ClickRotate",false,getX(),getY(),getZ());
+            //speaker->playSound("ClickRotate",false,getX(),getY(),getZ());
+            speaker->playSound2D(speaker->resolveSound("ClickRotate"));
 
             if(isBasic)
             {
@@ -285,7 +286,8 @@ namespace syj
             {
                 if(firstPressTime == -1)
                     firstPressTime = SDL_GetTicks();
-                speaker->playSound("ClickMove",false,getX(),getY(),getZ());
+                speaker->playSound2D(speaker->resolveSound("ClickMove"));
+                //speaker->playSound("ClickMove",false,getX(),getY(),getZ());
                 moveBrickSide = true;
                 brickMoveDir = glm::vec3(0,0,-1);
             }
@@ -294,7 +296,8 @@ namespace syj
             {
                 if(firstPressTime == -1)
                     firstPressTime = SDL_GetTicks();
-                speaker->playSound("ClickMove",false,getX(),getY(),getZ());
+                speaker->playSound2D(speaker->resolveSound("ClickMove"));
+                //speaker->playSound("ClickMove",false,getX(),getY(),getZ());
                 moveBrickSide = true;
                 brickMoveDir = glm::vec3(0,0,1);
             }
@@ -303,7 +306,8 @@ namespace syj
             {
                 if(firstPressTime == -1)
                     firstPressTime = SDL_GetTicks();
-                speaker->playSound("ClickMove",false,getX(),getY(),getZ());
+                speaker->playSound2D(speaker->resolveSound("ClickMove"));
+                //speaker->playSound("ClickMove",false,getX(),getY(),getZ());
                 moveBrickSide = true;
                 brickMoveDir = glm::vec3(-1,0,0);
             }
@@ -312,7 +316,8 @@ namespace syj
             {
                 if(firstPressTime == -1)
                     firstPressTime = SDL_GetTicks();
-                speaker->playSound("ClickMove",false,getX(),getY(),getZ());
+                speaker->playSound2D(speaker->resolveSound("ClickMove"));
+                //speaker->playSound("ClickMove",false,getX(),getY(),getZ());
                 moveBrickSide = true;
                 brickMoveDir = glm::vec3(1,0,0);
             }
@@ -332,7 +337,8 @@ namespace syj
                 if(firstPressTime == -1)
                     firstPressTime = SDL_GetTicks();
                 lastBrickMove = SDL_GetTicks();
-                speaker->playSound("ClickMove",false,getX(),getY(),getZ());
+                speaker->playSound2D(speaker->resolveSound("ClickMove"));
+                //speaker->playSound("ClickMove",false,getX(),getY(),getZ());
                 if(resizeMode == 1 && isBasic)
                 {
                     if(cart)
@@ -409,7 +415,8 @@ namespace syj
                 if(firstPressTime == -1)
                     firstPressTime = SDL_GetTicks();
                 lastBrickMove = SDL_GetTicks();
-                speaker->playSound("ClickMove",false,getX(),getY(),getZ());
+                speaker->playSound2D(speaker->resolveSound("ClickMove"));
+                //speaker->playSound("ClickMove",false,getX(),getY(),getZ());
                 if(resizeMode == 1 && isBasic)
                 {
                     if(cart)

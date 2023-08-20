@@ -243,7 +243,6 @@ int main(int argc, char *argv[])
         }
     }
 
-
     if(SDLNet_Init())
         error("Could not initalize SDLNet");
 
@@ -951,7 +950,7 @@ int main(int argc, char *argv[])
         deltaT = SDL_GetTicks() - lastTick;
         lastTick = SDL_GetTicks();
 
-        for(unsigned int a = 0; a<32; a++)
+        /*for(unsigned int a = 0; a<32; a++)
         {
             if(ohWow.speaker->carToTrack[a])
             {
@@ -960,7 +959,7 @@ int main(int argc, char *argv[])
                 alSource3f(ohWow.speaker->loopSources[a],AL_POSITION,pos.x,pos.y,pos.z);
                 alSource3f(ohWow.speaker->loopSources[a],AL_VELOCITY,vel.x,vel.y,vel.z);
             }
-        }
+        }*/
 
         Uint32 mouseState = SDL_GetMouseState(NULL,NULL);
         //SDL's macros are fucked up
@@ -1517,7 +1516,8 @@ int main(int argc, char *argv[])
         {
             ohWow.currentlyOpen = paintCan;
             glm::vec3 pos = ohWow.playerCamera->getPosition();
-            ohWow.speaker->playSound("Rattle",false,pos.x,pos.y,pos.z);
+            //ohWow.speaker->playSound("Rattle",false,pos.x,pos.y,pos.z);
+            ohWow.speaker->playSound2D(ohWow.speaker->resolveSound("Rattle"));
             ohWow.palette->advanceColumn();
             myTempBrick.basicChanged = myTempBrick.basicChanged || myTempBrick.isBasic;
             myTempBrick.specialChanged = myTempBrick.specialChanged || !myTempBrick.isBasic;
@@ -1734,7 +1734,8 @@ int main(int argc, char *argv[])
         ohWow.playerCamera->setFieldOfVision(currentZoom);
 
         glm::vec3 microphoneDir = glm::vec3(sin(ohWow.playerCamera->getYaw()),0,cos(ohWow.playerCamera->getYaw()));
-        ohWow.speaker->microphone(ohWow.playerCamera->getPosition()+glm::vec3(0.05,0.05,0.05),microphoneDir);
+        //ohWow.speaker->microphone(ohWow.playerCamera->getPosition()+glm::vec3(0.05,0.05,0.05),microphoneDir);
+        ohWow.speaker->update(ohWow.playerCamera->getPosition(),microphoneDir);
 
         if(playerInput.commandKeyDown(jump))
             doJump = true;
@@ -1838,7 +1839,8 @@ int main(int argc, char *argv[])
                     if(ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,ohWow.canJet && rightDown))
                         didJump = true;
                     if(didJump)
-                        ohWow.speaker->playSound("Jump",false,ohWow.playerCamera->getPosition().x,ohWow.playerCamera->getPosition().y-1.0,ohWow.playerCamera->getPosition().z);
+                        ohWow.speaker->playSound2D(ohWow.speaker->resolveSound("Jump"));
+                        //ohWow.speaker->playSound("Jump",false,ohWow.playerCamera->getPosition().x,ohWow.playerCamera->getPosition().y-1.0,ohWow.playerCamera->getPosition().z);
                 }
             }
 
