@@ -6,7 +6,7 @@
 
 namespace syj
 {
-    enum brickMaterial{none=0,tempBrickEffect=1,undulo=1000,bob=2000,peral=2,chrome=3,glow=4,blink=5,swirl=6,rainbow=7,slippery=8};
+    enum brickMaterial{none=0,tempBrickEffect=1,undulo=1000,bob=2000,peral=2,chrome=3,glow=4,blink=5,swirl=6,rainbow=7,slippery=8,foil=9};
 
     //Holds information that applies to every single brick:
     struct brickRenderData

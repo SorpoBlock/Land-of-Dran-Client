@@ -104,6 +104,7 @@ namespace syj
         std::vector<light*> lights;
         std::vector<heldLightPacket> heldLightPackets;
         emitterType *wheelDirtEmitter = 0;
+        newModel *newWheelModel = 0;
 
         std::vector<heldClientPhysicsDataPacket> clientPhysicsPackets;
 
@@ -140,6 +141,9 @@ namespace syj
         renderContext *context = 0;
         avatarPicker *picker = 0;
 
+        uniformsHolder *instancedShader = 0;
+        uniformsHolder *nonInstancedShader = 0;
+
         printLoader *prints = 0;
         material *brickMat;//("assets/brick/otherBrickMat.txt");
         material *brickMatSide;//("assets/brick/sideBrickMat.txt");
@@ -160,7 +164,7 @@ namespace syj
 
         std::vector<heldDynamicPacket> heldAppearancePackets;
         std::vector<item*> items;
-        std::vector<animatedModel*> oldDynamicTypes;
+        //std::vector<animatedModel*> oldDynamicTypes;
         std::vector<newModel*> newDynamicTypes;
         std::vector<newDynamic*> newDynamics;
         std::vector<livingBrick*> livingBricks;
@@ -169,6 +173,7 @@ namespace syj
         std::vector<light*> ghostCarLights;
         bool loadCarAsCar = false;
         std::vector<heldItemType*> itemTypes;
+        //std::vector<newDynamic*> itemIcons;
         std::vector<brickFakeKills> fakeKills;
         //bool inventoryOpen = true;
         unsigned int selectedSlot = 0;

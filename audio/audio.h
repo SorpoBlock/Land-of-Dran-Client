@@ -144,7 +144,7 @@ namespace syj
         //Needs to iterate through all 16 looping sources each time
         void setVolumes(float master,float music);
 
-        ALuint effect,effectSlot;
+        ALuint effect=0,effectSlot=0;
         void setEffect(std::string effectStr);
 
         audioPlayer();

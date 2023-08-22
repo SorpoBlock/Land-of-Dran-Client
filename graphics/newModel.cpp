@@ -2,6 +2,19 @@
 
 namespace syj
 {
+    void printMatScale(glm::mat4 in,std::string name)
+    {
+        glm::vec3 scale;
+        glm::quat rotation;
+        glm::vec3 translation;
+        glm::vec3 skew;
+        glm::vec4 perspective;
+        glm::decompose(in, scale, rotation, translation, skew, perspective);
+        std::cout<<name<<"\n";
+        std::cout<<"Scale: "<<scale.x<<","<<scale.y<<","<<scale.z<<"\n";
+        std::cout<<"Translation: "<<translation.x<<","<<translation.y<<","<<translation.z<<"\n\n";
+    }
+
     void newDynamic::createBoxBody(btDynamicsWorld *_world,btVector3 extents,btVector3 offset,btVector3 initPos)
     {
         world = _world;
@@ -108,6 +121,7 @@ namespace syj
 
         for(unsigned int a = 0; a<type->instancedMeshes.size(); a++)
         {
+            meshFlags.push_back(0);
             meshColors.push_back(glm::vec3(0,0,1));
             meshTransforms.push_back(glm::mat4(1.0));
             meshFixedRotation.push_back(glm::mat4(1.0));
@@ -134,6 +148,26 @@ namespace syj
             if(type->instancedMeshes[a]->name == nodeName)
             {
                 meshColors[a] = color;
+                meshColorChanged = true;
+                return;
+            }
+        }
+    }
+
+    void newDynamic::setAllFlag(int flag)
+    {
+        for(int a = 0; a<meshFlags.size(); a++)
+            meshFlags[a] = flag;
+        meshColorChanged = true;
+    }
+
+    void newDynamic::setNodeFlag(std::string nodeName,int flag)
+    {
+        for(int a = 0; a<meshFlags.size(); a++)
+        {
+            if(type->instancedMeshes[a]->name == nodeName)
+            {
+                meshFlags[a] = flag;
                 meshColorChanged = true;
                 return;
             }
@@ -708,6 +742,9 @@ namespace syj
             {
                 glBindBuffer(GL_ARRAY_BUFFER,((instancedMesh*)type->instancedMeshes[a])->buffers[perMeshColor]);
                 glBufferSubData(GL_ARRAY_BUFFER,sizeof(glm::vec3) * bufferOffset,sizeof(glm::vec3),&meshColors[a][0]);
+
+                glBindBuffer(GL_ARRAY_BUFFER,((instancedMesh*)type->instancedMeshes[a])->buffers[perMeshFlags]);
+                glBufferSubData(GL_ARRAY_BUFFER,sizeof(int) * bufferOffset,sizeof(int),&meshFlags[a]);
             }
 
             glBindBuffer(GL_ARRAY_BUFFER,((instancedMesh*)type->instancedMeshes[a])->buffers[perMeshTransformA]);
@@ -726,6 +763,7 @@ namespace syj
 
         std::vector<glm::mat4> transforms;
         std::vector<glm::vec3> colors;
+        std::vector<int> flags;
 
         for(unsigned int a = 0; a<instances.size(); a++)
         {
@@ -733,6 +771,7 @@ namespace syj
 
             transforms.push_back(instances[a]->meshTransforms[meshIndex]);
             colors.push_back(instances[a]->meshColors[meshIndex]);
+            flags.push_back(instances[a]->meshFlags[meshIndex]);
             instances[a]->meshColorChanged = false;
         }
 
@@ -743,6 +782,9 @@ namespace syj
 
         glBindBuffer(GL_ARRAY_BUFFER,buffers[perMeshColor]);
         glBufferData(GL_ARRAY_BUFFER,sizeof(glm::vec3) * colors.size(),&colors[0][0],GL_STREAM_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER,buffers[perMeshFlags]);
+        glBufferData(GL_ARRAY_BUFFER,sizeof(int) * flags.size(),&flags[0],GL_STREAM_DRAW);
 
         glBindVertexArray(0);
 
@@ -852,7 +894,7 @@ namespace syj
             error("Before anything OpenGL error: " + std::to_string(err));
 
         glGenVertexArrays(1,&vao);
-        glGenBuffers(8,buffers);
+        glGenBuffers(9,buffers);
 
         glBindVertexArray(vao);
 
@@ -864,6 +906,11 @@ namespace syj
         glEnableVertexAttribArray(perMeshColor);
         glVertexAttribPointer(perMeshColor,3,GL_FLOAT,GL_FALSE,0,(void*)0);
         glVertexAttribDivisor(perMeshColor,1);
+
+        glBindBuffer(GL_ARRAY_BUFFER,buffers[perMeshFlags]);
+        glEnableVertexAttribArray(perMeshFlags);
+        glVertexAttribIPointer(perMeshFlags,1,GL_INT,0,(void*)0);
+        glVertexAttribDivisor(perMeshFlags,1);
 
         glBindBuffer(GL_ARRAY_BUFFER,buffers[perMeshTransformA]);
         for(int i = 0; i<4; i++)

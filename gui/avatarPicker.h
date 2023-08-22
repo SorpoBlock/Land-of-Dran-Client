@@ -6,7 +6,7 @@
 #include "code/graphics/renderContext.h"
 #include "code/graphics/renderTarget.h"
 #include "code/graphics/uniformsBasic.h"
-#include "code/graphics/model.h"
+#include "code/graphics/newModel.h"
 #include "code/utility/ceguiHelper.h"
 #include "code/utility/preference.h"
 
@@ -27,12 +27,13 @@ namespace syj
         perspectiveCamera pickingCamera;
         bool picking = false;
         int settingColorFor = -1;
-        model *playerModel = 0;
+        //model *playerModel = 0;
+        newDynamic *pickingPlayer = 0;
         client *tmpClient = 0;
         preferenceFile *tmpPrefs = 0;
         renderTarget *pickingTexture = 0;
         bool sliderEventProtection = false;
-        void runPickCycle(renderContext *context,uniformsHolder *graphics,client *connection,preferenceFile *prefs);
+        void runPickCycle(renderContext *context,uniformsHolder *instancedUnis,uniformsHolder *nonInstancedUnis,client *connection,preferenceFile *prefs);
         float modelYaw = 0;
         float modelPitch = 0;
 

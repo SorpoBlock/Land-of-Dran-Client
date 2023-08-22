@@ -215,8 +215,13 @@ namespace syj
                     if(ohWow->newDynamicTypes.size() > 0)
                     {
                         //TODO: Update avatar picker code
-                        if(!ohWow->picker->playerModel)
-                            ohWow->picker->playerModel = (model*)ohWow->newDynamicTypes[0]->oldModelType;
+                        //if(!ohWow->picker->playerModel)
+                            //ohWow->picker->playerModel = (model*)ohWow->newDynamicTypes[0]->oldModelType;
+                        ohWow->picker->pickingPlayer = new newDynamic(ohWow->newDynamicTypes[0]);
+                        ohWow->picker->pickingPlayer->useGlobalTransform = true;
+                        ohWow->picker->pickingPlayer->hidden = true;
+                        ohWow->picker->pickingPlayer->calculateMeshTransforms(0);
+                        ohWow->picker->pickingPlayer->bufferSubData();
 
                         ohWow->picker->loadFromPrefs(ohWow->prefs);
                         ohWow->picker->sendAvatarPrefs(ohWow->connection,0);
@@ -1612,6 +1617,11 @@ namespace syj
                 float y = data->readFloat();
                 float z = data->readFloat();
 
+                std::string iconPath = data->readString();
+
+                if(!CEGUI::System::getSingleton().getRenderer()->isTextureDefined(uiName) && !CEGUI::ImageManager::getSingleton().isImageTypeAvailable(uiName) && !CEGUI::ImageManager::getSingleton().isDefined(uiName))
+                    CEGUI::ImageManager::getSingleton().addFromImageFile(uiName, iconPath,"/");
+
                 std::cout<<"Added item type: "<<uiName<<"\n";
 
                 for(unsigned int a = 0; a<ohWow->newDynamicTypes.size(); a++)
@@ -1638,13 +1648,27 @@ namespace syj
                         }
                         ohWow->itemTypes.push_back(tmp);
 
-                        if(uiName == std::string("Paint Can"))
+                        if(uiName != std::string("Paint Can"))
                         {
                             ohWow->paintCan = tmp;
                             ohWow->fixedPaintCanItem = new item(ohWow->world,tmp->type,glm::vec3(0.02,0.02,0.02));
                             ohWow->fixedPaintCanItem->itemType = tmp;
                             ohWow->items.push_back(ohWow->fixedPaintCanItem);
+
+                            /*newDynamic *itemIcon = new newDynamic(ohWow->newDynamicTypes[a]);
+                            itemIcon->hidden = true;
+                            tmp->icon = itemIcon;
+                            itemIcon->setAllFlag(meshFlag_skipCameraMatrix);
+                            ohWow->itemIcons.push_back(itemIcon);
+                            itemIcon->useGlobalTransform = true;
+                            itemIcon->calculateMeshTransforms(0);
+                            itemIcon->bufferSubData();*/
                         }
+                        /*else
+                        {
+                            ohWow->itemIcons.push_back(0);
+                            tmp->icon = 0;
+                        }*/
 
                         finishLoadingTypesCheck(ohWow);
                         return;
@@ -1662,6 +1686,8 @@ namespace syj
                 tmp->waitingForSwitchAnim = switchAnim;
                 tmp->waitingModel = modelId;
                 ohWow->itemTypes.push_back(tmp);
+                //ohWow->itemIcons.push_back(0);
+
                 if(uiName == "Paint Can")
                 {
                     ohWow->paintCan = tmp;
@@ -1747,6 +1773,10 @@ namespace syj
                             if(location::locations[l]->car == ohWow->livingBricks[a])
                                 location::locations[l]->car = 0;
                         }
+
+                        for(int b = 0; b<ohWow->livingBricks[a]->newWheels.size(); b++)
+                            delete ohWow->livingBricks[a]->newWheels[b];
+                        ohWow->livingBricks[a]->newWheels.clear();
 
                         delete ohWow->livingBricks[a];
                         ohWow->livingBricks.erase(ohWow->livingBricks.begin() + a);
@@ -1857,11 +1887,16 @@ namespace syj
 
                 if(radii)
                 {
-                    while(found->wheels.size() < wheels)
-                        found->wheels.push_back(new interpolator);
+                    //while(found->wheels.size() < wheels)
+                        //found->wheels.push_back(new interpolator);
+                    while(found->newWheels.size() < wheels)
+                        found->newWheels.push_back(new newDynamic(ohWow->newWheelModel));
                     for(unsigned int a = 0; a<wheels; a++)
                     {
-                        found->wheels[a]->scale = glm::vec3(radii[a]/1.6,radii[a]/1.6,radii[a]/1.6);
+                        found->newWheels[a]->scale = glm::vec3(radii[a]/1.6,radii[a]/1.6,radii[a]/1.6);
+                        found->newWheels[a]->scale.x *= 0.06;
+                        found->newWheels[a]->scale.y *= 0.06;
+                        found->newWheels[a]->scale.z *= 0.06;
 
                         if(ohWow->wheelDirtEmitter)
                         {
@@ -2260,7 +2295,7 @@ namespace syj
                             ohWow->livingBricks[i]->carTransform.addTransform(packetTime,glm::vec3(x,y,z),glm::quat(rotW,rotX,rotY,rotZ));
                             for(int wheel = 0; wheel<numWheels; wheel++)
                             {
-                                ohWow->livingBricks[i]->wheels[wheel]->addTransform(packetTime,glm::vec3(wheelX[wheel],wheelY[wheel],wheelZ[wheel]),glm::quat(wheelRotW[wheel],wheelRotX[wheel],wheelRotY[wheel],wheelRotZ[wheel]));
+                                ohWow->livingBricks[i]->newWheels[wheel]->modelInterpolator.addTransform(packetTime,glm::vec3(wheelX[wheel],wheelY[wheel],wheelZ[wheel]),glm::quat(wheelRotW[wheel],wheelRotX[wheel],wheelRotY[wheel],wheelRotZ[wheel]));
                                 //std::cout<<"emitterOn["<<wheel<<"] is "<<(emitterOn[i]?"true":"false")<<" for car ID "<<ohWow->livingBricks[i]->serverID<<"\n";
                                 if(ohWow->livingBricks[i]->wheelBrickData[wheel].dirtEmitter)
                                     ((emitter*)ohWow->livingBricks[i]->wheelBrickData[wheel].dirtEmitter)->enabled = emitterOn[i];
@@ -2630,11 +2665,11 @@ namespace syj
 
                 info("Loading dynamic type: " + filePath);
 
-                animatedModel *removeMeSomeday = new animatedModel(filePath);
-                ohWow->oldDynamicTypes.push_back(removeMeSomeday);
+                /*animatedModel *removeMeSomeday = new animatedModel(filePath);
+                ohWow->oldDynamicTypes.push_back(removeMeSomeday);*/
 
                 newModel *tmp = new newModel(filePath);
-                tmp->oldModelType = (void*)removeMeSomeday;
+                //tmp->oldModelType = (void*)removeMeSomeday;
                 tmp->defaultFrame = standingFrame;
                 tmp->serverID = serverID;
                 tmp->eyeOffset = glm::vec3(eyeOffsetX,eyeOffsetY,eyeOffsetZ);
@@ -2684,6 +2719,20 @@ namespace syj
                             info("Added model to " + ohWow->itemTypes[a]->uiName + " after the fact.");
                             ohWow->itemTypes[a]->waitingForModel = false;
                             ohWow->itemTypes[a]->type = tmp;
+
+                            /*if(ohWow->itemTypes[a]->uiName != std::string("Paint Can"))
+                            {
+                                ohWow->itemIcons[a] = new newDynamic(tmp);
+                                ohWow->itemTypes[a]->icon = ohWow->itemIcons[a];
+                                ohWow->itemIcons[a]->hidden = true;
+                                ohWow->itemIcons[a]->setAllFlag(meshFlag_skipCameraMatrix);
+                                ohWow->itemIcons[a]->useGlobalTransform = true;
+                                ohWow->itemIcons[a]->calculateMeshTransforms(0);
+                                ohWow->itemIcons[a]->bufferSubData();
+                            }
+                            else
+                                ohWow->itemTypes[a]->icon = 0;*/
+
                             for(unsigned int b = 0; b<tmp->animations.size(); b++)
                             {
                                 if(tmp->animations[b].serverID == ohWow->itemTypes[a]->waitingForSwingAnim)

@@ -135,6 +135,52 @@ namespace syj
     {
         nodeColors.clear();
 
+        if(!pickingPlayer)
+            return;
+
+        preference *tmp = prefs->getPreference("FACEDECAL");
+        if(tmp)
+        {
+            std::string decalName = tmp->toString();
+            for(int a = 0; a<faceDecalFilepaths.size(); a++)
+            {
+                if(faceDecalFilepaths[a] == decalName)
+                {
+                    chosenDecal = a;
+                    break;
+                }
+            }
+        }
+
+        for(int a = 0; a<pickingPlayer->meshColors.size(); a++)
+            nodeColors.push_back(glm::vec3(0,0,0));
+        for(int a = 0; a<pickingPlayer->meshColors.size(); a++)
+        {
+            preference *tmp = prefs->getPreference(pickingPlayer->type->instancedMeshes[a]->name + "_RED");
+            if(tmp)
+            {
+                nodeColors[a].r = tmp->toInteger();
+                nodeColors[a].r /= 255.0;
+            }
+            tmp = prefs->getPreference(pickingPlayer->type->instancedMeshes[a]->name + "_GREEN");
+            if(tmp)
+            {
+                nodeColors[a].g = tmp->toInteger();
+                nodeColors[a].g /= 255.0;
+            }
+            tmp = prefs->getPreference(pickingPlayer->type->instancedMeshes[a]->name + "_BLUE");
+            if(tmp)
+            {
+                nodeColors[a].b = tmp->toInteger();
+                nodeColors[a].b /= 255.0;
+            }
+        }
+    }
+
+    /*void avatarPicker::loadFromPrefs(preferenceFile *prefs)
+    {
+        nodeColors.clear();
+
         if(!playerModel)
             return;
 
@@ -179,7 +225,7 @@ namespace syj
                 nodeColors[id].b /= 255.0;
             }
         }
-    }
+    }*/
 
     void avatarPicker::sendAvatarPrefs(client *connection,preferenceFile *prefs)
     {
@@ -204,7 +250,7 @@ namespace syj
         data.writeUInt(nodeColors.size(),8);
         for(int a = 0; a<nodeColors.size(); a++)
         {
-            int mesh = -1;
+            /*int mesh = -1;
             for(int b = 0; b<playerModel->meshes.size(); b++)
             {
                 if(playerModel->meshes[b]->pickingID == a)
@@ -239,7 +285,26 @@ namespace syj
             {
                 data.writeString("error");
                 error("Could not find player model mesh w/ picking ID " + std::to_string(a));
+            }*/
+
+            if(prefs)
+            {
+                if(prefs->getPreference(pickingPlayer->type->instancedMeshes[a]->name + "_RED"))
+                    prefs->set(pickingPlayer->type->instancedMeshes[a]->name + "_RED",(int)(nodeColors[a].r*255));
+                else
+                    prefs->addIntegerPreference(pickingPlayer->type->instancedMeshes[a]->name + "_RED",(int)(nodeColors[a].r*255));
+
+                if(prefs->getPreference(pickingPlayer->type->instancedMeshes[a]->name + "_GREEN"))
+                    prefs->set(pickingPlayer->type->instancedMeshes[a]->name + "_GREEN",(int)(nodeColors[a].g*255));
+                else
+                    prefs->addIntegerPreference(pickingPlayer->type->instancedMeshes[a]->name + "_GREEN",(int)(nodeColors[a].g*255));
+
+                if(prefs->getPreference(pickingPlayer->type->instancedMeshes[a]->name + "_BLUE"))
+                    prefs->set(pickingPlayer->type->instancedMeshes[a]->name + "_BLUE",(int)(nodeColors[a].b*255));
+                else
+                    prefs->addIntegerPreference(pickingPlayer->type->instancedMeshes[a]->name + "_BLUE",(int)(nodeColors[a].b*255));
             }
+            data.writeString(pickingPlayer->type->instancedMeshes[a]->name);
 
             data.writeUInt(nodeColors[a].r*255,8);
             data.writeUInt(nodeColors[a].g*255,8);
@@ -325,7 +390,7 @@ namespace syj
         pickingCamera.name = "Player";
     }
 
-    void avatarPicker::runPickCycle(renderContext *context,uniformsHolder *graphics,client *connection,preferenceFile *prefs)
+    void avatarPicker::runPickCycle(renderContext *context,uniformsHolder *instancedUnis,uniformsHolder *nonInstancedUnis,client *connection,preferenceFile *prefs)
     {
         //Sometimes the decals haven't loaded by the time the other types have so put this here too
         preference *tmp = prefs->getPreference("FACEDECAL");
@@ -411,7 +476,7 @@ namespace syj
 
                         bool isFace = false;
 
-                        for(int a = 0; a<playerModel->meshes.size(); a++)
+                        /*for(int a = 0; a<playerModel->meshes.size(); a++)
                         {
                             if(playerModel->meshes[a]->pickingID == settingColorFor)
                             {
@@ -421,7 +486,10 @@ namespace syj
                                 }
                                 break;
                             }
-                        }
+                        }*/
+
+                        if(pickingPlayer->type->instancedMeshes[selectedMesh]->name == "Head")
+                            isFace = true;
 
                         if(isFace)
                         {
@@ -556,10 +624,20 @@ namespace syj
 
             glm::mat4 rotMatrix = glm::rotate(modelYaw,glm::vec3(0,1,0));
 
+            for(int a = 0; a<pickingPlayer->meshColors.size(); a++)
+                pickingPlayer->meshFlags[a] = a | 256;
+            pickingPlayer->meshColorChanged = true;
+
             pickingTexture->bind();
-            graphics->target->use();
-                pickingCamera.render(*graphics);
-                playerModel->renderForPicking(graphics,rotMatrix * glm::scale(glm::vec3(0.02)));
+            instancedUnis->target->use();
+                pickingCamera.render(*instancedUnis);
+                //playerModel->renderForPicking(graphics,rotMatrix * glm::scale(glm::vec3(0.02)));
+                pickingPlayer->useGlobalTransform = true;
+                pickingPlayer->hidden = false;
+                pickingPlayer->globalTransform = rotMatrix;
+                pickingPlayer->calculateMeshTransforms(0);
+                pickingPlayer->bufferSubData();
+                pickingPlayer->type->renderInstanced(instancedUnis);
 
             glFlush();
             glFinish();
@@ -583,11 +661,29 @@ namespace syj
             context->clear(0.5,0.5,0.5);
             context->select();
 
-            graphics->target->use();
-                pickingCamera.render(*graphics);
-                glUniform1i(graphics->target->getUniformLocation("avatarSelectorLighting"),true);
+            for(int a = 0; a<pickingPlayer->meshColors.size(); a++)
+            {
+                pickingPlayer->meshColors[a] = nodeColors[a];
+                pickingPlayer->meshFlags[a] = 0;
+            }
+            pickingPlayer->decal = faceDecals[chosenDecal];
+            pickingPlayer->meshColorChanged = true;
+
+            instancedUnis->target->use();
+                pickingCamera.render(*instancedUnis);
+                /*glUniform1i(graphics->target->getUniformLocation("avatarSelectorLighting"),true);
                 playerModel->render(graphics,rotMatrix * glm::scale(glm::vec3(0.02)),false,&nodeColors,faceDecals.size() > 0 ? faceDecals[chosenDecal] : 0);
-                glUniform1i(graphics->target->getUniformLocation("avatarSelectorLighting"),false);
+                glUniform1i(graphics->target->getUniformLocation("avatarSelectorLighting"),false);*/
+                pickingPlayer->useGlobalTransform = true;
+                pickingPlayer->hidden = false;
+                pickingPlayer->globalTransform = rotMatrix;
+                pickingPlayer->calculateMeshTransforms(0);
+                pickingPlayer->bufferSubData();
+                pickingPlayer->type->renderInstanced(instancedUnis);
+
+            nonInstancedUnis->target->use();
+                pickingCamera.render(*nonInstancedUnis);
+                pickingPlayer->type->renderNonInstanced(nonInstancedUnis);
 
             glDisable(GL_DEPTH_TEST);
             glActiveTexture(GL_TEXTURE0);
@@ -595,6 +691,10 @@ namespace syj
             context->swap();
             glEnable(GL_DEPTH_TEST);
         }
+
+        pickingPlayer->hidden = true;
+        pickingPlayer->calculateMeshTransforms(0);
+        pickingPlayer->bufferSubData();
 
         glEnable(GL_CULL_FACE);
     }

@@ -16,8 +16,13 @@
 #include <glm/gtx/transform.hpp>
 #include "code/graphics/material.h"
 
+#define meshFlag_usePickingColors 256
+#define meshFlag_skipCameraMatrix 512
+
 namespace syj
 {
+    void printMatScale(glm::mat4 in,std::string name);
+
     struct newNode;
     struct newModel;
 
@@ -63,6 +68,7 @@ namespace syj
         bool meshColorChanged = true;   //needs to be true at least once to allocate buffer
         std::vector<glm::vec3> meshColors;
         std::vector<glm::mat4> meshTransforms;
+        std::vector<int> meshFlags;
         int bufferOffset = -1;
 
         //For head tilt and other specific hand-coded rotations:
@@ -90,6 +96,8 @@ namespace syj
         bool hidden = false;
 
         void setNodeColor(std::string nodeName,glm::vec3 color);
+        void setNodeFlag(std::string nodeName,int flag);
+        void setAllFlag(int flag);
         void bufferSubData();
         void play(std::string name,bool reset = false,float speed = 1.0);
         void play(int animID,bool reset = false,float speed = 1.0);
@@ -110,11 +118,12 @@ namespace syj
         newTangents = 3,
         newBitangents = 4,
         newIndex = 5,
-        perMeshColor = 6,
-        perMeshTransformA = 7,  //Each of these contains one row of a 4x4 glm::mat4
-        perMeshTransformB = 8,  //But only A actually pointers to a buffer
-        perMeshTransformC = 9,  //There's only 8 buffers allocated so be careful when indexing
-        perMeshTransformD = 10
+        perMeshFlags = 6,
+        perMeshColor = 7,
+        perMeshTransformA = 8,  //Each of these contains one row of a 4x4 glm::mat4
+        perMeshTransformB = 9,  //But only A actually pointers to a buffer
+        perMeshTransformC = 10,  //There's only 9 buffers allocated so be careful when indexing
+        perMeshTransformD = 11
     };
 
     struct newMesh
@@ -136,8 +145,8 @@ namespace syj
         bool isCollisionMesh = false;
 
         //Essential to rendering it:
-        GLuint buffers[8];
-        //instanced uses all 8, noninstanced uses 6
+        GLuint buffers[9];
+        //instanced uses all 9, noninstanced uses 6
 
         //Called upon loading the given model file at start-up:
         void fillBuffer(instancedLayout dest,void *data,int size,int elements,bool elementBuffer = false);
@@ -209,7 +218,7 @@ namespace syj
     struct newModel
     {
         //All dependency on this needs to be removed as a priority:
-        void *oldModelType = 0;
+        //void *oldModelType = 0;
 
         //Network stuff:
         int serverID = -1;

@@ -261,8 +261,7 @@ int main(int argc, char *argv[])
         notify("Shader Failed to Compile","Basic shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
         shaderFailedToCompile = true;
     }
-
-    CEGUI::Window *escapeMenu = addEscapeMenu(&ohWow,&basic);
+    ohWow.nonInstancedShader = &basic;
 
     program newModelProgram;
     shader newModelVertex("shaders/model.vert.glsl",GL_VERTEX_SHADER);
@@ -277,22 +276,9 @@ int main(int argc, char *argv[])
         notify("Shader Failed to Compile","New model shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
         shaderFailedToCompile = true;
     }
+    ohWow.instancedShader = &newModelUnis;
 
-    /*program shadowProgram;
-    shader shadowVertex("shaders/shadowVertex.glsl",GL_VERTEX_SHADER);
-    shader shadowGeometry("shaders/shadowGeometry.glsl",GL_GEOMETRY_SHADER);
-    shader shadowFragment("shaders/shadowFragment.glsl",GL_FRAGMENT_SHADER);
-    shadowProgram.bindShader(shadowVertex);
-    shadowProgram.bindShader(shadowGeometry);
-    shadowProgram.bindShader(shadowFragment);
-    shadowProgram.compile();
-    uniformsHolder shadow(shadowProgram);
-    shadow.name = "shadow";
-    if(!shadowProgram.isCompiled())
-    {
-        notify("Shader Failed to Compile","Shadow shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }*/
+    CEGUI::Window *escapeMenu = addEscapeMenu(&ohWow,&newModelUnis);
 
     program newModelShadowProgram;
     shader newModelShadowVertex("shaders/modelShadow.vert.glsl",GL_VERTEX_SHADER);
@@ -834,7 +820,8 @@ int main(int argc, char *argv[])
     for(unsigned int a = 0; a<ohWow.prints->names.size(); a++)
         ohWow.staticBricks.allocatePerTexture(ohWow.prints->textures[a],false,false,true);
 
-    model wheelModel("assets/ball/ball.txt");
+    //model wheelModel("assets/ball/ball.txt");
+    ohWow.newWheelModel = new newModel("assets/ball/ball.txt");
 
     unsigned int last10Secs = SDL_GetTicks();
     unsigned int frames = 0;
@@ -1009,7 +996,8 @@ int main(int argc, char *argv[])
             //if(SDL_GetTicks() - lastPhysicsStep >= 15)
             //{
                 float physicsDeltaT = SDL_GetTicks() - lastPhysicsStep;
-                world->stepSimulation(physicsDeltaT / 1000.0);
+                //if(!showPreview)
+                    world->stepSimulation(physicsDeltaT / 1000.0);
                 lastPhysicsStep = SDL_GetTicks();
             //}
         }
@@ -1455,7 +1443,8 @@ int main(int argc, char *argv[])
                 case brickMaterial::glow: myTempBrick.mat = blink; break;
                 case brickMaterial::blink: myTempBrick.mat = swirl; break;
                 case brickMaterial::swirl: myTempBrick.mat = slippery; break;
-                case brickMaterial::slippery: myTempBrick.mat = none; break;
+                case brickMaterial::slippery: myTempBrick.mat = foil; break;
+                case brickMaterial::foil: myTempBrick.mat = none; break;
             }
 
             ohWow.palette->window->getChild("PaintName")->setText(getBrickMatName(myTempBrick.mat));
@@ -1933,8 +1922,12 @@ int main(int argc, char *argv[])
             //std::cout<<"Advancing: "<<deltaT<<"\n";
             ohWow.livingBricks[a]->carTransform.advance(deltaT);
             //std::cout<<"\n";
-            for(int wheel = 0; wheel<ohWow.livingBricks[a]->wheels.size(); wheel++)
-                ohWow.livingBricks[a]->wheels[wheel]->advance(deltaT);
+
+            for(int wheel = 0; wheel<ohWow.livingBricks[a]->newWheels.size(); wheel++)
+            {
+                ohWow.livingBricks[a]->newWheels[wheel]->calculateMeshTransforms(deltaT);
+                ohWow.livingBricks[a]->newWheels[wheel]->bufferSubData();
+            }
         }
 
         for(unsigned int a = 0; a<ohWow.items.size(); a++)
@@ -2035,8 +2028,7 @@ int main(int argc, char *argv[])
                         ohWow.env->drawSky(basic);
 
                         glEnable(GL_CLIP_DISTANCE0);
-
-                        for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
+                        /*for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
                         {
                             for(unsigned int wheel = 0; wheel<ohWow.livingBricks[a]->wheels.size(); wheel++)
                             {
@@ -2047,7 +2039,7 @@ int main(int argc, char *argv[])
                                                   glm::scale(ohWow.livingBricks[a]->wheels[wheel]->scale)
                                                   );
                             }
-                        }
+                        }*/
 
 
                     newModelProgram.use();
@@ -2057,6 +2049,8 @@ int main(int argc, char *argv[])
                         ohWow.env->passUniforms(newModelUnis);
                         for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
                             ohWow.newDynamicTypes[a]->renderInstanced(&newModelUnis);
+
+                        ohWow.newWheelModel->renderInstanced(&newModelUnis);
 
 
                         /*for(unsigned int a = 0; a<ohWow.dynamics.size(); a++)
@@ -2098,12 +2092,14 @@ int main(int argc, char *argv[])
                         for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
                             ohWow.newDynamicTypes[a]->renderInstanced(&newModelUnis);
 
+                        ohWow.newWheelModel->renderInstanced(&newModelUnis);
+
                     basicProgram.use();
                         glUniform1f(basic.clipHeight,-ohWow.waterLevel);
                         ohWow.playerCamera->render(basic);
                         ohWow.env->passUniforms(basic);
 
-                        for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
+                        /*for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
                         {
                             for(unsigned int wheel = 0; wheel<ohWow.livingBricks[a]->wheels.size(); wheel++)
                             {
@@ -2114,7 +2110,7 @@ int main(int argc, char *argv[])
                                                   glm::scale(ohWow.livingBricks[a]->wheels[wheel]->scale)
                                                   );
                             }
-                        }
+                        }*/
                         //ohWow.env->drawSky(basic);
                         /*(for(unsigned int a = 0; a<ohWow.dynamics.size(); a++)
                                 ohWow.dynamics[a]->render(&basic);*/
@@ -2244,53 +2240,21 @@ int main(int argc, char *argv[])
                         basicProgram.use();
                 }
 
-
-                /*for(unsigned int a = 0; a<ohWow.dynamics.size(); a++)
-                {
-                    //if((ohWow.dynamics[a] != ohWow.cameraTarget) || (camMode != cammode_firstPerson))
-                    if(ohWow.dynamics[a] != ohWow.cameraTarget)
-                    {
-                        ohWow.dynamics[a]->render(&basic);
-                    }
-                    else if(ohWow.dynamics[a] == ohWow.cameraTarget && camMode != cammode_firstPerson)
-                    {
-                        /*glm::mat4 final = glm::translate(glm::vec3(0,176.897,0)) * glm::rotate(glm::mat4(1.0),ohWow.playerCamera->getPitch(),glm::vec3(1.0,0.0,0.0)) * glm::translate(glm::vec3(0,-176.897,0));
-                        ohWow.dynamics[a]->setExtraTransform("Head",final);
-                        ohWow.dynamics[a]->setExtraTransform("Face1",final);
-                        ohWow.dynamics[a]->render(&basic);
-                    }
-                }*/
-
-                renderLights(basic,ohWow.lights);
-                for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                {
-                    for(unsigned int wheel = 0; wheel<ohWow.livingBricks[a]->wheels.size(); wheel++)
-                    {
-                        wheelModel.render(&basic,
-                                          glm::translate(ohWow.livingBricks[a]->wheels[wheel]->getPosition()) *
-                                          glm::toMat4(ohWow.livingBricks[a]->wheels[wheel]->getRotation()) *
-                                          glm::scale(glm::vec3(0.06)) *
-                                          glm::scale(ohWow.livingBricks[a]->wheels[wheel]->scale)
-                                          );
-                    }
-                }
-
+                //Render faces for players, pretty much:
                 for(unsigned int a = 0; a<ohWow.newDynamicTypes.size(); a++)
                     ohWow.newDynamicTypes[a]->renderNonInstanced(&basic);
+
+                //Start rendering item icons...
                 basic.setModelMatrix(glm::mat4(1.0));
 
                 for(unsigned int a = 0; a<ohWow.items.size(); a++)
                 {
-                    /*if(ohWow.items[a]->heldBy == ohWow.cameraTarget)
-                    {
-                        if(!ohWow.usingPaint)
-                            ohWow.items[a]->render(basic,true,ohWow.playerCamera->getYaw());
-                    }
-                    else*/
+                    //Skip updating transforms for items that we are currently holding, since we should use client physics transform for that instead of interpolated server snapshots...
                     if(!(!ohWow.giveUpControlOfCurrentPlayer && ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
                         ohWow.items[a]->updateTransform();
                 }
 
+                //Render paint can or not...
                 if(ohWow.paintCan && ohWow.fixedPaintCanItem && ohWow.currentlyOpen == paintCan && ohWow.cameraTarget)
                 {
                     ohWow.fixedPaintCanItem->pitch = -1.57;
@@ -2301,12 +2265,33 @@ int main(int argc, char *argv[])
                 else
                     ohWow.fixedPaintCanItem->hidden = true;
 
+                //Item icons...
+                //Start all item icons as hidden by default...
+                /*for(int a = 0; a<ohWow.itemIcons.size(); a++)
+                    if(ohWow.itemIcons[a]) //Paint can at a bare minimum will NOT have any icon!
+                        ohWow.itemIcons[a]->hidden = true;*/
+
                 if(ohWow.currentlyOpen == inventory)
                 {
+                    //For each inventory slot
                     for(unsigned int a = 0; a<inventorySize; a++)
                     {
                         heldItemType *type = ohWow.inventory[a];
                         if(!type)
+                        {
+                            hud->getChild("Inventory/ItemIcon" + std::to_string(a+1) + "/icon")->setProperty("Image","");
+                            continue;
+                        }
+
+                        if(type->uiName.length() < 1)
+                        {
+                            hud->getChild("Inventory/ItemIcon" + std::to_string(a+1) + "/icon")->setProperty("Image","");
+                            continue;
+                        }
+
+                        hud->getChild("Inventory/ItemIcon" + std::to_string(a+1) + "/icon")->setProperty("Image",type->uiName);
+
+                        /*if(!type->icon)//Paint can at a bare minimum will NOT have any icon!
                             continue;
 
                         glm::vec3 startSize = type->type->totalColMax - type->type->totalColMin;
@@ -2323,31 +2308,41 @@ int main(int argc, char *argv[])
 
                         glm::vec3 trans = startSize * type->type->totalColMin;
 
+                        std::cout<<type->uiName<<"\n";
+                        std::cout<<"Start size: "<<startSize.x<<","<<startSize.y<<","<<startSize.z<<"\n";
+                        std::cout<<"colMin: "<<type->type->totalColMin.x<<","<<type->type->totalColMin.y<<","<<type->type->totalColMin.z<<"\n";
+                        std::cout<<"colMax: "<<type->type->totalColMax.x<<","<<type->type->totalColMax.y<<","<<type->type->totalColMax.z<<"\n";
+                        std::cout<<"Trans: "<<trans.x<<","<<trans.y<<","<<trans.z<<"\n\n";
+
                         glm::mat4 tot;
                         if(ohWow.selectedSlot == a)
                             tot = glm::scale(startSize) * glm::translate(-type->type->totalColMin) * glm::toMat4(glm::quat(glm::vec3(0,fmod(((float)SDL_GetTicks())*0.0033,6.28),0)));
                         else
                             tot = glm::scale(startSize) * glm::translate(-type->type->totalColMin) * glm::toMat4(glm::quat(glm::vec3(0,1.57,0)));
+
+                        printMatScale(tot,"tot1");
+
                         tot = glm::scale(glm::vec3(2,2,1)) * tot;
                         tot = glm::translate(glm::vec3(-1,-1,0)) * tot;
 
-                        float boxSize = 0.21;//0.15372;
-                        tot = glm::scale(glm::vec3(0.15)) * tot;
-                        tot = glm::translate(glm::vec3(0.87+0.09,1 - (0.04875+boxSize+(boxSize*2*a)),0)) * tot;
+                        printMatScale(tot,"tot2");
 
-                        glUniform1i(basic.target->getUniformLocation("skipCamera"),1);
+                        float boxSize = 0.21;//0.15372;
+                        //tot = glm::scale(glm::vec3(0.15)) * tot;
+                        printMatScale(tot,"tot3");
+                        tot = glm::translate(glm::vec3(0.87+0.09,1 - (0.04875+boxSize+(boxSize*2*a)),0)) * tot;
+                        printMatScale(tot,"tot4");
+
+                        type->icon->useGlobalTransform = true;
+                        type->icon->hidden = false;
+                        type->icon->globalTransform = tot;
+                        type->icon->calculateMeshTransforms(0);
+                        type->icon->bufferSubData();
+                        /*glUniform1i(basic.target->getUniformLocation("skipCamera"),1);
                         ((animatedModel*)type->type->oldModelType)->render(&basic,0,tot);
-                        glUniform1i(basic.target->getUniformLocation("skipCamera"),0);
+                        glUniform1i(basic.target->getUniformLocation("skipCamera"),0);*/
                     }
                 }
-
-
-                /*hammer.render(&basic,glm::translate(glm::vec3(0,200,0)) * glm::scale(glm::vec3(0.1,0.1,0.1)));
-                wrench.render(&basic,glm::translate(glm::vec3(10,200,0)) * glm::scale(glm::vec3(0.1,0.1,0.1)));
-                spraycan.render(&basic,glm::translate(glm::vec3(20,200,0)) * glm::scale(glm::vec3(0.1,0.1,0.1)));*/
-
-                //for(int a = 0; a<ohWow.livingBricks.size(); a++)
-                  //  ohWow.livingBricks[a]->renderWheels(&basic,&sphere);
 
                 //Preview texture:
                 if(showPreview)
@@ -2361,7 +2356,7 @@ int main(int argc, char *argv[])
                 }
                 //end preview texture
 
-                drawDebugLocations(basic,cubeVAO,ohWow.debugLocations,ohWow.debugColors);
+                //drawDebugLocations(basic,cubeVAO,ohWow.debugLocations,ohWow.debugColors);
 
 /*            tessProgram.use();
                 ohWow.settings->render(tess);
@@ -2378,6 +2373,8 @@ int main(int argc, char *argv[])
                     renderLights(newModelUnis,ohWow.lights);
                     for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
                         ohWow.newDynamicTypes[a]->renderInstanced(&newModelUnis);
+
+                ohWow.newWheelModel->renderInstanced(&newModelUnis);
 
             brickProgram.use();
                 ohWow.playerCamera->render(brickUnis);
@@ -2502,6 +2499,8 @@ int main(int argc, char *argv[])
         CEGUI::System::getSingleton().renderAllGUIContexts();
         context.swap();
         glEnable(GL_DEPTH_TEST);
+
+        //SDL_Delay(1);
     }
 
     info("Shut down complete");

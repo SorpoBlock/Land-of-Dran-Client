@@ -6,7 +6,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include "code/graphics/newBrickType.h"
 #include "code/utility/debugGraphics.h"
-#include "code/graphics/model.h"
+#include "code/graphics/newModel.h"
 #include "code/networking/interpolator.h"
 
 namespace syj
@@ -62,12 +62,13 @@ namespace syj
         interpolator carTransform;
 
         std::vector<extraWheelData> wheelBrickData;
-        std::vector<interpolator*> wheels;
+        std::vector<newDynamic*> newWheels;
+        //std::vector<interpolator*> wheels;
 
         //btRigidBody *body = 0;
         bool compiled = false;
 
-        void renderWheels(uniformsHolder *unis,model *wheelModel);
+        //void renderWheels(uniformsHolder *unis,model *wheelModel);
         void addWheels(btVector3 &halfExtents);
         void compile(btDynamicsWorld *world);
         void renderAlive(uniformsHolder &unis,bool skipMats = false,float deltaT = 0,bool disableInterpolation = false);

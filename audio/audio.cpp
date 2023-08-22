@@ -2,11 +2,17 @@
 
 namespace syj
 {
-    EFXEAXREVERBPROPERTIES getEffectSettings(std::string in)
+    EFXEAXREVERBPROPERTIES getEffectSettings(std::string in,bool &stopEffect)
     {
+        stopEffect = false;
         in = lowercase(in);
 
-        if(in == "generic" || in == "default" || in == "normal")
+        if(in == "default" || in == "normal" || in == "" || in == " ")
+        {
+            stopEffect = true;
+            return EFX_REVERB_PRESET_GENERIC;
+        }
+        else if(in == "generic")
             return EFX_REVERB_PRESET_GENERIC;
         else if(in == "paddedcell")
             return EFX_REVERB_PRESET_PADDEDCELL;
@@ -394,7 +400,18 @@ namespace syj
 
     void audioPlayer::setEffect(std::string effectStr)
     {
-        EFXEAXREVERBPROPERTIES reverb = getEffectSettings(effectStr);
+        bool cancelEffect = false;
+        EFXEAXREVERBPROPERTIES reverb = getEffectSettings(effectStr,cancelEffect);
+        if(cancelEffect)
+        {
+            for(int a = 0; a<32; a++)
+                alSource3i(generalSounds[a], AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
+            for(int a = 0; a<16; a++)
+                alSource3i(loopingSounds[a], AL_AUXILIARY_SEND_FILTER, AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
+
+            return;
+        }
+
         alGenEffects(1, &effect);
 
         if(alGetEnumValue("AL_EFFECT_EAXREVERB") != 0)
@@ -471,7 +488,6 @@ namespace syj
         if(errr != AL_NO_ERROR)
             error("setVolumes OpenAL error: " + std::to_string(errr));
     }
-
 
     audioPlayer::audioPlayer()
     {

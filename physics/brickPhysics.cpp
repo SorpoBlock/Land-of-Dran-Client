@@ -15,20 +15,6 @@ namespace syj
                     0.0,                                0.0,                                0.0,                                1.0);
     }
 
-    /*
-    float gVehicleSteering = 0.f;
-    float steeringIncrement = 0.04f;
-    float steeringClamp = 0.3f;
-    float wheelRadius = 0.5f;
-    float wheelWidth = 0.4f;
-    float wheelFriction = 1000;  //BT_LARGE_FLOAT;
-    float suspensionStiffness = 20.f;
-    float suspensionDamping = 2.3f;
-    float suspensionCompression = 4.4f;
-    float rollInfluence = 0.1f;  //1.0f;
-    btScalar suspensionRestLength(0.6);
-    */
-
     void livingBrick::addWheels(btVector3 &halfExtents)
     {
         //The direction of the raycast, the btRaycastVehicle uses raycasts instead of simiulating the wheels with rigid bodies
@@ -319,20 +305,11 @@ namespace syj
         matrix[12], matrix[13], matrix[14], matrix[15]);
     }
 
-    void livingBrick::renderWheels(uniformsHolder *unis,model *wheelModel)
+    /*void livingBrick::renderWheels(uniformsHolder *unis,model *wheelModel)
     {
         glDisable(GL_CULL_FACE);
         for(int a = 0; a<4; a++)
         {
-            /*btTransform t = vehicle->getWheelInfo(a).m_worldTransform;
-
-            btVector3 o = t.getOrigin();
-            btQuaternion q = t.getRotation();
-
-            glm::mat4 translate = glm::translate(BtToGlm(o));
-            glm::mat4 rotate = glm::toMat4(glm::quat(q.w(),q.x(),q.y(),q.z()));
-            glm::mat4 modelMatrix = translate * rotate * glm::scale(glm::vec3(0.02));*/
-
             vehicle->updateWheelTransform(a,false);
 
             btScalar tmp[16];
@@ -342,7 +319,7 @@ namespace syj
             wheelModel->render(unis,myMat * glm::scale(glm::vec3(0.06)));
         }
         glEnable(GL_CULL_FACE);
-    }
+    }*/
 
     void livingBrick::renderAlive(uniformsHolder &unis,bool skipMats,float deltaT,bool disableInterpolation)
     {

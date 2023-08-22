@@ -33,7 +33,7 @@ namespace syj
     {
         CEGUI::Window *escapeMenu = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("EscapeMenu");
         serverStuff *ohWow = (serverStuff*)escapeMenu->getUserData();
-        uniformsHolder *basicShader = (uniformsHolder*)escapeMenu->getChild("AvatarPrefs")->getUserData();
+        //uniformsHolder *basicShader = (uniformsHolder*)escapeMenu->getChild("AvatarPrefs")->getUserData();
 
         bool isMouseLocked = ohWow->context->getMouseLocked();
         ohWow->context->setMouseLock(false);
@@ -62,7 +62,7 @@ namespace syj
         brickPopup->setPosition(CEGUI::UVector2(x,y));
 
         ohWow->picker->picking = true;
-        ohWow->picker->runPickCycle(ohWow->context,basicShader,ohWow->connection,ohWow->prefs);
+        ohWow->picker->runPickCycle(ohWow->context,ohWow->instancedShader,ohWow->nonInstancedShader,ohWow->connection,ohWow->prefs);
         ohWow->context->setMouseLock(isMouseLocked);
 
         for(unsigned int a = 0; a<ohWow->newDynamics.size(); a++)

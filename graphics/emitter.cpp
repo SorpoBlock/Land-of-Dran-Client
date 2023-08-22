@@ -54,7 +54,8 @@ namespace syj
             else if(attachedToCar)
             {
                 emitterRange = glm::vec3(1,0,1);
-                position = attachedToCar->wheels[whichWheel]->getPosition() - glm::vec3(0,attachedToCar->wheelBrickData[whichWheel].wheelScale,0);
+                //position = attachedToCar->wheels[whichWheel]->getPosition() - glm::vec3(0,attachedToCar->wheelBrickData[whichWheel].wheelScale,0);
+                position = attachedToCar->newWheels[whichWheel]->modelInterpolator.getPosition() - glm::vec3(0,attachedToCar->wheelBrickData[whichWheel].wheelScale,0);
             }
             justAttached = false;
         //}
