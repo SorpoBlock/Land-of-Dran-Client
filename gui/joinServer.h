@@ -8,6 +8,7 @@
 namespace syj
 {
     CEGUI::Window *loadJoinServer(serverStuff *ohWow);
+    void checkForSessionKey(serverStuff *ohWow,preferenceFile &prefs);
 }
 
 #endif // JOINSERVER_H_INCLUDED

@@ -47,7 +47,7 @@
 //#include <openssl/sha.h>
 #include <bearssl/bearssl_hash.h>
 
-#define hardCodedNetworkVersion 10012
+#define hardCodedNetworkVersion 10013
 
 #define cammode_firstPerson 0
 #define cammode_thirdPerson 1
@@ -243,6 +243,8 @@ int main(int argc, char *argv[])
                 joinServer->getChild("UpdateText")->setText("[colour='FF00CC00']Your game appears up to date!");
         }
     }
+
+    checkForSessionKey(&ohWow,prefs);
 
     if(SDLNet_Init())
         error("Could not initalize SDLNet");
@@ -683,6 +685,11 @@ int main(int argc, char *argv[])
         br_sha256_out(&shaContext,hash);
 
         std::string hexStr = GetHexRepresentation(hash,32);
+
+        std::cout<<ohWow.loggedName<<"\n";
+        std::cout<<ohWow.sessionToken<<"\n";
+        std::cout<<hexStr<<"\n";
+
         requestName.writeString(hexStr);
     }
     else

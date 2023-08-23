@@ -25,6 +25,74 @@ namespace syj
         optionsWindow->setVisible(true);
     }
 
+    size_t verifyLogin(void *buffer,size_t size,size_t nmemb,void *userp)
+    {
+        if(userp)
+        {
+            if(nmemb > 0)
+            {
+                std::string response;
+                response.assign((char*)buffer,nmemb);
+
+                if(response.substr(0,7) == "GOODKEY")
+                {
+                    info("Welcome back!");
+                    ((serverStuff*)userp)->loggedIn = true;
+                    CEGUI::Window *statusText = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/StatusText");
+                    statusText->setText(std::string("Welcome, ") + std::string(CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/UsernameBox")->getText().c_str()));
+                    CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setText("Join");
+                }
+                else
+                {
+                    error("Expired session token, you need to log in again!");
+                    ((serverStuff*)userp)->loggedIn = false;
+                    ((serverStuff*)userp)->sessionToken = "";
+                    ((serverStuff*)userp)->loggedName = "";
+                }
+            }
+        }
+        return nmemb;
+    }
+
+    void checkForSessionKey(serverStuff *ohWow,preferenceFile &prefs)
+    {
+        std::string username = "";
+        std::string key = "";
+        if(!prefs.getPreference("Name"))
+            return;
+        if(!prefs.getPreference("SESSION"))
+            return;
+
+        username = prefs.getPreference("Name")->toString();
+        key = prefs.getPreference("SESSION")->toString();
+
+        if(username.length() < 1)
+            return;
+        if(key.length() < 1)
+            return;
+
+        info("Logging in with previous credentials...");
+
+        ohWow->sessionToken = key;
+        ohWow->loggedName = username;
+
+        CURL *curlHandle = curl_easy_init();
+
+        int statusCode = 0;
+
+        std::string url = "https://dran.land/verifySessionToken.php";
+        curl_easy_setopt(curlHandle,CURLOPT_URL,url.c_str());
+        curl_easy_setopt(curlHandle,CURLOPT_WRITEFUNCTION,verifyLogin);
+        curl_easy_setopt(curlHandle,CURLOPT_WRITEDATA,ohWow);
+        curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYPEER , 0);
+        curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYHOST , 0);
+        std::string args = "key=" + key + "&name=" + username;
+        curl_easy_setopt(curlHandle,CURLOPT_POSTFIELDS,args.c_str());
+        CURLcode res = curl_easy_perform(curlHandle);
+
+        curl_easy_cleanup(curlHandle);
+    }
+
     size_t getLoginResponse(void *buffer,size_t size,size_t nmemb,void *userp)
     {
         serverStuff *ohWow = (serverStuff*)userp;
