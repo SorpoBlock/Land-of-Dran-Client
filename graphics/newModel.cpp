@@ -487,6 +487,10 @@ namespace syj
             }
         }
 
+        tmp = modelLoadFile.getPreference("oneMaterial");
+        if(tmp)
+            oneMaterial = tmp->toBool();
+
         if(modelPath == "")
         {
             error("No Filepath pref set in model loading settings file " + textFilePath);
@@ -503,13 +507,22 @@ namespace syj
             return;
         }
 
-        for(unsigned int a = 0; a<scene->mNumMaterials; a++)
+        if(oneMaterial)
         {
-            aiMaterial *src = scene->mMaterials[a];
-
-            std::string name = src->GetName().C_Str();
+            std::string name = "oneMaterial";
             material *dest = new material(name,modelLoadFile);
             allMaterials.push_back(dest);
+        }
+        else
+        {
+            for(unsigned int a = 0; a<scene->mNumMaterials; a++)
+            {
+                aiMaterial *src = scene->mMaterials[a];
+
+                std::string name = src->GetName().C_Str();
+                material *dest = new material(name,modelLoadFile);
+                allMaterials.push_back(dest);
+            }
         }
 
         for(unsigned int a = 0; a<scene->mNumMeshes; a++)
@@ -517,7 +530,10 @@ namespace syj
             aiMesh *src = scene->mMeshes[a];
             instancedMesh *dest = 0;
             dest = new instancedMesh(src);
-            ((instancedMesh*)dest)->materialToUse = allMaterials[src->mMaterialIndex];
+            if(oneMaterial)
+                ((instancedMesh*)dest)->materialToUse = allMaterials[0];
+            else
+                ((instancedMesh*)dest)->materialToUse = allMaterials[src->mMaterialIndex];
             dest->meshIndex = instancedMeshes.size();
             instancedMeshes.push_back(dest);
 

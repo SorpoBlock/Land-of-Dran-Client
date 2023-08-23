@@ -18,6 +18,17 @@ GLenum resolveChannels(int channels,bool hdr)
 
 namespace syj
 {
+
+    std::vector<LDRtextureResourceDescriptor*> texture::allTextures;
+
+    LDRtextureResourceDescriptor *texture::getTexture(std::string name)
+    {
+        for(int a = 0; a<allTextures.size(); a++)
+            if(allTextures[a]->fileName == name)
+                return allTextures[a];
+        return 0;
+    }
+
     void getImageDims(std::string filepath,int *x,int *y,int *c)
     {
         stbi_info(filepath.c_str(),x,y,c);
@@ -35,7 +46,24 @@ namespace syj
 
     unsigned char *loadImageU(std::string filename,int &tWidth,int &tHeight,int &tChannels,int desiredChannels)
     {
-        return stbi_load(filename.c_str(),&tWidth,&tHeight,&tChannels,desiredChannels);
+        if(LDRtextureResourceDescriptor* tex = texture::getTexture(filename))
+        {
+            tWidth = tex->width;
+            tHeight = tex->height;
+            tChannels = tex->channels;
+            return tex->data;
+        }
+        else
+        {
+            tex = new LDRtextureResourceDescriptor;
+            tex->data = stbi_load(filename.c_str(),&tWidth,&tHeight,&tChannels,desiredChannels);
+            tex->fileName = filename;
+            tex->channels = tChannels;
+            tex->width = tWidth;
+            tex->height = tHeight;
+            texture::allTextures.push_back(tex);
+            return tex->data;
+        }
     }
 
     void texture::useForFramebuffer(GLenum attachmentNumber)
@@ -179,7 +207,8 @@ namespace syj
         }
         else
         {
-            unsigned char *data = stbi_load(fileName.c_str(),&tWidth,&tHeight,&tChannels,0);
+            //unsigned char *data = stbi_load(fileName.c_str(),&tWidth,&tHeight,&tChannels,0);
+            unsigned char *data = loadImageU(fileName,tWidth,tHeight,tChannels,0);
             if(tWidth == 0 || tHeight == 0)
             {
                 error("Could not find " + fileName);

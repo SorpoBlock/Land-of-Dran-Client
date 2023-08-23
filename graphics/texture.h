@@ -25,9 +25,19 @@ namespace syj
         alpha = 3
     };
 
+    struct LDRtextureResourceDescriptor
+    {
+        std::string fileName = "";
+        int channels=0,width=0,height=0;
+        unsigned char *data = 0;
+    };
+
     class texture
     {
         public:
+
+            static std::vector<LDRtextureResourceDescriptor*> allTextures;
+            static LDRtextureResourceDescriptor *getTexture(std::string name);
 
             bool created = false;
             bool mipMaps = true;

@@ -220,6 +220,8 @@ namespace syj
         //All dependency on this needs to be removed as a priority:
         //void *oldModelType = 0;
 
+        bool oneMaterial = false;
+
         //Network stuff:
         int serverID = -1;
 
