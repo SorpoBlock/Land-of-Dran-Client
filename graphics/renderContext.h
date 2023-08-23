@@ -68,6 +68,7 @@ namespace syj
             void select();
             void clear(float r,float g,float b,float a = 1.0,bool depth = true);
             void clear(glm::vec3 rgb,bool depth = true);
+            void setSize(int x,int y){width=x,height=y;}
 
         private:
 

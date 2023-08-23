@@ -1,5 +1,10 @@
 #include "ceguiHelper.h"
 
+CEGUI::URect makeRelArea(float x,float y,float w,float h)
+{
+    return CEGUI::URect(CEGUI::UDim(x,0),CEGUI::UDim(y,0),CEGUI::UDim(w,0),CEGUI::UDim(h,0));
+}
+
 CEGUI::Window *addGUIFromFile(std::string fileName)
 {
     CEGUI::Window *myRoot = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();

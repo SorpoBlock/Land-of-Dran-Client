@@ -115,6 +115,7 @@ namespace syj
         void fatalNotify(std::string windowName,std::string windowText,std::string buttonText);
 
         bool waitingToPickServer = true;
+        bool clickedMainMenuExit = false;
         std::string wantedName = "Guest";
         std::string wantedIP = "127.0.0.1";
         glm::vec3 wantedColor = glm::vec3(1,1,1);

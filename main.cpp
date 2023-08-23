@@ -224,6 +224,7 @@ int main(int argc, char *argv[])
     ohWow.palette = new paletteGUI(hud);
     ohWow.bottomPrint.textBar = hud->getChild("BottomPrint");
     CEGUI::Window *saveLoadWindow = loadSaveLoadWindow(&ohWow);
+    CEGUI::Window *brickPopup = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("HUD")->getChild("BrickPopup");
 
     if(ourRevisionVersion == -1 || ourRevisionVersion == 0)
     {
@@ -567,6 +568,14 @@ int main(int argc, char *argv[])
                 return 0;
 
             processEventsCEGUI(e,states);
+
+            if(e.type == SDL_WINDOWEVENT)
+            {
+                if(e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                {
+                    context.setSize(e.window.data1,e.window.data2);
+                }
+            }
         }
 
         deltaT = SDL_GetTicks() - lastTick;
@@ -609,6 +618,9 @@ int main(int argc, char *argv[])
         CEGUI::System::getSingleton().renderAllGUIContexts();
         context.swap();
         glEnable(GL_DEPTH_TEST);
+
+        if(ohWow.clickedMainMenuExit)
+            return 0;
 
         SDL_Delay(1);
     }
@@ -894,6 +906,42 @@ int main(int argc, char *argv[])
         if(ohWow.currentlyOpen != paintCan)
             ohWow.palette->close();
 
+        if(ohWow.settings->guiScalingChanged)
+        {
+            switch(ohWow.settings->guiScaling)
+            {
+                case biggest:
+                ohWow.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.9), 0.03875, 1, 0.70375*0.9));
+                ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("OpenSans-30");
+                bottomBarClose = 0.165;
+                brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*1.0),0,0.5+((0.8-0.5)*1.0),0.165 * 1.0));
+                break;
+
+                case bigger:
+                ohWow.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.8), 0.03875, 1, 0.70375*0.8));
+                ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("OpenSans-20");
+                bottomBarClose = 0.165 * 0.9;
+                brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.9),0,0.5+((0.8-0.5)*0.9),0.165 * 0.9));
+                break;
+
+                case normalScaling:
+                ohWow.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.7), 0.03875, 1, 0.70375*0.7));
+                ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("DejaVuSans-12");
+                bottomBarClose = 0.165 * 0.8;
+                brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.8),0,0.5+((0.8-0.5)*0.8),0.165 * 0.8));
+                break;
+
+                case smaller:
+                ohWow.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.6), 0.03875, 1, 0.70375*0.6));
+                ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("DejaVuSans-10");
+                bottomBarClose = 0.165 * 0.7;
+                brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.6),0,0.5+((0.8-0.5)*0.6),0.165 * 0.6));
+                break;
+            }
+
+            ohWow.settings->guiScalingChanged = false;
+        }
+
         //ohWow.playerCamera->setFieldOfVision(ohWow.settings->fieldOfView);
         ohWow.brickSelector->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
         escapeMenu->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
@@ -1074,6 +1122,14 @@ int main(int argc, char *argv[])
 
             processEventsCEGUI(event,states);
 
+            if(event.type == SDL_WINDOWEVENT)
+            {
+                if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                {
+                    context.setSize(event.window.data1,event.window.data2);
+                }
+            }
+
             if(event.type == SDL_KEYDOWN)
             {
                 if(event.key.keysym.sym == SDLK_PAGEUP)
@@ -1098,9 +1154,6 @@ int main(int argc, char *argv[])
                         chatEditbox->setMousePassThroughEnabled(false);
                     }
                 }
-
-                if(event.key.keysym.sym == SDLK_END)
-                    showPreview = !showPreview;
 
                 if(event.key.keysym.sym == SDLK_RETURN && chatEditbox->isActive())
                 {
@@ -1511,7 +1564,6 @@ int main(int argc, char *argv[])
             myTempBrick.basicChanged = myTempBrick.basicChanged || myTempBrick.isBasic;
             myTempBrick.specialChanged = myTempBrick.specialChanged || !myTempBrick.isBasic;
         }
-        CEGUI::Window *brickPopup = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("HUD")->getChild("BrickPopup");
 
         bottomBarShouldBeOpen = ohWow.currentlyOpen == brickBar; //myTempBrick.brickSlotSelected != -1;
         float bottomBarPos = std::clamp(((float)SDL_GetTicks() - bottomBarLastAct) / bottomBarOpenTime,0.f,1.f);

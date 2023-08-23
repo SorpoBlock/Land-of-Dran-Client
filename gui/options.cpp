@@ -73,6 +73,9 @@ namespace syj
         toSet->invertMouseY = ((CEGUI::ToggleButton*)controlsPlane->getChild("InvertMouseCheckbox"))->isSelected();
         toSet->masterVolume = ((CEGUI::Slider*)audioPlane->getChild("MasterSlider"))->getCurrentValue();
         toSet->musicVolume = ((CEGUI::Slider*)audioPlane->getChild("MusicSlider"))->getCurrentValue();
+        toSet->guiScaling = (guiScalingChoices)((CEGUI::Combobox*)graphicsPlane->getChild("GuiScalingDropdown"))->getSelectedItem()->getID();
+
+        toSet->guiScalingChanged = true;
 
         if(toSet->prefs)
         {
@@ -225,6 +228,7 @@ namespace syj
         prefs->set("MASTERVOLUME",masterVolume);
         prefs->set("MUSICVOLUME",musicVolume);
         prefs->set("MATERIALCUTOFF",(int)materialCutoff);
+        prefs->set("GUISCALING",guiScaling);
     }
 
     void options::setDefaults(preferenceFile *prefs)
@@ -252,6 +256,7 @@ namespace syj
         prefs->addIntegerPreference("MASTERVOLUME",80);
         prefs->addIntegerPreference("MUSICVOLUME",80);
         prefs->addIntegerPreference("MATERIALCUTOFF",400);
+        prefs->addIntegerPreference("GUISCALING",1);
 
         prefs->addIntegerPreference("NETWORK",0);
         prefs->addIntegerPreference("REVISION",0);
@@ -332,6 +337,10 @@ namespace syj
         tmp = prefs->getPreference("MATERIALCUTOFF");
         if(tmp)
             materialCutoff = tmp->toInteger();
+
+        tmp = prefs->getPreference("GUISCALING");
+        if(tmp)
+            guiScaling = (guiScalingChoices)tmp->toInteger();
     }
 
     bool rebindKey(const CEGUI::EventArgs &e)
@@ -518,6 +527,13 @@ namespace syj
         dropBoxAdd(AASamplesDropdown,"8x Anti-Aliasing",aa8x);
         dropBoxAdd(AASamplesDropdown,"16x Anti-Aliasing",aa16x);
         AASamplesDropdown->setItemSelectState(defaults->antiAliasing,true);
+
+        CEGUI::Combobox *GuiScalingDropdown = (CEGUI::Combobox*)graphicsPlane->getChild("GuiScalingDropdown");
+        dropBoxAdd(GuiScalingDropdown,"Smaller",smaller);
+        dropBoxAdd(GuiScalingDropdown,"Normal",normalScaling);
+        dropBoxAdd(GuiScalingDropdown,"Bigger",bigger);
+        dropBoxAdd(GuiScalingDropdown,"Biggest",biggest);
+        GuiScalingDropdown->setItemSelectState(defaults->guiScaling,true);
 
         CEGUI::ToggleButton* vsync = (CEGUI::ToggleButton*)graphicsPlane->getChild("VSyncCheckbox");
         vsync->setSelected(defaults->vsync);

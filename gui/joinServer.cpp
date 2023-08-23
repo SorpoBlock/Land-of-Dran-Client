@@ -55,9 +55,13 @@ namespace syj
                 statusText->setText(std::string("Welcome, ") + std::string(CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/UsernameBox")->getText().c_str()));
                 CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setText("Join");
                 std::string afterSpace = response.substr(space+1,response.length() - (space+1));
-                std::cout<<"Session token: "<<afterSpace<<"\n";
                 ohWow->loggedIn = true;
                 ohWow->sessionToken = afterSpace;
+                if(ohWow->prefs->getPreference("SESSION"))
+                    ohWow->prefs->set("SESSION",afterSpace);
+                else
+                    ohWow->prefs->addStringPreference("SESSION",afterSpace);
+                ohWow->prefs->exportToFile("config.txt");
             }
             else if(beforeSpace == "BAD")
                 statusText->setText("Incorrect password!");
@@ -244,6 +248,15 @@ namespace syj
         return true;
     }
 
+    bool mainMenuExit(const CEGUI::EventArgs &e)
+    {
+        CEGUI::Window *joinServerWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer");
+        serverStuff *ohWow = (serverStuff*)joinServerWindow->getUserData();
+        if(!ohWow)
+            return true;
+        ohWow->clickedMainMenuExit = true;
+    }
+
     CEGUI::Window *loadJoinServer(serverStuff *ohWow)
     {
         CEGUI::Window *joinServerWindow = addGUIFromFile("joinServer.layout");
@@ -265,6 +278,7 @@ namespace syj
         joinServerWindow->getChild("UpdateButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&updaterButton));
         joinServerWindow->getChild("LoginButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&loginButton));
         joinServerWindow->getChild("Refresh")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&refreshServerList));
+        joinServerWindow->getChild("Exit")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&mainMenuExit));
 
         joinServerWindow->getChild("ServerList")->subscribeEvent(CEGUI::MultiColumnList::EventSelectionChanged,CEGUI::Event::Subscriber(&copyServerListIP));
 

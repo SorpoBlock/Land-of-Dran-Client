@@ -15,6 +15,7 @@ namespace syj
     enum godRayChoices{godRaysOff=0,godRays32Samples=1,godRays64Samples=2,godRays96Samples=3,godRays128Samples=4};
     enum spriteDensityChoices{spritesOff=0,sprites500=1,sprites1000=2,sprites2000=3,sprites4000=4};
     enum antiAliasingChoices{aaOff=0,aa2x=1,aa4x=2,aa8x=3,aa16x=4};
+    enum guiScalingChoices{smaller=0,normalScaling=1,bigger=2,biggest=3};
 
     struct options
     {
@@ -32,6 +33,7 @@ namespace syj
         godRayChoices godRayQuality = godRaysOff;
         spriteDensityChoices spriteDensity = sprites2000;
         antiAliasingChoices antiAliasing = aa4x;
+        guiScalingChoices guiScaling = normalScaling;
 
         int mouseSensitivity = 100;
         bool invertMouseY = false;
@@ -45,6 +47,8 @@ namespace syj
         void overwrite(preferenceFile *prefs);
         void loadFromFile(preferenceFile *prefs);
         void render(uniformsHolder &unis);
+
+        bool guiScalingChanged = true;
     };
 
     CEGUI::Window* loadOptionsGUI(options *defaults,preferenceFile &prefs,inputMap &keybinds);

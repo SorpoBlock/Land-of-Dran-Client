@@ -66,7 +66,7 @@ namespace syj
 
         width = options.startingResX;
         height = options.startingResY;
-        int flag = options.useFullscreen ? SDL_WINDOW_FULLSCREEN : 0;
+        int flag = options.useFullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_RESIZABLE;
         std::string name = "Land of Dran v0.002      ";
         name += options.name;
         window = SDL_CreateWindow( name.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,

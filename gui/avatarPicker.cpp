@@ -447,6 +447,14 @@ namespace syj
                     break;
                 }
 
+                if(event.type == SDL_WINDOWEVENT)
+                {
+                    if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                    {
+                        context->setSize(event.window.data1,event.window.data2);
+                    }
+                }
+
                 if(event.type == SDL_KEYDOWN)
                 {
                     if(event.key.keysym.sym == SDLK_ESCAPE)
@@ -690,6 +698,10 @@ namespace syj
             CEGUI::System::getSingleton().renderAllGUIContexts();
             context->swap();
             glEnable(GL_DEPTH_TEST);
+
+            pickingCamera.setAspectRatio(context->getWidth()/context->getHeight());
+            CEGUI::System::getSingleton().getRenderer()->setDisplaySize(CEGUI::Size<float>(context->getResolution().x,context->getResolution().y));
+            glViewport(0,0,context->getResolution().x,context->getResolution().y);
         }
 
         pickingPlayer->hidden = true;

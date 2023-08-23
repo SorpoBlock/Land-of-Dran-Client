@@ -8,6 +8,8 @@
 #include <CEGUI/ImageManager.h>
 #include <iostream>
 
+CEGUI::URect makeRelArea(float x,float y,float w,float h);
+
 //Loads a GUI skin and creates a root window
 CEGUI::Window *initLoadCEGUISkin(std::string skinName,int resX,int resY);
 CEGUI::Window *addGUIFromFile(std::string fileName);
