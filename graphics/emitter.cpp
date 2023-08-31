@@ -2,7 +2,7 @@
 
 namespace syj
 {
-    void emitter::update(glm::vec3 eyePos,glm::vec3 eyeDir,bool useBodyPos)
+    void emitter::update(glm::vec3 eyePos,glm::vec3 eyeDir,bool useBodyPos,bool firstPerson,float cameraYaw,float cameraPitch)
     {
         if(!enabled)
         {
@@ -11,54 +11,170 @@ namespace syj
             return;
         }
 
-        //if(justAttached)
-        //{
-            if(attachedToBasicBrick)
+        if(attachedToBasicBrick)
+        {
+            emitterRange = glm::vec3(attachedToBasicBrick->dimensions.x,0,attachedToBasicBrick->dimensions.z);
+            position = attachedToBasicBrick->position;
+        }
+        else if(attachedToSpecialBrick)
+        {
+            emitterRange = glm::vec3(attachedToSpecialBrick->type->type->width,0,attachedToSpecialBrick->type->type->length);
+            position = attachedToSpecialBrick->position;
+        }
+        else if(attachedToModel)
+        {
+            emitterRange = glm::vec3(0,0,0);
+            if(useBodyPos && attachedToModel->body)
             {
-                emitterRange = glm::vec3(attachedToBasicBrick->dimensions.x,0,attachedToBasicBrick->dimensions.z);
-                position = attachedToBasicBrick->position;
+                btVector3 o = attachedToModel->body->getWorldTransform().getOrigin();
+                position = glm::vec3(o.x(),o.y(),o.z());
             }
-            else if(attachedToSpecialBrick)
+            else
+                position = attachedToModel->modelInterpolator.getPosition();
+            //TODO: THERE IS (was?) A CRASH HERE
+            if(meshName != "")
             {
-                emitterRange = glm::vec3(attachedToSpecialBrick->type->type->width,0,attachedToSpecialBrick->type->type->length);
-                position = attachedToSpecialBrick->position;
-            }
-            else if(attachedToModel)
-            {
-                emitterRange = glm::vec3(0,0,0);
-                if(useBodyPos && attachedToModel->body)
+                for(unsigned int a = 0; a<attachedToModel->type->instancedMeshes.size(); a++)
                 {
-                    btVector3 o = attachedToModel->body->getWorldTransform().getOrigin();
-                    position = glm::vec3(o.x(),o.y(),o.z());
+                    newMesh *tmp = attachedToModel->type->instancedMeshes[a];
+                    if(tmp->name == meshName)
+                    {
+                        glm::vec3 center = tmp->rawMaxExtents - tmp->rawMinExtents;
+                        center = center / glm::vec3(2,2,2) + tmp->rawMinExtents;
+                        center *= attachedToModel->scale;
+                        center = multVec3ByMat(attachedToModel->modelInterpolator.getRotation(),center);
+                        position += center;
+                        break;
+                    }
+                }
+            }
+        }
+        else if(attachedToItem)
+        {
+            if(attachedToItem->hidden)
+                return;
+
+            if(attachedToItem->heldBy)
+            {
+                //Copied from item::updateTransform
+
+                float actualPitch = -0.785 * (sin(attachedToItem->pitch)+1.0);
+                glm::vec4 handoffset = glm::vec4(attachedToItem->itemType->handOffset.x,attachedToItem->itemType->handOffset.y,attachedToItem->itemType->handOffset.z,1);
+                glm::mat4 rot;
+                glm::vec3 playerPos;
+
+                //YOUR item, on a client physics simulated player model
+                /*if(useBodyPos && attachedToItem->heldBy->body && firstPerson)
+                {
+                    handoffset = glm::vec4(attachedToItem->itemType->handOffset.x,attachedToItem->itemType->handOffset.y,0,1);
+                    handoffset += glm::toMat4(glm::quat(glm::vec3(cameraPitch,0,0))) * glm::vec4(0,0,attachedToItem->itemType->handOffset.z,1);
+                    handoffset.w = 1.0;
+
+                    rot = glm::toMat4(glm::quat(glm::vec3(cameraPitch,0,0))) * glm::toMat4(glm::quat(glm::vec3(0,cameraYaw+3.1415,0)));
+                    btVector3 bulletPos = attachedToItem->heldBy->body->getWorldTransform().getOrigin();
+                    playerPos.x = bulletPos.x();
+                    playerPos.y = bulletPos.y();
+                    playerPos.z = bulletPos.z();
+                }
+                else //everyone else's tools
+                {
+                    rot = glm::toMat4(attachedToItem->heldBy->modelInterpolator.getRotation());
+                    playerPos = attachedToItem->heldBy->modelInterpolator.getPosition();
+                }*/
+
+                glm::vec4 offset;
+                if(firstPerson)
+                {
+                     offset = glm::vec4(attachedToItem->itemType->handOffset.x,attachedToItem->itemType->handOffset.y,0,1);
+                    offset += glm::toMat4(glm::quat(glm::vec3(cameraPitch,0,0))) * glm::vec4(0,0,attachedToItem->itemType->handOffset.z,1);
+                    offset.w = 1.0;
                 }
                 else
-                    position = attachedToModel->modelInterpolator.getPosition();
-                //TODO: THERE IS (was?) A CRASH HERE
+                    offset = glm::vec4(attachedToItem->itemType->handOffset.x,attachedToItem->itemType->handOffset.y,attachedToItem->itemType->handOffset.z,1);
+
+                if(useBodyPos && attachedToItem->heldBy->body)
+                {
+                    rot = glm::toMat4(glm::quat(glm::vec3(0,cameraYaw+3.1415,0)));
+                    btVector3 bulletPos = attachedToItem->heldBy->body->getWorldTransform().getOrigin();
+                    playerPos.x = bulletPos.x();
+                    playerPos.y = bulletPos.y();
+                    playerPos.z = bulletPos.z();
+                }
+                else
+                {
+                    rot = glm::toMat4(attachedToItem->heldBy->modelInterpolator.getRotation());
+                    playerPos = attachedToItem->heldBy->modelInterpolator.getPosition();
+                }
+
+                glm::vec4 meshOffset = glm::vec4(0,1,-2.3,1);
                 if(meshName != "")
                 {
-                    for(unsigned int a = 0; a<attachedToModel->type->instancedMeshes.size(); a++)
+                    for(unsigned int a = 0; a<attachedToItem->type->instancedMeshes.size(); a++)
                     {
-                        newMesh *tmp = attachedToModel->type->instancedMeshes[a];
+                        newMesh *tmp = attachedToItem->type->instancedMeshes[a];
                         if(tmp->name == meshName)
                         {
                             glm::vec3 center = tmp->rawMaxExtents - tmp->rawMinExtents;
                             center = center / glm::vec3(2,2,2) + tmp->rawMinExtents;
-                            center *= attachedToModel->scale;
-                            center = multVec3ByMat(attachedToModel->modelInterpolator.getRotation(),center);
+                            center *= attachedToItem->scale;
+                            center = multVec3ByMat(attachedToItem->modelInterpolator.getRotation(),center);
+                            meshOffset.x += center.x;
+                            meshOffset.y += center.y;
+                            meshOffset.z += center.z;
+                            break;
+                        }
+                    }
+                }
+
+                offset = rot * offset;
+                glm::vec4 result = glm::translate(playerPos + glm::vec3(offset.x,offset.y,offset.z)) *
+                                    rot *
+                                    glm::toMat4(glm::quat(glm::vec3(cameraPitch,0,0)))  *
+                                    glm::toMat4(attachedToItem->itemType->handRot)*
+                                    meshOffset;
+
+                position.x = result.x;
+                position.y = result.y;
+                position.z = result.z;
+
+                /*
+                    offset = rot * offset;
+                    useGlobalTransform = true;
+                    globalTransform =
+                                glm::translate(playerPos + glm::vec3(offset.x,offset.y,offset.z)) *
+                                rot *
+                                glm::toMat4(glm::quat(glm::vec3(camPitch + actualPitch,0,0)));
+                */
+            }
+            else
+            {
+                position = attachedToItem->modelInterpolator.getPosition();
+                //TODO: THERE IS (was?) A CRASH HERE (i copied this comment lol)
+                if(meshName != "")
+                {
+                    for(unsigned int a = 0; a<attachedToItem->type->instancedMeshes.size(); a++)
+                    {
+                        newMesh *tmp = attachedToItem->type->instancedMeshes[a];
+                        if(tmp->name == meshName)
+                        {
+                            glm::vec3 center = tmp->rawMaxExtents - tmp->rawMinExtents;
+                            center = center / glm::vec3(2,2,2) + tmp->rawMinExtents;
+                            center *= attachedToItem->scale;
+                            center = multVec3ByMat(attachedToItem->modelInterpolator.getRotation(),center);
                             position += center;
                             break;
                         }
                     }
                 }
             }
-            else if(attachedToCar)
-            {
-                emitterRange = glm::vec3(1,0,1);
-                //position = attachedToCar->wheels[whichWheel]->getPosition() - glm::vec3(0,attachedToCar->wheelBrickData[whichWheel].wheelScale,0);
-                position = attachedToCar->newWheels[whichWheel]->modelInterpolator.getPosition() - glm::vec3(0,attachedToCar->wheelBrickData[whichWheel].wheelScale,0);
-            }
-            justAttached = false;
-        //}
+        }
+        else if(attachedToCar)
+        {
+            emitterRange = glm::vec3(1,0,1);
+            //position = attachedToCar->wheels[whichWheel]->getPosition() - glm::vec3(0,attachedToCar->wheelBrickData[whichWheel].wheelScale,0);
+            position = attachedToCar->newWheels[whichWheel]->modelInterpolator.getPosition() - glm::vec3(0,attachedToCar->wheelBrickData[whichWheel].wheelScale,0);
+        }
+        justAttached = false;
 
         if((unsigned)(lastEmission + type->ejectionPeriodMS) > SDL_GetTicks())
             return;

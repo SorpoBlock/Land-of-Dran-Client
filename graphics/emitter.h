@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <glm/gtx/norm.hpp>
 #include "code/graphics/newModel.h"
+#include "code/physics/player.h"
 #include "code/graphics/newBrickType.h"
 #include "code/utility/debugGraphics.h"
 #include "code/physics/brickPhysics.h"
@@ -100,6 +101,7 @@ namespace syj
         glm::vec3 emitterRange = glm::vec3(0,0,0);
         std::string meshName = "";
         newDynamic *attachedToModel = 0;
+        item *attachedToItem = 0;
         basicBrickRenderData *attachedToBasicBrick = 0;
         specialBrickRenderData *attachedToSpecialBrick = 0;
         livingBrick *attachedToCar = 0;
@@ -112,7 +114,7 @@ namespace syj
         float currentPhi = 0;
         unsigned int creationTime = 0;
 
-        void update(glm::vec3 eyePos,glm::vec3 eyeDir,bool useBodyPos = false);
+        void update(glm::vec3 eyePos,glm::vec3 eyeDir,bool useBodyPos = false,bool firstPerson = false,float cameraYaw=0,float cameraPitch=0);
     };
 }
 

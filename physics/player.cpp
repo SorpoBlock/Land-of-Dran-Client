@@ -355,15 +355,21 @@ namespace syj
         {}
 
     //useDir now means it's a model (player) that has client simulated physics
-    void item::updateTransform(bool useDir,float yaw)
+    void item::updateTransform(bool useDir,float yaw,float camPitch)
     {
         if(hidden)
             return;
 
         if(heldBy)
         {
+            //This code was copied to emitter::update
+
             float actualPitch = -0.785 * (sin(pitch)+1.0);
-            glm::vec4 offset = glm::vec4(itemType->handOffset.x,itemType->handOffset.y,itemType->handOffset.z,1);
+            glm::vec4 offset = glm::vec4(itemType->handOffset.x,itemType->handOffset.y,0,1);
+
+            offset += glm::toMat4(glm::quat(glm::vec3(camPitch,0,0))) * glm::vec4(0,0,itemType->handOffset.z,1);
+            offset.w = 1.0;
+
             glm::mat4 rot;
             glm::vec3 playerPos;
             //YOUR item, on a client physics simulated player model
@@ -386,7 +392,8 @@ namespace syj
             globalTransform =
                         glm::translate(playerPos + glm::vec3(offset.x,offset.y,offset.z)) *
                         rot *
-                        glm::toMat4(glm::quat(glm::vec3(actualPitch,0,0)));
+                        glm::toMat4(glm::quat(glm::vec3(camPitch + actualPitch,0,0))) *
+                        glm::toMat4(itemType->handRot);
 
             /*type->render(&unis,0,
                         glm::translate(heldBy->modelInterpolator.getPosition() + glm::vec3(offset.x,offset.y,offset.z)) *
@@ -413,6 +420,8 @@ namespace syj
             else
                 pitch = -1;
         }
+        else
+            pitch = -1;
     }
 }
 

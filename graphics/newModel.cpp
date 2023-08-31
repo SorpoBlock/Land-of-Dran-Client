@@ -135,6 +135,7 @@ namespace syj
             animationFrame.push_back(0);
             animationSpeed.push_back(1.0);
             animationOn.push_back(false);
+            animationLooping.push_back(false);
         }
 
         calculateMeshTransforms(0);
@@ -187,12 +188,32 @@ namespace syj
         to[2][3] = from.d3; to[3][3] = from.d4;
     }
 
+    void recursiveNodePrint(aiNode *node,int level = 0)
+    {
+        for(int a = 0; a<level; a++)
+            std::cout<<" \t";
+        std::cout<<node->mName.C_Str();
+
+        glm::mat4 mat;
+        CopyaiMatRedundant(node->mTransformation,mat);
+        glm::vec3 scale;
+        glm::quat rotation;
+        glm::vec3 translation;
+        glm::vec3 skew;
+        glm::vec4 perspective;
+        glm::decompose(mat, scale, rotation, translation, skew, perspective);
+        std::cout<<" Rotation: "<<rotation.w<<","<<rotation.x<<","<<rotation.y<<","<<rotation.z<<"\n";
+
+        for(int a = 0; a<node->mNumChildren; a++)
+            recursiveNodePrint(node->mChildren[a],level+1);
+    }
+
     glm::vec3 lerpRedundant(glm::vec3 x, glm::vec3 y, float t)
     {
         return x * (1.f - t) + y * t;
     }
 
-    void newDynamic::play(std::string name,bool reset,float speed)
+    void newDynamic::play(std::string name,bool reset,float speed,bool loop)
     {
         int idx = -1;
         for(int a = 0; a<type->animations.size(); a++)
@@ -213,14 +234,10 @@ namespace syj
             animationProgress[idx] = 0;
         animationOn[idx] = true;
         animationSpeed[idx] = speed;
-
-        /*playingAnimation = idx;
-        if(reset)
-            animationProgress = 0;
-        animationSpeed = speed;*/
+        animationLooping[idx] = loop;
     }
 
-    void newDynamic::play(int animID,bool reset,float speed)
+    void newDynamic::play(int animID,bool reset,float speed,bool loop)
     {
         int idx = -1;
         for(int a = 0; a<type->animations.size(); a++)
@@ -241,11 +258,7 @@ namespace syj
             animationProgress[idx] = 0;
         animationOn[idx] = true;
         animationSpeed[idx] = speed;
-
-        /*playingAnimation = idx;
-        if(reset)
-            animationProgress = 0;
-        animationSpeed = speed;*/
+        animationLooping[idx] = loop;
     }
 
     void newDynamic::stop(std::string name)
@@ -319,10 +332,25 @@ namespace syj
                     continue;
 
                 animationFrame[a] = type->defaultFrame;
+
                 animationProgress[a] += deltaMS * type->animations[a].speedDefault * animationSpeed[a];
                 if(animationProgress[a] >= type->animations[a].endFrame)
-                    animationProgress[a] -= type->animations[a].endFrame - type->animations[a].startFrame;
-                animationFrame[a] = animationProgress[a] + type->animations[a].startFrame;
+                {
+                    if(animationLooping[a])
+                    {
+                        animationProgress[a] -= type->animations[a].endFrame - type->animations[a].startFrame;
+                    }
+                    else
+                    {
+                        animationOn[a] = false;
+                        animationProgress[a] -= type->animations[a].endFrame - type->animations[a].startFrame;
+                    }
+                }
+
+                if(animationOn[a])
+                    animationFrame[a] = animationProgress[a] + type->animations[a].startFrame;
+                else
+                    animationFrame[a] = type->defaultFrame;
             }
         }
 
@@ -333,6 +361,7 @@ namespace syj
                 newTrans = node->defaultTransform;
             else
             {
+                bool noAnimsOn = true;
                 glm::vec3 pos = glm::vec3(0,0,0);//node->posFrames[0];
                 glm::mat4 rot = glm::mat4(1.0); //glm::toMat4(node->rotFrames[0]);
 
@@ -340,6 +369,8 @@ namespace syj
                 {
                     if(!animationOn[i])
                         continue;
+
+                    noAnimsOn = false;
 
                     for(unsigned int a = 0; a<node->posFrames.size(); a++)
                     {
@@ -390,7 +421,63 @@ namespace syj
                     }
                 }
 
-                newTrans = glm::translate(node->rotationPivot) * glm::mat4(rot) * glm::translate(-node->rotationPivot) * glm::translate(pos);
+                if(noAnimsOn)
+                {
+                    int defaultFrame = type->defaultFrame;
+
+                    for(unsigned int a = 0; a<node->posFrames.size(); a++)
+                    {
+                        if(node->posTimes[a] >= defaultFrame)
+                        {
+                            float nextTime = node->posTimes[a];
+                            float prevTime = node->posTimes[node->posTimes.size() - 1];
+                            glm::vec3 nextPos = node->posFrames[a];
+                            glm::vec3 prevPos = node->posFrames[node->posTimes.size() - 1];
+                            if(a > 0)
+                            {
+                                prevTime = node->posTimes[a-1];
+                                prevPos = node->posFrames[a-1];
+                            }
+
+                            float timeAheadPrev = defaultFrame - prevTime;
+                            float timeBetween = nextTime - prevTime;
+                            float progress = timeAheadPrev / timeBetween;
+
+                            pos += lerpRedundant(prevPos,nextPos,progress);
+
+                            break;
+                        }
+                    }
+
+                    for(unsigned int a = 1; a<node->rotFrames.size(); a++)
+                    {
+                        if(node->rotTimes[a] >= defaultFrame)
+                        {
+                            float nextTime = node->rotTimes[a];
+                            float prevTime = node->rotTimes[node->rotTimes.size() - 1];
+                            glm::quat nextRot = node->rotFrames[a];
+                            glm::quat prevRot = node->rotFrames[node->rotTimes.size() - 1];
+                            if(a > 0)
+                            {
+                                prevTime = node->rotTimes[a-1];
+                                prevRot = node->rotFrames[a-1];
+                            }
+
+                            float timeAheadPrev = defaultFrame - prevTime;
+                            float timeBetween = nextTime - prevTime;
+                            float progress = timeAheadPrev / timeBetween;
+
+                            rot = glm::toMat4(glm::slerp(prevRot,nextRot,progress)) * rot;
+
+                            break;
+                        }
+                    }
+                }
+
+                if(type->rotationPivotFix)
+                    newTrans = glm::translate(node->rotationPivot) * glm::mat4(rot) * glm::translate(-node->rotationPivot) * glm::translate(pos);
+                else
+                    newTrans = glm::translate(pos) * glm::mat4(rot);
             }
         }
         else
@@ -491,6 +578,10 @@ namespace syj
         if(tmp)
             oneMaterial = tmp->toBool();
 
+        tmp = modelLoadFile.getPreference("RotationPivotFix");
+        if(tmp)
+            rotationPivotFix = tmp->toBool();
+
         if(modelPath == "")
         {
             error("No Filepath pref set in model loading settings file " + textFilePath);
@@ -499,6 +590,8 @@ namespace syj
 
         Assimp::Importer importer;
         const aiScene *scene = importer.ReadFile(modelPath,pFlags);
+
+        //recursiveNodePrint(scene->mRootNode);
 
         if(!scene)
         {
@@ -576,8 +669,17 @@ namespace syj
                 for(unsigned int b = 0; b<nodeAnim->mNumPositionKeys; b++)
                 {
                     glm::vec3 pos(nodeAnim->mPositionKeys[b].mValue.x,nodeAnim->mPositionKeys[b].mValue.y,nodeAnim->mPositionKeys[b].mValue.z);
+
+                    //TODO: This is a hack for the gun and a test
+                    if(nodeAnim->mNumScalingKeys > b)
+                    {
+                        glm::vec3 scale(nodeAnim->mScalingKeys[b].mValue.x,nodeAnim->mScalingKeys[b].mValue.y,nodeAnim->mScalingKeys[b].mValue.z);
+                        pos /= scale;
+                    }
+
                     target->posFrames.push_back(pos);
                     target->posTimes.push_back(nodeAnim->mPositionKeys[b].mTime);
+                    //std::cout<<"Position key "<<b<<" for mesh "<<target->name<<" is "<<pos.x<<","<<pos.y<<","<<pos.z<<" with time of "<<nodeAnim->mPositionKeys[b].mTime<<"\n";
                 }
 
                 for(unsigned int b = 0; b<nodeAnim->mNumRotationKeys; b++)
@@ -585,6 +687,7 @@ namespace syj
                     glm::quat rot(nodeAnim->mRotationKeys[b].mValue.w,nodeAnim->mRotationKeys[b].mValue.x,nodeAnim->mRotationKeys[b].mValue.y,nodeAnim->mRotationKeys[b].mValue.z);
                     target->rotFrames.push_back(rot);
                     target->rotTimes.push_back(nodeAnim->mRotationKeys[b].mTime);
+                    //std::cout<<"Rot key "<<b<<" for mesh "<<target->name<<" is "<<rot.w<<","<<rot.x<<","<<rot.y<<","<<rot.z<<" with time of  "<<nodeAnim->mRotationKeys[b].mTime<<"\n";
                 }
 
             }
@@ -597,7 +700,6 @@ namespace syj
             if(scene->mNumCameras > 0)
             {
                 hasCamera = true;
-                cameraPosition = glm::vec3(scene->mCameras[0]->mPosition.x,scene->mCameras[0]->mPosition.y,scene->mCameras[0]->mPosition.z);
             }
         }
 
@@ -747,8 +849,14 @@ namespace syj
 
     void newDynamic::bufferSubData()
     {
+        //std::cout<<"\nGUN\n";
         for(int a = 0; a<type->instancedMeshes.size(); a++)
         {
+            if(type->serverID == 4)
+            {
+                //printMatScale(meshTransforms[a],type->instancedMeshes[a]->name);
+            }
+
             if(!type->instancedMeshes[a]->isInstanced())
                 continue;
 

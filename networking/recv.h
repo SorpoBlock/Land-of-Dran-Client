@@ -73,6 +73,9 @@ namespace syj
 
     struct serverStuff
     {
+        glm::vec3 vignetteColor = glm::vec3(1,0,0);
+        float vignetteStrength = 0.0;
+
         float waterLevel = 15.0;
 
         std::string loggedName = "";

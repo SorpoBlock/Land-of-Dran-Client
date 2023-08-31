@@ -44,6 +44,7 @@ namespace syj
         newModel *type = 0;
         newAnimation *switchAnim = 0;
         newAnimation *fireAnim = 0;
+        glm::quat handRot = glm::quat(1.0,0.0,0.0,0.0);
         glm::vec3 handOffset = glm::vec3(0,0,0);
         std::string uiName = "";
         unsigned int serverID = 0;
@@ -57,12 +58,22 @@ namespace syj
 
     struct item : newDynamic
     {
+        int nextFireAnim = -1;
+        float nextFireAnimSpeed = 1.0;
+        int nextFireSound = -1;
+        float nextFireSoundPitch = 1.0;
+        float nextFireSoundGain = 1.0;
+        int nextFireEmitter = -1;
+        std::string nextFireEmitterMesh = "";
+        int fireCooldownMS = 0;
+        int lastFire = 0;
+
         heldItemType *itemType = 0;
         newDynamic *heldBy = 0;
         float pitch = 0;
         bool swinging = false;
         item(btDynamicsWorld *_world,newModel *_type,glm::vec3 baseScale = glm::vec3(1,1,1));
-        void updateTransform(bool useDir = false,float yaw = 0);
+        void updateTransform(bool useDir = false,float yaw = 0,float camPitch = 0);
         void advance(bool mouseIsDown,float deltaMS);
     };
 }

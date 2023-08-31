@@ -415,7 +415,7 @@ namespace syj
             toRender = rootNode;
 
         glm::mat4 nodeTransform = toRender->transform;
-        /*bone *curBone = getBone(toRender->name);
+        bone *curBone = getBone(toRender->name);
         if(curBone)
         {
             //todo: Update bone anim here
@@ -433,7 +433,7 @@ namespace syj
                     break;
                 }
             }
-        }*/
+        }
 
         startTransform = startTransform * nodeTransform;
 

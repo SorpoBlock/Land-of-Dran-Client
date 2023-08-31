@@ -505,6 +505,7 @@ int main(int argc, char *argv[])
         notify("Shader Failed to Compile","Screen overlays shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
         shaderFailedToCompile = true;
     }
+
     /*std::vector<glm::vec3> shape = defaultSquareShape();
     std::vector<glm::vec3> norms = calculateNormals(shape);
     std::vector<glm::vec2> uvsAndDims = defaultSquareUVs();
@@ -750,8 +751,8 @@ int main(int argc, char *argv[])
     //GLuint boxEdgesVAO = createBoxEdgesVAO();
 
     texture *bdrf = generateBDRF(quadVAO);
-    //std::string iblName = "mountain";
-    std::string iblName = "MoonlessGolf";
+    std::string iblName = "mountain";
+    //std::string iblName = "MoonlessGolf";
     //std::string iblName = "sunset";
     //std::string iblName = "shanghai";
     //std::string iblName = "alexs_apartment";
@@ -1402,8 +1403,53 @@ int main(int argc, char *argv[])
 
                     if(event.button.button == SDL_BUTTON_LEFT && ohWow.currentPlayer)
                     {
-                        ohWow.currentPlayer->stop("grab");
-                        ohWow.currentPlayer->play("grab",true);
+                        item *currentlyHeldItem = 0;
+                        if(ohWow.currentlyOpen == inventory && ohWow.cameraTarget)
+                        {
+                            for(int a = 0; a<ohWow.items.size(); a++)
+                            {
+                                if(ohWow.items[a]->heldBy == ohWow.cameraTarget && !ohWow.items[a]->hidden)
+                                {
+                                    currentlyHeldItem = ohWow.items[a];
+                                    break;
+                                }
+                            }
+                        }
+
+                        if(currentlyHeldItem)
+                        {
+                            if(currentlyHeldItem->lastFire + currentlyHeldItem->fireCooldownMS < SDL_GetTicks())
+                            {
+                                currentlyHeldItem->lastFire = SDL_GetTicks();
+                                if(currentlyHeldItem->nextFireAnim != -1)
+                                    currentlyHeldItem->play(currentlyHeldItem->nextFireAnim,true,currentlyHeldItem->nextFireAnimSpeed,false);
+                                if(currentlyHeldItem->nextFireSound != -1)
+                                    ohWow.speaker->playSound2D(currentlyHeldItem->nextFireSound,currentlyHeldItem->nextFireSoundPitch,currentlyHeldItem->nextFireSoundGain);
+
+                                if(currentlyHeldItem->nextFireEmitter != -1)
+                                {
+                                    for(int a = 0; a<ohWow.emitterTypes.size(); a++)
+                                    {
+                                        if(ohWow.emitterTypes[a]->serverID == currentlyHeldItem->nextFireEmitter)
+                                        {
+                                            emitter *e = new emitter;
+                                            e->creationTime = SDL_GetTicks();
+                                            e->type = ohWow.emitterTypes[a];
+                                            e->attachedToItem = currentlyHeldItem;
+                                            e->justAttached = true;
+                                            e->meshName = currentlyHeldItem->nextFireEmitterMesh;
+                                            ohWow.emitters.push_back(e);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ohWow.currentPlayer->stop("grab");
+                            ohWow.currentPlayer->play("grab",true);
+                        }
                     }
                 }
 
@@ -1447,36 +1493,6 @@ int main(int argc, char *argv[])
                         {
                             box->currentPhase = selectionBox::selectionPhase::stretching;
                         }
-
-                        /*if(stageOfSelection == 0)
-                        {
-                            drawDebugLines = true;
-                            start = BtToGlm(res.m_hitPointWorld[idx]);
-                            end = BtToGlm(res.m_hitPointWorld[idx]);
-                            stageOfSelection = 1;
-                        }
-                        else if(stageOfSelection == 1)
-                        {
-                            stageOfSelection = -1;
-                            drawDebugLines = false;
-
-                            if(start.x > end.x)
-                                std::swap(start.x,end.x);
-                            if(start.y > end.y)
-                                std::swap(start.y,end.y);
-                            if(start.z > end.z)
-                                std::swap(start.z,end.z);
-
-                            packet data;
-                            data.writeUInt(5,4);
-                            data.writeFloat(start.x);
-                            data.writeFloat(start.y);
-                            data.writeFloat(start.z);
-                            data.writeFloat(end.x);
-                            data.writeFloat(end.y);
-                            data.writeFloat(end.z);
-                            ohWow.connection->send(&data,true);
-                        }*/
                     }
                 }
             }
@@ -1754,10 +1770,10 @@ int main(int argc, char *argv[])
                     if(ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden)
                     {
                         if(ohWow.giveUpControlOfCurrentPlayer)
-                            ohWow.items[a]->updateTransform(false,ohWow.playerCamera->getYaw());
+                            ohWow.items[a]->updateTransform(false,ohWow.playerCamera->getYaw(),ohWow.playerCamera->getPitch());
                         else
-                            ohWow.items[a]->updateTransform(true,ohWow.playerCamera->getYaw());
-                        ohWow.items[a]->calculateMeshTransforms(0);
+                            ohWow.items[a]->updateTransform(true,ohWow.playerCamera->getYaw(),ohWow.playerCamera->getPitch());
+                        ohWow.items[a]->calculateMeshTransforms(deltaT); //The item we are currently holding
                     }
                 }
             }
@@ -1778,7 +1794,7 @@ int main(int argc, char *argv[])
         else
             desiredFov = ohWow.settings->fieldOfView;
 
-        currentZoom += (desiredFov - currentZoom) * deltaT * 0.001;
+        currentZoom += (desiredFov - currentZoom) * deltaT * 0.0025;
         ohWow.playerCamera->setFieldOfVision(currentZoom);
 
         glm::vec3 microphoneDir = glm::vec3(sin(ohWow.playerCamera->getYaw()),0,cos(ohWow.playerCamera->getYaw()));
@@ -1811,7 +1827,7 @@ int main(int argc, char *argv[])
         }
         for(int a = 0; a<ohWow.items.size(); a++)
             if(!(ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
-                ohWow.items[a]->calculateMeshTransforms(0);
+                ohWow.items[a]->calculateMeshTransforms(deltaT); //Any item we are not currently holding
 
         auto emitterIter = ohWow.emitters.begin();
         while(emitterIter != ohWow.emitters.end())
@@ -1826,8 +1842,13 @@ int main(int argc, char *argv[])
                     continue;
                 }
             }
-            bool usePhysicsPos = ohWow.currentPlayer && ohWow.currentPlayer == e->attachedToModel && !ohWow.giveUpControlOfCurrentPlayer;
-            e->update(ohWow.playerCamera->position,ohWow.playerCamera->direction,usePhysicsPos);
+            bool usePhysicsPos = ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer;
+            e->update(ohWow.playerCamera->position,
+                      ohWow.playerCamera->direction,
+                      usePhysicsPos,
+                      (camMode == cammode_firstPerson) && (ohWow.currentPlayer == e->attachedToModel || (e->attachedToItem && ohWow.currentPlayer == e->attachedToItem->heldBy)),
+                      ohWow.playerCamera->getYaw(),
+                      ohWow.playerCamera->getPitch());
             ++emitterIter;
         }
 
@@ -2030,7 +2051,9 @@ int main(int argc, char *argv[])
         }
 
         //Graphics:
-        ohWow.env->iblShadowsCalc(ohWow.playerCamera,glm::vec3(0.496595,0.50,0.856871));
+        //Sun direction sundirection
+        //ohWow.env->iblShadowsCalc(ohWow.playerCamera,glm::vec3(0.496595,0.50,0.856871));
+        ohWow.env->iblShadowsCalc(ohWow.playerCamera,glm::vec3(0.540455,0.742971,0.394844));
 
         glActiveTexture(GL_TEXTURE0 + cubeMapRadiance);
         glBindTexture(GL_TEXTURE_CUBE_MAP,IBLRad);
@@ -2277,8 +2300,6 @@ int main(int argc, char *argv[])
 
                 ohWow.env->drawSky(basic);
 
-
-
                 if(ohWow.settings->waterQuality != waterStatic && waterRefraction)
                 {
                     waterProgram.use();
@@ -2499,6 +2520,13 @@ int main(int argc, char *argv[])
             //Remember, 'god rays' actually includes the underwater texture too
             screenOverlaysProgram.use();
                 glUniform1f(screenOverlaysProgram.getUniformLocation("waterLevel"),ohWow.waterLevel); //TODO: Don't string match this every frame
+                glUniform1f(screenOverlaysProgram.getUniformLocation("vignetteStrength"),ohWow.vignetteStrength);
+                glUniform3f(screenOverlaysProgram.getUniformLocation("vignetteColor"),ohWow.vignetteColor.r,ohWow.vignetteColor.g,ohWow.vignetteColor.b);
+                if(ohWow.vignetteStrength >= 0)
+                    ohWow.vignetteStrength -= deltaT * 0.001;
+                if(ohWow.vignetteStrength < 0)
+                    ohWow.vignetteStrength = 0;
+
                 ohWow.settings->render(screenOverlaysUnis);
                 ohWow.playerCamera->render(screenOverlaysUnis);
                 ohWow.env->passUniforms(screenOverlaysUnis);

@@ -178,6 +178,173 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         std::string effect = data->readString();
         ohWow->speaker->setEffect(effect);
     }
+    else if(commandType == "setItemFireAnim")
+    {
+        int itemId = data->readUInt(dynamicObjectIDBits);
+
+        item *foundItem = 0;
+        for(int a = 0; a<ohWow->items.size(); a++)
+        {
+            if(ohWow->items[a]->serverID == itemId)
+            {
+                foundItem = ohWow->items[a];
+                break;
+            }
+        }
+
+        if(!foundItem)
+            return;
+
+        if(data->readBit())
+        {
+            foundItem->nextFireAnim = data->readUInt(10);
+            foundItem->nextFireAnimSpeed = data->readFloat();
+        }
+        else
+            foundItem->nextFireAnim = -1;
+    }
+    else if(commandType == "setItemFireSound")
+    {
+        int itemId = data->readUInt(dynamicObjectIDBits);
+
+        item *foundItem = 0;
+        for(int a = 0; a<ohWow->items.size(); a++)
+        {
+            if(ohWow->items[a]->serverID == itemId)
+            {
+                foundItem = ohWow->items[a];
+                break;
+            }
+        }
+
+        if(!foundItem)
+            return;
+
+        if(data->readBit())
+        {
+            foundItem->nextFireSound = data->readUInt(10);
+            foundItem->nextFireSoundPitch = data->readFloat();
+            foundItem->nextFireSoundGain = data->readFloat();
+        }
+        else
+            foundItem->nextFireSound = -1;
+    }
+    else if(commandType == "setItemFireEmitter")
+    {
+        int itemId = data->readUInt(dynamicObjectIDBits);
+
+        item *foundItem = 0;
+        for(int a = 0; a<ohWow->items.size(); a++)
+        {
+            if(ohWow->items[a]->serverID == itemId)
+            {
+                foundItem = ohWow->items[a];
+                break;
+            }
+        }
+
+        if(!foundItem)
+            return;
+
+        if(data->readBit())
+        {
+            foundItem->nextFireEmitter = data->readUInt(10);
+            foundItem->nextFireEmitterMesh = data->readString();
+        }
+        else
+            foundItem->nextFireEmitter = -1;
+    }
+    else if(commandType == "setItemCooldown")
+    {
+        int itemId = data->readUInt(dynamicObjectIDBits);
+
+        item *foundItem = 0;
+        for(int a = 0; a<ohWow->items.size(); a++)
+        {
+            if(ohWow->items[a]->serverID == itemId)
+            {
+                foundItem = ohWow->items[a];
+                break;
+            }
+        }
+
+        if(!foundItem)
+            return;
+
+        foundItem->fireCooldownMS = data->readUInt(16);
+    }
+    else if(commandType == "playItemAnimation")
+    {
+        int itemId = data->readUInt(dynamicObjectIDBits);
+
+        item *foundItem = 0;
+        for(int a = 0; a<ohWow->items.size(); a++)
+        {
+            if(ohWow->items[a]->serverID == itemId)
+            {
+                foundItem = ohWow->items[a];
+                break;
+            }
+        }
+
+        if(!foundItem)
+            return;
+
+        int animId = data->readUInt(10);
+        float speed = data->readFloat();
+
+        foundItem->play(animId,speed);
+    }
+    else if(commandType == "itemFired")
+    {
+        int itemId = data->readUInt(dynamicObjectIDBits);
+
+        item *foundItem = 0;
+        for(int a = 0; a<ohWow->items.size(); a++)
+        {
+            if(ohWow->items[a]->serverID == itemId)
+            {
+                foundItem = ohWow->items[a];
+                break;
+            }
+        }
+
+        if(!foundItem)
+            return;
+
+        if(foundItem->nextFireAnim != -1)
+            foundItem->play(foundItem->nextFireAnim,false,foundItem->nextFireAnimSpeed,false);
+        if(foundItem->nextFireSound != -1)
+            ohWow->speaker->playSound2D(foundItem->nextFireSound,foundItem->nextFireSoundPitch,foundItem->nextFireSoundGain);
+
+        if(foundItem->nextFireEmitter != -1)
+        {
+            for(int a = 0; a<ohWow->emitterTypes.size(); a++)
+            {
+                if(ohWow->emitterTypes[a]->serverID == foundItem->nextFireEmitter)
+                {
+                    emitter *e = new emitter;
+                    e->creationTime = SDL_GetTicks();
+                    e->type = ohWow->emitterTypes[a];
+                    e->attachedToItem = foundItem;
+                    e->justAttached = true;
+                    e->meshName = foundItem->nextFireEmitterMesh;
+                    ohWow->emitters.push_back(e);
+                    break;
+                }
+            }
+        }
+    }
+    else if(commandType == "vignette")
+    {
+        ohWow->vignetteStrength = data->readFloat();
+        if(data->readBit())
+        {
+            ohWow->vignetteColor.r = data->readFloat();
+            ohWow->vignetteColor.g = data->readFloat();
+            ohWow->vignetteColor.b = data->readFloat();
+        }
+    }
     else
         error("Unrecognized command: " + commandType);
 }
@@ -1561,7 +1728,7 @@ namespace syj
                         return;
                     }
 
-                    item *tmp = new item(ohWow->world,type->type,glm::vec3(0.03));
+                    item *tmp = new item(ohWow->world,type->type,type->type->networkScale);
                     tmp->serverID = itemId;
                     tmp->itemType = type;
                     ohWow->items.push_back(tmp);
@@ -1578,6 +1745,15 @@ namespace syj
                             {
                                 if(location::locations[l]->dynamic == ohWow->items[a])
                                     location::locations[l]->dynamic = 0;
+                            }
+
+                            for(int e = 0; e<ohWow->emitters.size(); e++)
+                            {
+                                if(ohWow->emitters[e]->attachedToItem == ohWow->items[a])
+                                {
+                                    delete ohWow->emitters[e];
+                                    ohWow->emitters.erase(ohWow->emitters.begin() + e);
+                                }
                             }
 
                             delete ohWow->items[a];
@@ -1619,10 +1795,13 @@ namespace syj
 
                 std::string iconPath = data->readString();
 
+                float rotW = data->readFloat();
+                float rotX = data->readFloat();
+                float rotY = data->readFloat();
+                float rotZ = data->readFloat();
+
                 if(!CEGUI::System::getSingleton().getRenderer()->isTextureDefined(uiName) && !CEGUI::ImageManager::getSingleton().isImageTypeAvailable(uiName) && !CEGUI::ImageManager::getSingleton().isDefined(uiName))
                     CEGUI::ImageManager::getSingleton().addFromImageFile(uiName, iconPath,"/");
-
-                std::cout<<"Added item type: "<<uiName<<"\n";
 
                 for(unsigned int a = 0; a<ohWow->newDynamicTypes.size(); a++)
                 {
@@ -1634,6 +1813,7 @@ namespace syj
                         tmp->type = ohWow->newDynamicTypes[a];
                         tmp->handOffset = glm::vec3(x,y,z);
                         tmp->uiName = uiName;
+                        tmp->handRot = glm::quat(rotW,rotX,rotY,rotZ);
                         tmp->waitingForModel = false;
                         for(unsigned int b = 0; b<ohWow->newDynamicTypes[a]->animations.size(); b++)
                         {
@@ -1648,7 +1828,7 @@ namespace syj
                         }
                         ohWow->itemTypes.push_back(tmp);
 
-                        if(uiName != std::string("Paint Can"))
+                        if(uiName == std::string("Paint Can"))
                         {
                             ohWow->paintCan = tmp;
                             ohWow->fixedPaintCanItem = new item(ohWow->world,tmp->type,glm::vec3(0.02,0.02,0.02));
@@ -1691,7 +1871,7 @@ namespace syj
                 if(uiName == "Paint Can")
                 {
                     ohWow->paintCan = tmp;
-                    ohWow->fixedPaintCanItem = new item(ohWow->world,tmp->type,glm::vec3(0.02,0.02,0.02));
+                    ohWow->fixedPaintCanItem = new item(ohWow->world,tmp->type,tmp->type->networkScale);
                     ohWow->fixedPaintCanItem->itemType = tmp;
                     ohWow->items.push_back(ohWow->fixedPaintCanItem);
                 }
@@ -2168,7 +2348,7 @@ namespace syj
                                         ohWow->newDynamics[i]->setFixedRotation("Face1",final);
 
                                         if(walking)
-                                            ohWow->newDynamics[i]->play("walk");
+                                            ohWow->newDynamics[i]->play("walk",false,1.0,true);
                                         else
                                             ohWow->newDynamics[i]->stop("walk");
                                     }
@@ -2540,7 +2720,7 @@ namespace syj
                     if(type)
                     {
                         //TODO: Let server set scale
-                        newDynamic *tmp = new newDynamic(type,glm::vec3(0.02,0.02,0.02));
+                        newDynamic *tmp = new newDynamic(type,type->networkScale);
                         /*tmp->addExtraTransform("Head");
                         tmp->addExtraTransform("Face1");
 
@@ -2662,17 +2842,17 @@ namespace syj
                 float eyeOffsetX = data->readFloat();
                 float eyeOffsetY = data->readFloat();
                 float eyeOffsetZ = data->readFloat();
+                float scaleX = data->readFloat();
+                float scaleY = data->readFloat();
+                float scaleZ = data->readFloat();
 
                 info("Loading dynamic type: " + filePath);
 
-                /*animatedModel *removeMeSomeday = new animatedModel(filePath);
-                ohWow->oldDynamicTypes.push_back(removeMeSomeday);*/
-
                 newModel *tmp = new newModel(filePath);
-                //tmp->oldModelType = (void*)removeMeSomeday;
                 tmp->defaultFrame = standingFrame;
                 tmp->serverID = serverID;
                 tmp->eyeOffset = glm::vec3(eyeOffsetX,eyeOffsetY,eyeOffsetZ);
+                tmp->networkScale = glm::vec3(scaleX,scaleY,scaleZ);
 
                 int numAnims = data->readUInt(8);
                 for(int a = 0; a<numAnims; a++)
@@ -2680,6 +2860,7 @@ namespace syj
                     int startFrame = data->readUInt(8);
                     int endFrame = data->readUInt(8);
                     float speed = data->readFloat();
+
                     newAnimation anim;
                     anim.serverID = a;
                     anim.startFrame = startFrame;
@@ -2719,19 +2900,6 @@ namespace syj
                             info("Added model to " + ohWow->itemTypes[a]->uiName + " after the fact.");
                             ohWow->itemTypes[a]->waitingForModel = false;
                             ohWow->itemTypes[a]->type = tmp;
-
-                            /*if(ohWow->itemTypes[a]->uiName != std::string("Paint Can"))
-                            {
-                                ohWow->itemIcons[a] = new newDynamic(tmp);
-                                ohWow->itemTypes[a]->icon = ohWow->itemIcons[a];
-                                ohWow->itemIcons[a]->hidden = true;
-                                ohWow->itemIcons[a]->setAllFlag(meshFlag_skipCameraMatrix);
-                                ohWow->itemIcons[a]->useGlobalTransform = true;
-                                ohWow->itemIcons[a]->calculateMeshTransforms(0);
-                                ohWow->itemIcons[a]->bufferSubData();
-                            }
-                            else
-                                ohWow->itemTypes[a]->icon = 0;*/
 
                             for(unsigned int b = 0; b<tmp->animations.size(); b++)
                             {

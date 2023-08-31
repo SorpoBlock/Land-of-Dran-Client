@@ -30,7 +30,7 @@ namespace syj
     {
         int startFrame;
         int endFrame;
-        float speedDefault;
+        float speedDefault = 0.04;
         int serverID = -1;
         std::string name;
     };
@@ -86,6 +86,7 @@ namespace syj
         std::vector<float> animationFrame;
         std::vector<float> animationSpeed;
         std::vector<bool>  animationOn;
+        std::vector<bool>  animationLooping;
 
         //Other option graphics stuff:
         std::string shapeName = "";
@@ -99,8 +100,8 @@ namespace syj
         void setNodeFlag(std::string nodeName,int flag);
         void setAllFlag(int flag);
         void bufferSubData();
-        void play(std::string name,bool reset = false,float speed = 1.0);
-        void play(int animID,bool reset = false,float speed = 1.0);
+        void play(std::string name,bool reset = false,float speed = 1.0,bool loop = false);
+        void play(int animID,bool reset = false,float speed = 1.0,bool loop = false);
         void stop(int animID);
         void stop(std::string name);
         void stopAll();
@@ -220,6 +221,9 @@ namespace syj
         //All dependency on this needs to be removed as a priority:
         //void *oldModelType = 0;
 
+        glm::vec3 networkScale = glm::vec3(1,1,1);
+
+        bool rotationPivotFix = false;
         bool oneMaterial = false;
 
         //Network stuff:
@@ -235,7 +239,6 @@ namespace syj
         //Eye position for player models:
         bool hasCamera = false;
         glm::vec3 eyeOffset;        //TODO: Only use one of these
-        glm::vec3 cameraPosition;
 
         //Used for icon size adjustment and I guess collision?
         glm::vec3 totalColMin,totalColMax;

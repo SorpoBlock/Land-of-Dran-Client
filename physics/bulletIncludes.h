@@ -9,7 +9,6 @@ const bool useClientPhysics = true;
 #include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 #include <BulletCollision/CollisionShapes/btTriangleMesh.h>
 #include <BulletCollision/CollisionDispatch/btCollisionWorld.h>
-#include <BulletCollision/CollisionDispatch/btGhostObject.h>
 
 #define userIndex_livingBrick 77
 #define userIndex_staticNormalBrick 88
