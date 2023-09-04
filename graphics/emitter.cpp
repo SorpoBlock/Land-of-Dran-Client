@@ -58,34 +58,13 @@ namespace syj
             {
                 //Copied from item::updateTransform
 
-                float actualPitch = -0.785 * (sin(attachedToItem->pitch)+1.0);
-                glm::vec4 handoffset = glm::vec4(attachedToItem->itemType->handOffset.x,attachedToItem->itemType->handOffset.y,attachedToItem->itemType->handOffset.z,1);
                 glm::mat4 rot;
                 glm::vec3 playerPos;
-
-                //YOUR item, on a client physics simulated player model
-                /*if(useBodyPos && attachedToItem->heldBy->body && firstPerson)
-                {
-                    handoffset = glm::vec4(attachedToItem->itemType->handOffset.x,attachedToItem->itemType->handOffset.y,0,1);
-                    handoffset += glm::toMat4(glm::quat(glm::vec3(cameraPitch,0,0))) * glm::vec4(0,0,attachedToItem->itemType->handOffset.z,1);
-                    handoffset.w = 1.0;
-
-                    rot = glm::toMat4(glm::quat(glm::vec3(cameraPitch,0,0))) * glm::toMat4(glm::quat(glm::vec3(0,cameraYaw+3.1415,0)));
-                    btVector3 bulletPos = attachedToItem->heldBy->body->getWorldTransform().getOrigin();
-                    playerPos.x = bulletPos.x();
-                    playerPos.y = bulletPos.y();
-                    playerPos.z = bulletPos.z();
-                }
-                else //everyone else's tools
-                {
-                    rot = glm::toMat4(attachedToItem->heldBy->modelInterpolator.getRotation());
-                    playerPos = attachedToItem->heldBy->modelInterpolator.getPosition();
-                }*/
 
                 glm::vec4 offset;
                 if(firstPerson)
                 {
-                     offset = glm::vec4(attachedToItem->itemType->handOffset.x,attachedToItem->itemType->handOffset.y,0,1);
+                    offset = glm::vec4(attachedToItem->itemType->handOffset.x,attachedToItem->itemType->handOffset.y,0,1);
                     offset += glm::toMat4(glm::quat(glm::vec3(cameraPitch,0,0))) * glm::vec4(0,0,attachedToItem->itemType->handOffset.z,1);
                     offset.w = 1.0;
                 }
@@ -137,14 +116,6 @@ namespace syj
                 position.y = result.y;
                 position.z = result.z;
 
-                /*
-                    offset = rot * offset;
-                    useGlobalTransform = true;
-                    globalTransform =
-                                glm::translate(playerPos + glm::vec3(offset.x,offset.y,offset.z)) *
-                                rot *
-                                glm::toMat4(glm::quat(glm::vec3(camPitch + actualPitch,0,0)));
-                */
             }
             else
             {

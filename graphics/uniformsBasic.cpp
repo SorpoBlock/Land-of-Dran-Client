@@ -115,6 +115,13 @@ namespace syj
         clipHeight        = toAdd.registerUniformFloat("clipHeight"            ,true,0);
         previewTexture    = toAdd.registerUniformBool("previewTexture"         ,true,false);
         waterDelta        = toAdd.registerUniformFloat("waterDelta"            ,true,0);
+
+         //Bullet trails:
+
+         bulletTrailStart = toAdd.registerUniformVec3("bulletTrailStart");
+         bulletTrailEnd = toAdd.registerUniformVec3("bulletTrailEnd");
+         bulletTrailColor = toAdd.registerUniformVec3("bulletTrailColor");
+         bulletTrailProgress = toAdd.registerUniformFloat("bulletTrailProgress");
     }
 
     GLint uniformsHolder::cameraRight(std::string name)

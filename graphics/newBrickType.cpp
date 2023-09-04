@@ -174,7 +174,7 @@ namespace syj
                     theBrick->body = 0;
                 }
             }
-            else
+            else if(!theBrick->markedForDeath)
             {
                 if(world && !theBrick->body)
                 {
@@ -489,7 +489,7 @@ namespace syj
         }
         glm::vec4 pos = glm::vec4(theBrick->position.x,theBrick->position.y,theBrick->position.z,theBrick->material);
 
-        if(theBrick->shouldCollide)
+        if(theBrick->shouldCollide && !theBrick->markedForDeath)
         {
             if(!theBrick->body && world)
             {

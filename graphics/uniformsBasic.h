@@ -116,6 +116,13 @@ namespace syj
          GLint pointLightIsSpotlight[8] = {-1,-1,-1,-1,-1,-1,-1,-1};
          GLint pointLightDirection[8] = {-1,-1,-1,-1,-1,-1,-1,-1};
 
+         //Bullet trails:
+
+         GLint bulletTrailStart = -1;
+         GLint bulletTrailEnd = -1;
+         GLint bulletTrailColor = -1;
+         GLint bulletTrailProgress = -1;
+
          //New camera:
 
          GLint cameraUp(std::string name);

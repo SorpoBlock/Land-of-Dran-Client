@@ -130,6 +130,7 @@ namespace syj
         //Non-looping audio sources:
         ALuint generalSounds[32];
         location soundLocations[32];
+        glm::vec3 lastLocations[32];
         //Where the search for a free/non-playing source will start:
         int lastUsedGeneralSound = 0;
 

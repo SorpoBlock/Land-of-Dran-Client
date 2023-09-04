@@ -58,6 +58,10 @@ namespace syj
 
     struct item : newDynamic
     {
+        glm::vec3 bulletTrailColor = glm::vec3(1,0.5,0);
+        float bulletTrailSpeed = 1.0;
+        bool useBulletTrail = false;
+
         int nextFireAnim = -1;
         float nextFireAnimSpeed = 1.0;
         int nextFireSound = -1;

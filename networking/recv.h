@@ -18,6 +18,7 @@
 #include "code/graphics/emitter.h"
 #include "code/graphics/rope.h"
 #include "code/graphics/light.h"
+#include "code/graphics/bulletTrails.h"
 
 #define clientPacketType_requestName 0
 #define clientPacketType_startLoadingStageTwo 1
@@ -63,6 +64,31 @@ namespace syj
         unsigned int deletionTime = 0;
     };
 
+    struct heldSetItemPropertiesPacket
+    {
+        int itemID = -1;
+        unsigned int deletionTime = 0;
+
+        bool setAnim = false;
+        bool hasAnim = false;
+        int animID = 0;
+        float animSpeed = 1.0;
+
+        bool setSound = false;
+        bool hasSound = false;
+        int soundID = 0;
+        float soundPitch = 1.0;
+        float soundGain = 1.0;
+
+        bool setEmitter = false;
+        bool hasEmitter = false;
+        int emitterID = 0;
+        std::string emitterMesh = "";
+
+        bool setCooldown = false;
+        unsigned int cooldown = 1.0;
+    };
+
     enum hudType
     {
         allClosed = 0,
@@ -73,6 +99,8 @@ namespace syj
 
     struct serverStuff
     {
+        bulletTrailsHolder *bulletTrails = 0;
+
         glm::vec3 vignetteColor = glm::vec3(1,0,0);
         float vignetteStrength = 0.0;
 
@@ -105,11 +133,12 @@ namespace syj
         std::vector<emitterType*> emitterTypes;
         std::vector<emitter*> emitters;
         std::vector<light*> lights;
-        std::vector<heldLightPacket> heldLightPackets;
         emitterType *wheelDirtEmitter = 0;
         newModel *newWheelModel = 0;
 
         std::vector<heldClientPhysicsDataPacket> clientPhysicsPackets;
+        std::vector<heldLightPacket> heldLightPackets;
+        std::vector<heldSetItemPropertiesPacket> heldItemPackets;
 
         std::vector<glm::vec3> debugLocations;
         std::vector<glm::vec3> debugColors;

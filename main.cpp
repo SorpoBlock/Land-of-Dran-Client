@@ -44,10 +44,10 @@
 #include "code/physics/selectionBox.h"
 #include <CURL/curl.h>
 #include "code/gui/updater.h"
-//#include <openssl/sha.h>
 #include <bearssl/bearssl_hash.h>
+#include "code/graphics/bulletTrails.h"
 
-#define hardCodedNetworkVersion 10013
+#define hardCodedNetworkVersion 10014
 
 #define cammode_firstPerson 0
 #define cammode_thirdPerson 1
@@ -506,6 +506,20 @@ int main(int argc, char *argv[])
         shaderFailedToCompile = true;
     }
 
+    program bulletProgram;;
+    shader bulletVert("shaders/bullet.vert.glsl",GL_VERTEX_SHADER);
+    shader bulletFrag("shaders/bullet.frag.glsl",GL_FRAGMENT_SHADER);
+    bulletProgram.bindShader(bulletVert);
+    bulletProgram.bindShader(bulletFrag);
+    bulletProgram.compile();
+    uniformsHolder bulletUnis(bulletProgram);
+    bulletUnis.name = "bullet";
+    if(!bulletProgram.isCompiled())
+    {
+        notify("Shader Failed to Compile","Screen overlays shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
+        shaderFailedToCompile = true;
+    }
+
     /*std::vector<glm::vec3> shape = defaultSquareShape();
     std::vector<glm::vec3> norms = calculateNormals(shape);
     std::vector<glm::vec2> uvsAndDims = defaultSquareUVs();
@@ -568,7 +582,15 @@ int main(int argc, char *argv[])
         while(SDL_PollEvent(&e))
         {
             if(e.type == SDL_QUIT)
+            {
+                info("Shutting down OpenAL");
+
+                alcMakeContextCurrent(audioContext);
+                alcDestroyContext(audioContext);
+                alcCloseDevice(device);
+
                 return 0;
+            }
 
             processEventsCEGUI(e,states);
 
@@ -623,7 +645,15 @@ int main(int argc, char *argv[])
         glEnable(GL_DEPTH_TEST);
 
         if(ohWow.clickedMainMenuExit)
+        {
+            info("Shutting down OpenAL");
+
+            alcMakeContextCurrent(audioContext);
+            alcDestroyContext(audioContext);
+            alcCloseDevice(device);
+
             return 0;
+        }
 
         SDL_Delay(1);
     }
@@ -662,6 +692,7 @@ int main(int argc, char *argv[])
         connected = true;
 
     blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",ohWow.brickSelector,true);
+
     ohWow.staticBricks.allocateVertBuffer();
     ohWow.staticBricks.allocatePerTexture(ohWow.brickMat);
     ohWow.staticBricks.allocatePerTexture(ohWow.brickMatSide,true,true);
@@ -751,13 +782,14 @@ int main(int argc, char *argv[])
     //GLuint boxEdgesVAO = createBoxEdgesVAO();
 
     texture *bdrf = generateBDRF(quadVAO);
-    std::string iblName = "mountain";
+    //std::string iblName = "mountain";
     //std::string iblName = "MoonlessGolf";
     //std::string iblName = "sunset";
     //std::string iblName = "shanghai";
     //std::string iblName = "alexs_apartment";
     //std::string iblName = "field";
     //std::string iblName = "Zollhoff";
+    std::string iblName = "road";
     GLuint IBL = processEquirectangularMap(rectToCubeProgram,cubeVAO,"assets/"+iblName+"/main.hdr");
     GLuint IBLRad = processEquirectangularMap(rectToCubeProgram,cubeVAO,"assets/"+iblName+"/mainRad.hdr",true);
     GLuint IBLIrr = processEquirectangularMap(rectToCubeProgram,cubeVAO,"assets/"+iblName+"/mainIrr.hdr",true);
@@ -885,9 +917,13 @@ int main(int argc, char *argv[])
     bool justTurnOnChat = false;
     float lastPhysicsStep = 0.0;
 
+    unsigned int debugMode = 1;
+
     //TODO: remove this, it's for debugging client physics:
     //ohWow.debugLocations.push_back(glm::vec3(0,0,0));
     //ohWow.debugColors.push_back(glm::vec3(1,1,1));
+
+    ohWow.bulletTrails = new bulletTrailsHolder;
 
     bool cont = true;
     while(cont)
@@ -1140,6 +1176,13 @@ int main(int argc, char *argv[])
 
             if(event.type == SDL_KEYDOWN)
             {
+                if(event.key.keysym.sym == SDLK_BACKQUOTE)
+                {
+                    debugMode++;
+                    if(debugMode > 3)
+                        debugMode = 1;
+                }
+
                 if(event.key.keysym.sym == SDLK_PAGEUP)
                 {
                     ohWow.chat->getVertScrollbar()->setStepSize(36.3222);
@@ -1442,6 +1485,20 @@ int main(int argc, char *argv[])
                                             break;
                                         }
                                     }
+                                }
+
+                                if(currentlyHeldItem->useBulletTrail)
+                                {
+                                    bulletTrail trail;
+                                    trail.color = currentlyHeldItem->bulletTrailColor;
+
+                                    trail.end = ohWow.playerCamera->getPosition() + (ohWow.playerCamera->getDirection() * glm::vec3(1.0));
+                                    trail.start = ohWow.playerCamera->getPosition() + (ohWow.playerCamera->getDirection() * glm::vec3(60.0));
+
+                                    trail.creationTime = SDL_GetTicks();
+                                    trail.deletionTime = SDL_GetTicks() + glm::length(trail.end-trail.start) * 13 * currentlyHeldItem->bulletTrailSpeed;
+
+                                    ohWow.bulletTrails->bulletTrails.push_back(trail);
                                 }
                             }
                         }
@@ -2146,6 +2203,7 @@ int main(int argc, char *argv[])
                         theMap.render(tess);*/
 
                     brickSimpleProgram.use();
+                        glUniform1i(brickSimpleUnis.target->getUniformLocation("debugMode"),debugMode);
 
                         glUniform1f(brickSimpleUnis.clipHeight,ohWow.waterLevel);
                         ohWow.playerCamera->renderReflection(brickSimpleUnis,ohWow.waterLevel);
@@ -2205,6 +2263,7 @@ int main(int argc, char *argv[])
                         theMap.render(tess);*/
 
                     brickSimpleProgram.use();
+                    glUniform1i(brickSimpleUnis.target->getUniformLocation("debugMode"),debugMode);
                     ohWow.env->passUniforms(brickSimpleUnis);
                     ohWow.settings->render(brickSimpleUnis);
                         glUniform1f(brickSimpleUnis.clipHeight,-ohWow.waterLevel);
@@ -2461,6 +2520,7 @@ int main(int argc, char *argv[])
                 ohWow.env->passUniforms(brickUnis);
                 ohWow.settings->render(brickUnis);
                 renderLights(brickUnis,ohWow.lights);
+                glUniform1i(brickUnis.target->getUniformLocation("debugMode"),debugMode);
 
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2481,7 +2541,14 @@ int main(int argc, char *argv[])
                     for(unsigned int a = 0; a<ohWow.particleTypes.size(); a++)
                         ohWow.particleTypes[a]->render(emitterUnis);
 
-                glEnable(GL_CULL_FACE);
+
+            ohWow.bulletTrails->purge();
+            glDisable(GL_CULL_FACE);
+            bulletProgram.use();
+                ohWow.playerCamera->render(bulletUnis);
+                ohWow.bulletTrails->render(&bulletUnis);
+            glEnable(GL_CULL_FACE);
+
 
                 glLineWidth(3.0);
                 boxEdgesProgram.use();
@@ -2513,6 +2580,7 @@ int main(int argc, char *argv[])
                         }
                         defaultFont.naiveRender(fontUnis,ohWow.newDynamics[a]->shapeName,pos+ohWow.newDynamics[a]->type->eyeOffset+glm::vec3(0,2,0),glm::length(ohWow.newDynamics[a]->scale),ohWow.newDynamics[a]->shapeNameColor);
                     }
+
             //glEnable(GL_CULL_FACE);
             glDisable(GL_BLEND);
             glEnable(GL_DEPTH_TEST);
@@ -2589,6 +2657,12 @@ int main(int argc, char *argv[])
 
         //SDL_Delay(1);
     }
+
+    info("Shutting down OpenAL");
+
+    alcMakeContextCurrent(audioContext);
+    alcDestroyContext(audioContext);
+    alcCloseDevice(device);
 
     info("Shut down complete");
     return 0;

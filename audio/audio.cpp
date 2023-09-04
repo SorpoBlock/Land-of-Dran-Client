@@ -131,16 +131,13 @@ namespace syj
 
     void audioPlayer::removeLoop(int loopID)
     {
-        std::cout<<"Stopping loop "<<loopID<<"\n";
         for(int a = 0; a<allLoops.size(); a++)
         {
             if(allLoops[a].serverId == loopID)
             {
                 if(allLoops[a].mostRecentSource != -1)
-                {
-                    std::cout<<"Found it!\n";
                     alSourceStop(loopingSounds[allLoops[a].mostRecentSource]);
-                }
+
 
                 allLoops.erase(allLoops.begin() + a);
                 return;
@@ -166,7 +163,6 @@ namespace syj
         //Handle loops later in audioPlayer::update as a special case
         if(loopID != audioPlayerNotLooping)
         {
-            std::cout<<"Adding loop "<<loopID<<"\n";
             loopingSound tmp(loc);
             tmp.soundIdx = soundIdx;
             tmp.pitch = pitch;
@@ -331,11 +327,21 @@ namespace syj
         ori[4] = 1;
         ori[5] = 0;
         alListenerfv(AL_ORIENTATION,ori);
+        //std::cout<<microphoneDirection.x<<","<<microphoneDirection.z<<" ("<<glm::length(microphoneDirection)<<") "<<microphonePosition.x<<","<<microphonePosition.y<<","<<microphonePosition.z<<"\n";
 
         //Update locations of non looping audio:
         for(int a = 0; a<32; a++)
         {
+            ALint isPlaying;
+            alGetSourcei(generalSounds[a],AL_SOURCE_STATE,&isPlaying);
+            if(isPlaying != AL_PLAYING)
+                continue;
+
             glm::vec3 pos = soundLocations[a].getPosition();
+            if(glm::length(lastLocations[a]-pos) < 0.005)
+                continue;
+            lastLocations[a] = pos;
+
             alSource3f( generalSounds[a], AL_POSITION, pos.x,pos.y,pos.z);
         }
 

@@ -193,7 +193,22 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         }
 
         if(!foundItem)
+        {
+            heldSetItemPropertiesPacket tmp;
+            tmp.itemID = itemId;
+
+            tmp.setAnim = true;
+            tmp.hasAnim = data->readBit();
+            if(tmp.hasAnim)
+            {
+                tmp.animID = data->readUInt(10);
+                tmp.animSpeed = data->readFloat();
+            }
+
+            tmp.deletionTime = SDL_GetTicks() + 10000;
+            ohWow->heldItemPackets.push_back(tmp);
             return;
+        }
 
         if(data->readBit())
         {
@@ -218,7 +233,23 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         }
 
         if(!foundItem)
+        {
+            heldSetItemPropertiesPacket tmp;
+            tmp.itemID = itemId;
+
+            tmp.setSound = true;
+            tmp.hasSound = data->readBit();
+            if(tmp.hasSound)
+            {
+                tmp.soundID = data->readUInt(10);
+                tmp.soundPitch = data->readFloat();
+                tmp.soundGain = data->readFloat();
+            }
+
+            tmp.deletionTime = SDL_GetTicks() + 10000;
+            ohWow->heldItemPackets.push_back(tmp);
             return;
+        }
 
         if(data->readBit())
         {
@@ -244,7 +275,22 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         }
 
         if(!foundItem)
+        {
+            heldSetItemPropertiesPacket tmp;
+            tmp.itemID = itemId;
+
+            tmp.setEmitter = true;
+            tmp.hasEmitter = data->readBit();
+            if(tmp.hasEmitter)
+            {
+                tmp.emitterID = data->readUInt(10);
+                tmp.emitterMesh = data->readString();
+            }
+
+            tmp.deletionTime = SDL_GetTicks() + 10000;
+            ohWow->heldItemPackets.push_back(tmp);
             return;
+        }
 
         if(data->readBit())
         {
@@ -269,7 +315,17 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         }
 
         if(!foundItem)
+        {
+            heldSetItemPropertiesPacket tmp;
+            tmp.itemID = itemId;
+
+            tmp.setCooldown = true;
+            tmp.cooldown = data->readUInt(16);
+
+            tmp.deletionTime = SDL_GetTicks() + 10000;
+            ohWow->heldItemPackets.push_back(tmp);
             return;
+        }
 
         foundItem->fireCooldownMS = data->readUInt(16);
     }
@@ -313,9 +369,9 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
             return;
 
         if(foundItem->nextFireAnim != -1)
-            foundItem->play(foundItem->nextFireAnim,false,foundItem->nextFireAnimSpeed,false);
+            foundItem->play(foundItem->nextFireAnim,true,foundItem->nextFireAnimSpeed,false);
         if(foundItem->nextFireSound != -1)
-            ohWow->speaker->playSound2D(foundItem->nextFireSound,foundItem->nextFireSoundPitch,foundItem->nextFireSoundGain);
+            ohWow->speaker->playSound3D(foundItem->nextFireSound,location(foundItem),foundItem->nextFireSoundPitch,foundItem->nextFireSoundGain);
 
         if(foundItem->nextFireEmitter != -1)
         {
@@ -334,6 +390,23 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
                 }
             }
         }
+
+        if(foundItem->useBulletTrail)
+        {
+            bulletTrail trail;
+            trail.color = foundItem->bulletTrailColor;
+            trail.end.x = data->readFloat();
+            trail.end.y = data->readFloat();
+            trail.end.z = data->readFloat();
+            trail.start.x = data->readFloat();
+            trail.start.y = data->readFloat();
+            trail.start.z = data->readFloat();
+
+            trail.creationTime = SDL_GetTicks();
+            trail.deletionTime = SDL_GetTicks() + glm::length(trail.end-trail.start) * 15 * foundItem->bulletTrailSpeed;
+
+            ohWow->bulletTrails->bulletTrails.push_back(trail);
+        }
     }
     else if(commandType == "vignette")
     {
@@ -344,6 +417,46 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
             ohWow->vignetteColor.g = data->readFloat();
             ohWow->vignetteColor.b = data->readFloat();
         }
+    }
+    else if(commandType == "bulletTrail")
+    {
+        bulletTrail trail;
+        trail.color.r = data->readFloat();
+        trail.color.g = data->readFloat();
+        trail.color.b = data->readFloat();
+        trail.start.x = data->readFloat();
+        trail.start.y = data->readFloat();
+        trail.start.z = data->readFloat();
+        trail.end.x = data->readFloat();
+        trail.end.y = data->readFloat();
+        trail.end.z = data->readFloat();
+        trail.creationTime = SDL_GetTicks();
+        trail.deletionTime = glm::length(trail.end-trail.start) * 10 * data->readFloat();
+        ohWow->bulletTrails->bulletTrails.push_back(trail);
+    }
+    else if(commandType == "setItemBulletTrail")
+    {
+        int itemId = data->readUInt(dynamicObjectIDBits);
+
+        item *foundItem = 0;
+        for(int a = 0; a<ohWow->items.size(); a++)
+        {
+            if(ohWow->items[a]->serverID == itemId)
+            {
+                foundItem = ohWow->items[a];
+                break;
+            }
+        }
+
+        if(!foundItem)
+            return;
+
+        foundItem->useBulletTrail = data->readBit();
+        foundItem->bulletTrailColor.r = data->readFloat();
+        foundItem->bulletTrailColor.g = data->readFloat();
+        foundItem->bulletTrailColor.b = data->readFloat();
+        foundItem->bulletTrailSpeed = data->readFloat();
+
     }
     else
         error("Unrecognized command: " + commandType);
@@ -430,6 +543,67 @@ namespace syj
         if(lastCalledTime + 300 > SDL_GetTicks())
             return;
         lastCalledTime = SDL_GetTicks();
+
+        auto iterItem = heldItemPackets.begin();
+        while(iterItem != heldItemPackets.end())
+        {
+            heldSetItemPropertiesPacket *tmp = &(*iterItem);
+
+            for(int a = 0; a<items.size(); a++)
+            {
+                item *i = items[a];
+                if(i->serverID == tmp->itemID)
+                {
+                    if(tmp->setSound)
+                    {
+                        if(tmp->hasSound)
+                        {
+                            i->nextFireSound = tmp->soundID;
+                            i->nextFireSoundPitch = tmp->soundPitch;
+                            i->nextFireSoundGain = tmp->soundGain;
+                        }
+                        else
+                            i->nextFireSound = -1;
+                    }
+
+                    if(tmp->setAnim)
+                    {
+                        if(tmp->hasAnim)
+                        {
+                            i->nextFireAnim = tmp->animID;
+                            i->nextFireAnimSpeed = tmp->animSpeed;
+                        }
+                        else
+                            i->nextFireAnim = -1;
+                    }
+
+                    if(tmp->setCooldown)
+                        i->fireCooldownMS = tmp->cooldown;
+
+                    if(tmp->setEmitter)
+                    {
+                        if(tmp->hasEmitter)
+                        {
+                            i->nextFireEmitter = tmp->emitterID;
+                            i->nextFireEmitterMesh = tmp->emitterMesh;
+                        }
+                        else
+                            i->nextFireEmitter = -1;
+                    }
+
+                    iterItem = heldItemPackets.erase(iterItem);
+                    continue;
+                }
+            }
+
+            if(tmp->deletionTime < SDL_GetTicks())
+            {
+                iterItem = heldItemPackets.erase(iterItem);
+                continue;
+            }
+
+            ++iterItem;
+        }
 
         auto iter = heldAppearancePackets.begin();
         while(iter != heldAppearancePackets.end())
@@ -2212,6 +2386,13 @@ namespace syj
                                 continue;
                             if(howMany < 12)
                             {
+                                if(ohWow->staticBricks.opaqueBasicBricks[b]->body)
+                                {
+                                    ohWow->world->removeRigidBody(ohWow->staticBricks.opaqueBasicBricks[b]->body);
+                                    delete ohWow->staticBricks.opaqueBasicBricks[b]->body;
+                                    ohWow->staticBricks.opaqueBasicBricks[b]->body = 0;
+                                }
+
                                 tmp.basic = ohWow->staticBricks.opaqueBasicBricks[b];
                                 ohWow->staticBricks.opaqueBasicBricks[b]->markedForDeath = true;
                                 ohWow->fakeKills.push_back(tmp);
@@ -2231,6 +2412,13 @@ namespace syj
                                 continue;
                             if(howMany < 12)
                             {
+                                if(ohWow->staticBricks.transparentBasicBricks[b]->body)
+                                {
+                                    ohWow->world->removeRigidBody(ohWow->staticBricks.transparentBasicBricks[b]->body);
+                                    delete ohWow->staticBricks.transparentBasicBricks[b]->body;
+                                    ohWow->staticBricks.transparentBasicBricks[b]->body = 0;
+                                }
+
                                 tmp.basic = ohWow->staticBricks.transparentBasicBricks[b];
                                 ohWow->staticBricks.transparentBasicBricks[b]->markedForDeath = true;
                                 ohWow->fakeKills.push_back(tmp);
@@ -2250,6 +2438,13 @@ namespace syj
                                 continue;
                             if(howMany < 12)
                             {
+                                if(ohWow->staticBricks.opaqueSpecialBricks[b]->body)
+                                {
+                                    ohWow->world->removeRigidBody(ohWow->staticBricks.opaqueSpecialBricks[b]->body);
+                                    delete ohWow->staticBricks.opaqueSpecialBricks[b]->body;
+                                    ohWow->staticBricks.opaqueSpecialBricks[b]->body = 0;
+                                }
+
                                 tmp.special = ohWow->staticBricks.opaqueSpecialBricks[b];
                                 ohWow->staticBricks.opaqueSpecialBricks[b]->markedForDeath = true;
                                 ohWow->fakeKills.push_back(tmp);
@@ -2269,6 +2464,13 @@ namespace syj
                                 continue;
                             if(howMany < 12)
                             {
+                                if(ohWow->staticBricks.transparentSpecialBricks[b]->body)
+                                {
+                                    ohWow->world->removeRigidBody(ohWow->staticBricks.transparentSpecialBricks[b]->body);
+                                    delete ohWow->staticBricks.transparentSpecialBricks[b]->body;
+                                    ohWow->staticBricks.transparentSpecialBricks[b]->body = 0;
+                                }
+
                                 tmp.special = ohWow->staticBricks.transparentSpecialBricks[b];
                                 ohWow->staticBricks.transparentSpecialBricks[b]->markedForDeath = true;
                                 ohWow->fakeKills.push_back(tmp);

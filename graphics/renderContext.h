@@ -13,8 +13,8 @@ namespace syj
 {
     struct renderContextOptions
     {
-        int glMajorVersion = 4;
-        int glMinorVersion = 0;
+        int glMajorVersion = 3;
+        int glMinorVersion = 3;
         int multiSampleBuffers = 1;
         int multiSampleSamples = 8;
         bool useComptabilityProfile = false;
