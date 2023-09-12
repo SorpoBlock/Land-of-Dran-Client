@@ -409,10 +409,12 @@ namespace syj
     void particleType::recompile()
     {
         std::vector<particle*> swapVector;
+
         for(unsigned int a = 0; a<particles.size(); a++)
             if(particles[a])
                 swapVector.push_back(particles[a]);
         particles.clear();
+
         for(unsigned int a = 0; a<swapVector.size(); a++)
             particles.push_back(swapVector[a]);
 
@@ -421,16 +423,25 @@ namespace syj
 
         for(unsigned int a = 0; a<particles.size(); a++)
         {
-            startingPosAndTimes.push_back(glm::vec4(
-                                                    particles[a]->startingPos.x,
-                                                    particles[a]->startingPos.y,
-                                                    particles[a]->startingPos.z,
-                                                    particles[a]->creationTimeMS));
-            startingVelocitiesAndLifeRandom.push_back(glm::vec4(
-                                                   particles[a]->startingVel.x,
-                                                   particles[a]->startingVel.y,
-                                                   particles[a]->startingVel.z,
-                                                   particles[a]->lifetimeRandomness));
+            particle *tmp = particles[a];
+            /*int howBig = startingPosAndTimes.size();
+            int howBigOther = particles.size();*/
+            //TODO: There was a crash here 11sep2023
+
+            glm::vec4 posAndTime = glm::vec4(
+                                                    tmp->startingPos.x,
+                                                    tmp->startingPos.y,
+                                                    tmp->startingPos.z,
+                                                    tmp->creationTimeMS);
+
+            glm::vec4 velAndLifeRandom = glm::vec4(
+                                                   tmp->startingVel.x,
+                                                   tmp->startingVel.y,
+                                                   tmp->startingVel.z,
+                                                   tmp->lifetimeRandomness);
+
+            startingPosAndTimes.push_back(posAndTime);
+            startingVelocitiesAndLifeRandom.push_back(velAndLifeRandom);
 
         }
         emptySlots = 0;

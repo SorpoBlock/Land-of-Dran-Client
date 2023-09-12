@@ -50,7 +50,12 @@ namespace syj
         rotateBrickBackwards = 37,
         moveBrickUpThree = 38,
         moveBrickDownThree = 39,
-        endOfCommandEnum = 40        //inputCommands::endOfEnum gives the size of the enum
+        toggleGUI = 40,
+        dropCameraAtPlayer = 41,
+        playersListButton = 42,
+        debugInfo = 43,
+        debugMode = 44,
+        endOfCommandEnum = 45        //inputCommands::endOfEnum gives the size of the enum
     };
 
     std::string inputCommandToString(inputCommand command);

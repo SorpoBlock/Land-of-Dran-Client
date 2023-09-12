@@ -712,6 +712,9 @@ namespace syj
 
         //if(packetType != 7)
             //std::cout<<"Got "<<(data->critical?"critical":"normal")<<" packet type: "<<packetType<<" streampos: "<<data->getStreamPos()<<" allocated bytes: "<<data->allocatedChunks<<"\n";
+        if(packetType >= 0 && packetType <= 31)
+            ++ohWow->numGottenPackets[packetType];
+
         switch(packetType)
         {
             case packetType_clientPhysicsData:
@@ -1051,10 +1054,11 @@ namespace syj
                     }
                     if(!found)
                     {
+                        std::cout<<"Got request to create emitter with serverID "<<serverID<<" and type " <<typeID<<" "<<(newEmitter?"new":"found")<<"\n";
                         if(vecPos != -1)
                             ohWow->emitters.erase(ohWow->emitters.begin() + vecPos);
                         delete tmp;
-                        error("Could not find emitter type!");
+                        error("Could not find emitter type " + std::to_string(typeID));
                         return;
                     }
 
@@ -1146,6 +1150,8 @@ namespace syj
                 if(data->readBit()) //Emitter:
                 {
                     int serverID = data->readUInt(10);
+
+                    std::cout<<"Adding emitter type "<<serverID<<"\n";
 
                     bool foundEmitterType = false;
                     emitterType *tmp = 0;
@@ -1926,6 +1932,13 @@ namespace syj
                                 if(ohWow->emitters[e]->attachedToItem == ohWow->items[a])
                                 {
                                     delete ohWow->emitters[e];
+                                    ohWow->emitters[e] = 0;
+                                    ohWow->emitters.erase(ohWow->emitters.begin() + e);
+                                }
+                                if(ohWow->emitters[e]->attachedToModel == ohWow->items[a])
+                                {
+                                    delete ohWow->emitters[e];
+                                    ohWow->emitters[e] = 0;
                                     ohWow->emitters.erase(ohWow->emitters.begin() + e);
                                 }
                             }
@@ -2947,11 +2960,36 @@ namespace syj
                             if(ohWow->cameraTarget == ohWow->newDynamics[a])
                                 ohWow->cameraTarget = 0;
                             if(ohWow->currentPlayer == ohWow->newDynamics[a])
+                            {
+                                if(ohWow->newDynamics[a]->body)
+                                {
+                                    ohWow->newDynamics[a]->world->removeRigidBody(ohWow->newDynamics[a]->body);
+                                    delete ohWow->newDynamics[a]->defaultMotionState;
+                                    ohWow->newDynamics[a]->defaultMotionState = 0;
+                                    delete ohWow->newDynamics[a]->shape;
+                                    ohWow->newDynamics[a]->shape = 0;
+                                    ohWow->newDynamics[a]->body = 0;
+                                }
                                 ohWow->currentPlayer = 0;
+                            }
 
                             for(int b = 0; b<ohWow->emitters.size(); b++)
+                            {
                                 if(ohWow->emitters[b]->attachedToModel == ohWow->newDynamics[a])
+                                {
                                     ohWow->emitters[b]->attachedToModel = 0;
+                                    delete ohWow->emitters[b];
+                                    ohWow->emitters[b] = 0;
+                                    ohWow->emitters.erase(ohWow->emitters.begin() + b);
+                                }
+                                if(ohWow->emitters[b]->attachedToItem == ohWow->newDynamics[a])
+                                {
+                                    ohWow->emitters[b]->attachedToItem = 0;
+                                    delete ohWow->emitters[b];
+                                    ohWow->emitters[b] = 0;
+                                    ohWow->emitters.erase(ohWow->emitters.begin() + b);
+                                }
+                            }
 
                             for(int l = 0; l<location::locations.size(); l++)
                             {
@@ -2975,12 +3013,15 @@ namespace syj
                 if(ohWow->boundToObject)
                 {
                     ohWow->cameraTargetServerID = data->readUInt(dynamicObjectIDBits);
+                    std::cout<<"Got a camera details packet, bound to object "<<ohWow->cameraTargetServerID<<"\n";
                     ohWow->cameraLean = data->readBit();
                     ohWow->cameraTarget = 0;
                     checkForCameraToBind(ohWow);
                 }
                 else
                 {
+                    std::cout<<"Got a camera details packet, not bound to any object!\n";
+                    ohWow->cameraTarget = 0;
                     float x = data->readFloat();
                     float y = data->readFloat();
                     float z = data->readFloat();

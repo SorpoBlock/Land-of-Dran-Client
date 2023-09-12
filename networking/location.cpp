@@ -164,6 +164,7 @@ namespace syj
 
     location::location(const location &src)
     {
+        locations.push_back(this);
         type = src.type;
         fixedPos = src.fixedPos;
         brick = src.brick;
@@ -174,5 +175,8 @@ namespace syj
         direction = src.direction;
     }
 
-    location::location(){}
+    location::location()
+    {
+        locations.push_back(this);
+    }
 }

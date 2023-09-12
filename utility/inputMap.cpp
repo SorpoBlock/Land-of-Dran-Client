@@ -15,7 +15,7 @@ namespace syj
             case walkLeft: return "Walk-Left";
             case jump: return "Jump";
             case zoom: return "Zoom";
-            case dropPlayerAtCamera: return "DropPlayerAtCamera";
+            case dropPlayerAtCamera: return "Drop Player At Camera";
             case openOptions: return "OpenOptions";
             case changeCameraMode: return "ChangeCameraMode";
             case openBrickSelector: return "OpenBrickSelector";
@@ -47,6 +47,11 @@ namespace syj
             case rotateBrickBackwards: return "Rotate Brick Counter-Clockwise";
             case moveBrickUpThree: return "Move 1 Brick Up";
             case moveBrickDownThree: return "Move 1 Brick Down";
+            case toggleGUI: return "Toggle GUI";
+            case dropCameraAtPlayer: return "Drop Camera At Player";
+            case playersListButton: return "Players List";
+            case debugInfo: return "Debug Info";
+            case debugMode: return "Debug Mode";
             case endOfCommandEnum: return "Error 1";
             default: return "Error 2";
         }
@@ -77,7 +82,6 @@ namespace syj
         bindKey(walkLeft,SDL_SCANCODE_D);
         bindKey(jump,SDL_SCANCODE_SPACE);
         bindKey(zoom,SDL_SCANCODE_F);
-        bindKey(dropPlayerAtCamera,SDL_SCANCODE_F7);
         bindKey(openOptions,SDL_SCANCODE_O);
         bindKey(changeCameraMode,SDL_SCANCODE_TAB);
         bindKey(openBrickSelector,SDL_SCANCODE_B);
@@ -105,10 +109,17 @@ namespace syj
         bindKey(changeMaterial,SDL_SCANCODE_EQUALS);
         bindKey(startSelection,SDL_SCANCODE_INSERT);
         bindKey(openInventory,SDL_SCANCODE_Q);
-        bindKey(openEvalWindow,SDL_SCANCODE_F12);
         bindKey(rotateBrickBackwards,SDL_SCANCODE_KP_7);
         bindKey(moveBrickUpThree,SDL_SCANCODE_P);
         bindKey(moveBrickDownThree,SDL_SCANCODE_SEMICOLON);
+
+        bindKey(debugInfo,SDL_SCANCODE_F1);
+        bindKey(debugMode,SDL_SCANCODE_F2);
+        bindKey(playersListButton,SDL_SCANCODE_F3);
+        bindKey(dropPlayerAtCamera,SDL_SCANCODE_F7);
+        bindKey(dropCameraAtPlayer,SDL_SCANCODE_F8);
+        bindKey(toggleGUI,SDL_SCANCODE_F11);
+        bindKey(openEvalWindow,SDL_SCANCODE_F12);
 
         if(filePath == "")
             return;

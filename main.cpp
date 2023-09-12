@@ -88,6 +88,8 @@ bool godRayButton(const CEGUI::EventArgs &e)
 int main(int argc, char *argv[])
 {
     serverStuff ohWow;
+    for(int i = 0; i<32; i++)
+        ohWow.numGottenPackets[i] = 0;
 
     preferenceFile prefs;
     ohWow.prefs = &prefs;
@@ -917,7 +919,7 @@ int main(int argc, char *argv[])
     bool justTurnOnChat = false;
     float lastPhysicsStep = 0.0;
 
-    unsigned int debugMode = 1;
+    unsigned int debugMode = 3;
 
     //TODO: remove this, it's for debugging client physics:
     //ohWow.debugLocations.push_back(glm::vec3(0,0,0));
@@ -1268,85 +1270,10 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                if(event.key.keysym.sym == SDLK_F1)
-                {
-                    if(ohWow.currentPlayer)
-                    {
-                        btTransform t = ohWow.currentPlayer->body->getWorldTransform();
-                        btVector3 v = t.getOrigin();
-                        std::cout<<"Physics pos: "<<v.x()<<","<<v.y()<<","<<v.z()<<"\n";
-                    }
-
-                    std::cout<<"Position: "<<ohWow.playerCamera->getPosition().x<<","<<ohWow.playerCamera->getPosition().y<<","<<ohWow.playerCamera->getPosition().z<<"\n";
-                    std::cout<<"Direction: "<<ohWow.playerCamera->getDirection().x<<","<<ohWow.playerCamera->getDirection().y<<","<<ohWow.playerCamera->getDirection().z<<"\n";
-                }
 
                 if(event.key.keysym.sym == SDLK_F5)
                 {
                     godRayDebug->setVisible(true);
-                }
-
-                if(event.key.keysym.sym == SDLK_F2)
-                {
-                    if(ohWow.currentPlayer)
-                    {
-                        btTransform t;
-                        t.setIdentity();
-                        t.setOrigin(btVector3(ohWow.playerCamera->getPosition().x,ohWow.playerCamera->getPosition().y,ohWow.playerCamera->getPosition().z));
-                        ohWow.currentPlayer->body->setWorldTransform(t);
-                        ohWow.currentPlayer->body->setLinearVelocity(btVector3(0,0,0));
-                        ohWow.currentPlayer->body->setAngularVelocity(btVector3(0,0,0));
-                    }
-
-                    for(unsigned int a = 0; a<ohWow.newDynamics.size(); a++)
-                    {
-                        ohWow.newDynamics[a]->modelInterpolator.keyFrames.clear();
-                    }
-                    for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                    {
-                        ohWow.livingBricks[a]->carTransform.keyFrames.clear();
-                    }
-                }
-
-                if(event.key.keysym.sym == SDLK_F4)
-                {
-                    if(ohWow.cameraTarget)
-                    {
-                        unsigned int currentServerTime = (getServerTime() - interpolator::clientTimePoint) + interpolator::serverTimePoint;
-                        std::cout<<"Server time: "<<currentServerTime<<"\n";
-                        for(int a = 0; a<ohWow.cameraTarget->modelInterpolator.keyFrames.size(); a++)
-                            std::cout<<a<<": "<<ohWow.cameraTarget->modelInterpolator.keyFrames[a].packetTime<<"ms - "<<ohWow.cameraTarget->modelInterpolator.keyFrames[a].position.x<<"\n";
-                    }
-                    interpolator::serverTimePoint -= 50;
-                }
-
-                if(event.key.keysym.sym == SDLK_F3)
-                {
-                    ohWow.playerList->setVisible(true);
-                    ohWow.playerList->moveToFront();
-                }
-
-                if(event.key.keysym.sym == SDLK_F8)
-                {
-                    packet data;
-                    data.writeUInt(14,4);
-                    data.writeBit(true);
-                    ohWow.connection->send(&data,true);
-
-                    //camMode = cammode_adminCam;
-                }
-
-                if(event.key.keysym.sym == SDLK_F7)
-                {
-                    packet data;
-                    data.writeUInt(14,4);
-                    data.writeBit(false);
-                    data.writeFloat(ohWow.playerCamera->getPosition().x);
-                    data.writeFloat(ohWow.playerCamera->getPosition().y);
-                    data.writeFloat(ohWow.playerCamera->getPosition().z);
-                    ohWow.connection->send(&data,true);
-
-                    //camMode = cammode_firstPerson;
                 }
 
                 if(states[SDL_SCANCODE_LCTRL] && event.key.keysym.sym == SDLK_z)
@@ -1564,8 +1491,64 @@ int main(int argc, char *argv[])
 
         playerInput.supress(supress);
 
+        if(playerInput.commandPressed(toggleGUI))
+            hud->setVisible(!hud->isVisible());
+
+        if(playerInput.commandPressed(debugInfo))
+        {
+            if(ohWow.currentPlayer)
+            {
+                btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                btVector3 v = t.getOrigin();
+                std::cout<<"Physics pos: "<<v.x()<<","<<v.y()<<","<<v.z()<<"\n";
+            }
+
+            std::cout<<"Position: "<<ohWow.playerCamera->getPosition().x<<","<<ohWow.playerCamera->getPosition().y<<","<<ohWow.playerCamera->getPosition().z<<"\n";
+            std::cout<<"Direction: "<<ohWow.playerCamera->getDirection().x<<","<<ohWow.playerCamera->getDirection().y<<","<<ohWow.playerCamera->getDirection().z<<"\n";
+
+            std::cout<<"Num dynamics: "<<ohWow.newDynamics.size()<<"\n";
+            std::cout<<"Num items: "<<ohWow.items.size()<<"\n";
+            std::cout<<"Num emitters: "<<ohWow.emitters.size()<<"\n";
+            std::cout<<"Num lights: "<<ohWow.lights.size()<<"\n";
+            std::cout<<"Num cars: "<<ohWow.livingBricks.size()<<"\n";
+            std::cout<<"Last crit packet ID: "<<ohWow.connection->nextPacketID<<"\n";
+            std::cout<<"Highest server crit ID: "<<ohWow.connection->highestServerCritID<<"\n";
+
+            std::cout<<"Program open for "<<SDL_GetTicks()<<"ms\n";
+
+            for(int a = 0; a<32; a++)
+                std::cout<<"Of packet type "<<a<<" received "<<ohWow.numGottenPackets[a]<<" packets.\n";
+        }
+
+        if(playerInput.commandPressed(playersListButton))
+        {
+            ohWow.playerList->setVisible(true);
+            ohWow.playerList->moveToFront();
+        }
+
+        if(playerInput.commandPressed(dropCameraAtPlayer))
+        {
+            packet data;
+            data.writeUInt(14,4);
+            data.writeBit(true);
+            ohWow.connection->send(&data,true);
+        }
+
+        if(playerInput.commandPressed(dropPlayerAtCamera))
+        {
+            packet data;
+            data.writeUInt(14,4);
+            data.writeBit(false);
+            data.writeFloat(ohWow.playerCamera->getPosition().x);
+            data.writeFloat(ohWow.playerCamera->getPosition().y);
+            data.writeFloat(ohWow.playerCamera->getPosition().z);
+            ohWow.connection->send(&data,true);
+        }
+
         if(playerInput.commandPressed(changeMaterial))
         {
+            ohWow.currentlyOpen = paintCan;
+
             switch(myTempBrick.mat)
             {
                 case brickMaterial::none: default: myTempBrick.mat = undulo; break;
@@ -1634,6 +1617,7 @@ int main(int argc, char *argv[])
         }
         if(playerInput.commandPressed(toggleMouseLock))
             context.setMouseLock(!context.getMouseLocked());
+
         if(playerInput.commandPressed(changePaintColumn))
         {
             ohWow.currentlyOpen = paintCan;
@@ -2107,6 +2091,10 @@ int main(int argc, char *argv[])
             }
         }
 
+        /*glFlush();
+        glFinish();
+        SDL_Delay(1);*/
+
         //Graphics:
         //Sun direction sundirection
         //ohWow.env->iblShadowsCalc(ohWow.playerCamera,glm::vec3(0.496595,0.50,0.856871));
@@ -2280,12 +2268,12 @@ int main(int argc, char *argv[])
             }
             glDisable(GL_CLIP_DISTANCE0);
 
-            waterDepth->bind();
+            /*waterDepth->bind();
                  /*tessProgram.use();
                     glUniform1f(tess.clipHeight,-waterLevel);
                     ohWow.playerCamera->render(tess);
                     grass.use(tess); //TODO: Yes, at the moment, this is required for some reason...
-                    theMap.render(tess);*/
+                    theMap.render(tess);
 
                 brickProgram.use();
                     ohWow.playerCamera->render(brickUnis);
@@ -2294,7 +2282,7 @@ int main(int argc, char *argv[])
                     for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
                         ohWow.livingBricks[a]->renderAlive(brickUnis,true,SDL_GetTicks()/25);
 
-            waterDepth->unbind();
+            waterDepth->unbind();*/
         }
 
         //End drawing to water textures
@@ -2371,7 +2359,7 @@ int main(int argc, char *argv[])
 
                         waterReflection->colorResult->bind(reflection);
                         waterRefraction->colorResult->bind(refraction);
-                        waterDepth->depthResult->bind(shadowNearMap);
+                        //waterDepth->depthResult->bind(shadowNearMap);
                         dudvTexture->bind(normal);
 
                         water.render(waterUnis);
@@ -2654,8 +2642,6 @@ int main(int argc, char *argv[])
         CEGUI::System::getSingleton().renderAllGUIContexts();
         context.swap();
         glEnable(GL_DEPTH_TEST);
-
-        //SDL_Delay(1);
     }
 
     info("Shutting down OpenAL");

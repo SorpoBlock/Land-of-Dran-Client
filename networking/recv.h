@@ -99,6 +99,8 @@ namespace syj
 
     struct serverStuff
     {
+        unsigned int numGottenPackets[32];
+
         bulletTrailsHolder *bulletTrails = 0;
 
         glm::vec3 vignetteColor = glm::vec3(1,0,0);
