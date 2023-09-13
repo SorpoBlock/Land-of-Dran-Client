@@ -55,8 +55,10 @@ namespace syj
     };
 
     //Holds one instance of a looping sound on the server, i.e. a music brick's music
-    struct loopingSound : location
+    struct loopingSound
     {
+        location *loc = 0;
+
         //Used for removing the loop per server request:
         int serverId = -1;
         //Which of audioPlayer::loopingSources is currently used for this sound:
@@ -70,28 +72,14 @@ namespace syj
         float pitch = 1.0;
         float volume = 1.0;
 
-        loopingSound(const location &src)
+        loopingSound(location *src)
         {
-            type = src.type;
-            fixedPos = src.fixedPos;
-            brick = src.brick;
-            car = src.car;
-            dynamic = src.dynamic;
-            calculatedOffset = src.calculatedOffset;
-            useOffset = src.useOffset;
-            direction = src.direction;
+            loc = src;
         }
 
         loopingSound(const loopingSound &src)
         {
-            type = src.type;
-            fixedPos = src.fixedPos;
-            brick = src.brick;
-            car = src.car;
-            dynamic = src.dynamic;
-            calculatedOffset = src.calculatedOffset;
-            useOffset = src.useOffset;
-            direction = src.direction;
+            loc = src.loc;
             mostRecentSource = src.mostRecentSource;
             soundIdx = src.soundIdx;
             sampleBytesOffset = src.sampleBytesOffset;
@@ -100,7 +88,7 @@ namespace syj
             serverId = src.serverId;
         }
 
-        loopingSound(){}
+        //loopingSound(){}
     };
 
     struct audioPlayer
@@ -129,12 +117,12 @@ namespace syj
 
         //Non-looping audio sources:
         ALuint generalSounds[32];
-        location soundLocations[32];
+        location *soundLocations[32];
         glm::vec3 lastLocations[32];
         //Where the search for a free/non-playing source will start:
         int lastUsedGeneralSound = 0;
 
-        void playSound3D(int soundID,location loc,float pitch = 1.0,float volume = 1.0,int loopID = audioPlayerNotLooping);
+        void playSound3D(int soundID,location *loc,float pitch = 1.0,float volume = 1.0,int loopID = audioPlayerNotLooping);
         void playSound2D(int soundID,float pitch = 1.0,float volume = 1.0);
         void removeLoop(int loopID);
 

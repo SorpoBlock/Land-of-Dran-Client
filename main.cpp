@@ -1513,6 +1513,7 @@ int main(int argc, char *argv[])
             std::cout<<"Num cars: "<<ohWow.livingBricks.size()<<"\n";
             std::cout<<"Last crit packet ID: "<<ohWow.connection->nextPacketID<<"\n";
             std::cout<<"Highest server crit ID: "<<ohWow.connection->highestServerCritID<<"\n";
+            std::cout<<"Sound locations: "<<location::locations.size()<<"\n";
 
             std::cout<<"Program open for "<<SDL_GetTicks()<<"ms\n";
 

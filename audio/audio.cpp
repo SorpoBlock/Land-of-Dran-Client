@@ -126,7 +126,7 @@ namespace syj
 
     bool sortMusic(const loopingSound &a,const loopingSound &b)
     {
-        return glm::distance2(a.getPosition(),audioPlayer::musicSortPosition) < glm::distance2(b.getPosition(),audioPlayer::musicSortPosition);
+        return glm::distance2(a.loc->getPosition(),audioPlayer::musicSortPosition) < glm::distance2(b.loc->getPosition(),audioPlayer::musicSortPosition);
     }
 
     void audioPlayer::removeLoop(int loopID)
@@ -138,6 +138,9 @@ namespace syj
                 if(allLoops[a].mostRecentSource != -1)
                     alSourceStop(loopingSounds[allLoops[a].mostRecentSource]);
 
+                if(allLoops[a].loc)
+                    delete allLoops[a].loc;
+                allLoops[a].loc = 0;
 
                 allLoops.erase(allLoops.begin() + a);
                 return;
@@ -145,7 +148,7 @@ namespace syj
         }
     }
 
-    void audioPlayer::playSound3D(int soundID,location loc,float pitch,float volume,int loopID)
+    void audioPlayer::playSound3D(int soundID,location *loc,float pitch,float volume,int loopID)
     {
         //Turn an ID into an Index, ideally these could just be the same...
         int soundIdx = -1;
@@ -195,6 +198,8 @@ namespace syj
                 alSourcei( generalSounds[idx], AL_BUFFER, sounds[soundIdx]->buffer);
                 alSourcePlay(generalSounds[idx]);
 
+                if(soundLocations[idx])
+                    delete soundLocations[idx];
                 soundLocations[idx] = loc;
 
                 lastUsedGeneralSound = idx;
@@ -227,6 +232,8 @@ namespace syj
         alSourcei( generalSounds[idx], AL_BUFFER, sounds[soundIdx]->buffer);
         alSourcePlay(generalSounds[idx]);
 
+        if(soundLocations[idx])
+            delete soundLocations[idx];
         soundLocations[idx] = loc;
 
         lastUsedGeneralSound = idx;
@@ -274,7 +281,9 @@ namespace syj
                 alSourcei( generalSounds[idx], AL_BUFFER, sounds[soundIdx]->buffer);
                 alSourcePlay(generalSounds[idx]);
 
-                soundLocations[idx] = location(glm::vec3(0,1,0));
+                if(soundLocations[idx])
+                    delete soundLocations[idx];
+                soundLocations[idx] = 0;//location(glm::vec3(0,1,0));
 
                 lastUsedGeneralSound = idx;
 
@@ -307,7 +316,9 @@ namespace syj
         alSourcePlay(generalSounds[idx]);
         lastUsedGeneralSound = idx;
 
-        soundLocations[idx] = location(glm::vec3(0,1,0));
+        if(soundLocations[idx])
+            delete soundLocations[idx];
+        soundLocations[idx] = 0;//location(glm::vec3(0,1,0));
 
         ALenum errr = alGetError();
         if(errr != AL_NO_ERROR)
@@ -337,7 +348,10 @@ namespace syj
             if(isPlaying != AL_PLAYING)
                 continue;
 
-            glm::vec3 pos = soundLocations[a].getPosition();
+            glm::vec3 pos = glm::vec3(0,1,0);
+            if(soundLocations[a])
+                pos = soundLocations[a]->getPosition();
+
             if(glm::length(lastLocations[a]-pos) < 0.005)
                 continue;
             lastLocations[a] = pos;
@@ -367,7 +381,7 @@ namespace syj
             if(allLoops[a].mostRecentSource != -1)
             {
                 //Except we gotta update positions for moving objects
-                glm::vec3 pos = allLoops[a].getPosition();
+                glm::vec3 pos = allLoops[a].loc->getPosition();
                 alSource3f( loopingSounds[allLoops[a].mostRecentSource], AL_POSITION, pos.x,pos.y,pos.z);
                 continue;
             }
@@ -382,7 +396,7 @@ namespace syj
                     //We got a free source
                     allLoops[a].mostRecentSource = b;
 
-                    glm::vec3 pos = allLoops[a].getPosition();
+                    glm::vec3 pos = allLoops[a].loc->getPosition();
 
                     //Actually play the loop:
                     alSourcef( loopingSounds[b], AL_PITCH, allLoops[a].pitch);
@@ -497,6 +511,9 @@ namespace syj
 
     audioPlayer::audioPlayer()
     {
+        for(int a = 0; a<32; a++)
+            soundLocations[a] = 0;
+
         alGenSources(16,loopingSounds);
         alGenSources(32,generalSounds);
 

@@ -371,7 +371,10 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         if(foundItem->nextFireAnim != -1)
             foundItem->play(foundItem->nextFireAnim,true,foundItem->nextFireAnimSpeed,false);
         if(foundItem->nextFireSound != -1)
-            ohWow->speaker->playSound3D(foundItem->nextFireSound,location(foundItem),foundItem->nextFireSoundPitch,foundItem->nextFireSoundGain);
+        {
+            location *soundLoc = new location(foundItem);
+            ohWow->speaker->playSound3D(foundItem->nextFireSound,soundLoc,foundItem->nextFireSoundPitch,foundItem->nextFireSoundGain);
+        }
 
         if(foundItem->nextFireEmitter != -1)
         {
@@ -1151,7 +1154,7 @@ namespace syj
                 {
                     int serverID = data->readUInt(10);
 
-                    std::cout<<"Adding emitter type "<<serverID<<"\n";
+                    //std::cout<<"Adding emitter type "<<serverID<<"\n";
 
                     bool foundEmitterType = false;
                     emitterType *tmp = 0;
@@ -1843,14 +1846,16 @@ namespace syj
                             return;
                         }
                         //ohWow->speaker->loopSound(id,loopId,car,pitch);
-                        ohWow->speaker->playSound3D(id,location(car),pitch,1.0,loopId);
+                        location *soundLocation = new location(car);
+                        ohWow->speaker->playSound3D(id,soundLocation,pitch,1.0,loopId);
                     }
                     else
                     {
                         float x = data->readFloat();
                         float y = data->readFloat();
                         float z = data->readFloat();
-                        ohWow->speaker->playSound3D(id,location(glm::vec3(x,y,z)),pitch,1.0,loopId);
+                        location *soundLocation = new location(glm::vec3(x,y,z));
+                        ohWow->speaker->playSound3D(id,soundLocation,pitch,1.0,loopId);
                         //ohWow->speaker->loopSound(id,loopId,x,y,z,pitch);
                     }
                     return;
@@ -1879,7 +1884,8 @@ namespace syj
                     float pitch = data->readFloat();
                     float vol = data->readFloat();
                     //ohWow->speaker->playSound(id,loop,x,y,z,pitch,vol);
-                    ohWow->speaker->playSound3D(id,location(glm::vec3(x,y,z)),pitch,vol);
+                    location *soundLocation = new location(glm::vec3(x,y,z));
+                    ohWow->speaker->playSound3D(id,soundLocation,pitch,vol);
                 }
                 return;
             }
@@ -3013,14 +3019,14 @@ namespace syj
                 if(ohWow->boundToObject)
                 {
                     ohWow->cameraTargetServerID = data->readUInt(dynamicObjectIDBits);
-                    std::cout<<"Got a camera details packet, bound to object "<<ohWow->cameraTargetServerID<<"\n";
+                    //std::cout<<"Got a camera details packet, bound to object "<<ohWow->cameraTargetServerID<<"\n";
                     ohWow->cameraLean = data->readBit();
                     ohWow->cameraTarget = 0;
                     checkForCameraToBind(ohWow);
                 }
                 else
                 {
-                    std::cout<<"Got a camera details packet, not bound to any object!\n";
+                    //std::cout<<"Got a camera details packet, not bound to any object!\n";
                     ohWow->cameraTarget = 0;
                     float x = data->readFloat();
                     float y = data->readFloat();
