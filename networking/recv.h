@@ -26,6 +26,8 @@
 
 #define inventorySize 3
 
+std::string GetHexRepresentation(const unsigned char *Bytes, size_t Length);
+
 namespace syj
 {
     struct brickFakeKills
@@ -101,6 +103,7 @@ namespace syj
     {
         unsigned int numGottenPackets[32];
 
+        std::string lastGuessedEvalPass = "";
         bulletTrailsHolder *bulletTrails = 0;
 
         glm::vec3 vignetteColor = glm::vec3(1,0,0);

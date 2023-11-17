@@ -64,16 +64,6 @@ void gotKicked(client *theClient,unsigned int reason,void *userData)
     ohWow->fatalNotify("Disconnected!","Connection with server lost, reason: " + std::to_string(reason) + ".","Exit");
 }
 
-std::string GetHexRepresentation(const unsigned char *Bytes, size_t Length) {
-    std::ostringstream os;
-    os.fill('0');
-    os<<std::hex;
-    for(const unsigned char *ptr = Bytes; ptr < Bytes+Length; ++ptr) {
-        os<<std::setw(2)<<(unsigned int)*ptr;
-    }
-    return os.str();
-}
-
 bool godRayButton(const CEGUI::EventArgs &e)
 {
     CEGUI::Window *godRayWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("GodRays");

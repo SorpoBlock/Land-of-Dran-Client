@@ -3,6 +3,7 @@
 
 #include "code/utility/ceguiHelper.h"
 #include "code/networking/recv.h"
+#include <bearssl/bearssl_hash.h>
 
 namespace syj
 {

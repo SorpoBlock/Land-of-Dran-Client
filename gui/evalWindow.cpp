@@ -21,6 +21,7 @@ namespace syj
 
         packet data;
         data.writeUInt(7,4);
+        data.writeString(common->lastGuessedEvalPass);
         data.writeString(code);
         common->connection->send(&data,true);
 
@@ -38,9 +39,18 @@ namespace syj
         if(guess.length() < 1)
             return true;
 
+        unsigned char hash[32];
+        br_sha256_context shaContext;
+        br_sha256_init(&shaContext);
+        br_sha256_update(&shaContext,guess.c_str(),guess.length());
+        br_sha256_out(&shaContext,hash);
+        std::string hexStr = GetHexRepresentation(hash,32);
+
+        common->lastGuessedEvalPass = hexStr;
+
         packet data;
         data.writeUInt(6,4);
-        data.writeString(guess);
+        data.writeString(hexStr);
         common->connection->send(&data,true);
 
         return true;
