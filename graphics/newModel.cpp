@@ -546,6 +546,20 @@ namespace syj
                                         {"aiProcess_GenBoundingBoxes",aiProcess_GenBoundingBoxes},
                                         };
 
+    newModel::~newModel()
+    {
+        for(int a = 0; a<allMaterials.size(); a++)
+            delete allMaterials[a];
+
+        delete rootNode;
+
+        for(int a = 0; a<instancedMeshes.size(); a++)
+            delete instancedMeshes[a];
+
+        for(int a = 0; a<nonInstancedMeshes.size(); a++)
+            delete nonInstancedMeshes[a];
+    }
+
     newModel::newModel(std::string textFilePath)
     {
         std::string modelPath = "";

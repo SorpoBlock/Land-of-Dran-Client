@@ -58,6 +58,45 @@ namespace syj
 
         public:
 
+        ~newBrickRenderer()
+        {
+            for(int a = 0; a<perTextureVAO.size(); a++)
+                glDeleteVertexArrays(1,&perTextureVAO[a]);
+
+            for(int a = 0; a<perTexturePositionMatBuffer.size(); a++)
+                glDeleteBuffers(1,&perTexturePositionMatBuffer[a]);
+            for(int a = 0; a<perTextureRotationBuffer.size(); a++)
+                glDeleteBuffers(1,&perTextureRotationBuffer[a]);
+            for(int a = 0; a<perTexturePaintColorBuffer.size(); a++)
+                glDeleteBuffers(1,&perTexturePaintColorBuffer[a]);
+            for(int a = 0; a<perTextureDimensionBuffer.size(); a++)
+                glDeleteBuffers(1,&perTextureDimensionBuffer[a]);
+            for(int a = 0; a<perTextureDirectionBuffer.size(); a++)
+                glDeleteBuffers(1,&perTextureDirectionBuffer[a]);
+
+            for(int a = 0; a<transparentPerTextureVAO.size(); a++)
+                glDeleteVertexArrays(1,&transparentPerTextureVAO[a]);
+
+            for(int a = 0; a<transparentPerTexturePositionMatBuffer.size(); a++)
+                glDeleteBuffers(1,&transparentPerTexturePositionMatBuffer[a]);
+            for(int a = 0; a<transparentPerTextureRotationBuffer.size(); a++)
+                glDeleteBuffers(1,&transparentPerTextureRotationBuffer[a]);
+            for(int a = 0; a<transparentPerTexturePaintColorBuffer.size(); a++)
+                glDeleteBuffers(1,&transparentPerTexturePaintColorBuffer[a]);
+            for(int a = 0; a<transparentPerTextureDimensionBuffer.size(); a++)
+                glDeleteBuffers(1,&transparentPerTextureDimensionBuffer[a]);
+            for(int a = 0; a<transparentPerTextureDirectionBuffer.size(); a++)
+                glDeleteBuffers(1,&transparentPerTextureDirectionBuffer[a]);
+
+            glDeleteBuffers(1,&vertBuffer);
+
+            for(int a = 0; a<specialBrickTypes.size(); a++)
+                delete specialBrickTypes[a];
+
+            for(int a = 0; a<transparentSpecialBrickTypes.size(); a++)
+                delete transparentSpecialBrickTypes[a];
+        }
+
         brickRenderData *getBrick(int serverID,bool &isSpecial)
         {
             for(unsigned int a = 0; a<opaqueBasicBricks.size(); a++)

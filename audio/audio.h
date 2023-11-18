@@ -52,6 +52,7 @@ namespace syj
         ALuint buffer = 0;      //Handle to actual audio data for OpenAL
 
         sound(std::string _fileName,std::string _scriptName);
+        ~sound();
     };
 
     //Holds one instance of a looping sound on the server, i.e. a music brick's music

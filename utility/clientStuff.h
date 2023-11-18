@@ -24,6 +24,7 @@ namespace syj
     //Split off everything from serverStuff that's not particular to a given server connection
     struct clientStuff
     {
+        avatarPicker *picker = 0;
         hudType currentlyOpen = allClosed;
 
         bool fatalNotifyStarted = false;

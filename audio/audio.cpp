@@ -57,6 +57,11 @@ namespace syj
 
     glm::vec3 audioPlayer::musicSortPosition = glm::vec3(0,0,0);
 
+    sound::~sound()
+    {
+        alDeleteBuffers(1,&buffer);
+    }
+
     sound::sound(std::string _fileName,std::string _scriptName)
     {
         scriptName = _scriptName;

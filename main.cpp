@@ -75,6 +75,11 @@ bool godRayButton(const CEGUI::EventArgs &e)
     clientEnvironment->serverData->env->godRayWeight = atof(godRayWindow->getChild("Weight")->getText().c_str());
 }
 
+enum gameState
+{
+    STATE_MAINMENU,STATE_CONNECTING,STATE_PLAYING,STATE_AVATARPICKER,STATE_QUITTING
+};
+
 int main(int argc, char *argv[])
 {
     client *serverConnection = 0;
@@ -296,243 +301,17 @@ int main(int argc, char *argv[])
     clientEnvironment.nonInstancedShader = oldModelUnis;
     clientEnvironment.instancedShader = modelUnis;
 
-    //Start connect screen
     clientEnvironment.brickMat = new material("assets/brick/otherBrickMat.txt");
     clientEnvironment.brickMatSide = new material("assets/brick/sideBrickMat.txt");
     clientEnvironment.brickMatRamp = new material("assets/brick/rampBrickMat.txt");
     clientEnvironment.brickMatBottom = new material("assets/brick/bottomBrickMat.txt");
 
-    clientEnvironment.prints = new printLoader(".\\assets\\brick\\prints");
-
-    coolLabel:
-
-    hud->setVisible(false);
-    context.setMouseLock(false);
-    joinServer->setVisible(true);
-
-    CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
-    CEGUI::Window *bounceText = addGUIFromFile("justText.layout");
-    bounceText->setVisible(true);
-    bounceText->moveToBack();
-
-    float hue = 0;
-    float lastTick = SDL_GetTicks();
-    float deltaT = 0;
-    float horBounceDir = 1;
-    float vertBounceDir = 1;
-
-    while(clientEnvironment.waitingToPickServer)
-    {
-        const Uint8 *states = SDL_GetKeyboardState(NULL);
-
-        SDL_Event e;
-        while(SDL_PollEvent(&e))
-        {
-            if(e.type == SDL_QUIT)
-            {
-                info("Shutting down OpenAL");
-
-                alcMakeContextCurrent(audioContext);
-                alcDestroyContext(audioContext);
-                alcCloseDevice(device);
-
-                return 0;
-            }
-
-            processEventsCEGUI(e,states);
-
-            if(e.type == SDL_WINDOWEVENT)
-            {
-                if(e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-                {
-                    context.setSize(e.window.data1,e.window.data2);
-                }
-            }
-        }
-
-        deltaT = SDL_GetTicks() - lastTick;
-
-        //After auto-updating, land of dran text may dissapear without this:
-        if(deltaT > 20)
-            deltaT = 20;
-
-        lastTick = SDL_GetTicks();
-
-        CEGUI::UVector2 pos = bounceText->getPosition();
-        if(pos.d_x.d_scale > 0.75)
-            horBounceDir = -1;
-        if(pos.d_y.d_scale > 0.9)
-            vertBounceDir = -1;
-
-        if(pos.d_x.d_scale < -0.1)
-            horBounceDir = 1;
-        if(pos.d_y.d_scale < -0.05)
-            vertBounceDir = 1;
-        pos += CEGUI::UVector2(CEGUI::UDim(horBounceDir * deltaT * 0.0002,0),CEGUI::UDim(vertBounceDir * deltaT * 0.0001,0));
-        bounceText->setPosition(pos);
-
-        hue += deltaT * 0.00003;
-        if(hue > 1)
-            hue -= 1;
-
-        HsvColor hsv;
-        hsv.h = hue*255;
-        hsv.s = 0.5*255;
-        hsv.v = 0.5*255;
-        RgbColor rgb = HsvToRgb(hsv);
-
-        context.clear(((float)rgb.r)/255.0,((float)rgb.g)/255.0,((float)rgb.b)/255.0);
-        context.select();
-        CEGUI::System::getSingleton().getRenderer()->setDisplaySize(CEGUI::Size<float>(context.getResolution().x,context.getResolution().y));
-        glViewport(0,0,context.getResolution().x,context.getResolution().y);
-        glDisable(GL_DEPTH_TEST);
-        glActiveTexture(GL_TEXTURE0);
-        CEGUI::System::getSingleton().renderAllGUIContexts();
-        context.swap();
-        glEnable(GL_DEPTH_TEST);
-
-        if(clientEnvironment.clickedMainMenuExit)
-        {
-            info("Shutting down OpenAL");
-
-            alcMakeContextCurrent(audioContext);
-            alcDestroyContext(audioContext);
-            alcCloseDevice(device);
-
-            return 0;
-        }
-
-        SDL_Delay(1);
-    }
-
-    context.setMouseLock(true);
-    hud->setVisible(true);
-    joinServer->setVisible(false);
-
-    root->removeChild("Bouncer");
-    updater->setVisible(false);
-
-    //End connect screen
-
-    info("Trying to connect to server...");
-
-    clientEnvironment.serverData = new serverStuff;
-    serverStuff *serverData = clientEnvironment.serverData;
-    serverData->picker = new avatarPicker(context.getResolution().x,context.getResolution().y);
-
-    bool connected = false;
-    networkingPreferences netPrefs;
-    netPrefs.timeoutMS = 1000;
-    serverConnection = new client(netPrefs,clientEnvironment.wantedIP);
-    hud->getChild("Chat/Editbox")->setUserData(serverConnection);
-    serverConnection->userData = &clientEnvironment;
-    serverData->connection = serverConnection;
-    serverConnection->receiveHandle = recvHandle;
-    serverConnection->kickHandle = gotKicked;
-    syjError netErr = serverConnection->getLastError();
-    if(netErr != syjError::noError)
-    {
-        error(getErrorString(netErr));
-        error("Could not connect to server!");
-        joinServer->getChild("StatusText")->setText("Could not connect!");
-        clientEnvironment.waitingToPickServer = true;
-        goto coolLabel;
-        return 0;
-    }
-    else
-        connected = true;
-
-    blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",clientEnvironment.brickSelector,true);
-
-    serverData->staticBricks.allocateVertBuffer();
-    serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMat);
-    serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatSide,true,true);
-    serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatBottom,true);
-    serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatRamp);
-    serverData->staticBricks.blocklandTypes = &blocklandHolder;
-
-    packet requestName;
-    requestName.writeUInt(clientPacketType_requestName,4);
-    requestName.writeUInt(hardCodedNetworkVersion,32);
-
-    requestName.writeBit(clientEnvironment.loggedIn);
-    if(clientEnvironment.loggedIn)
-    {
-        requestName.writeString(clientEnvironment.loggedName);
-
-        unsigned char hash[32];
-
-        br_sha256_context shaContext;
-        br_sha256_init(&shaContext);
-        br_sha256_update(&shaContext,clientEnvironment.sessionToken.c_str(),clientEnvironment.sessionToken.length());
-        br_sha256_out(&shaContext,hash);
-
-        std::string hexStr = GetHexRepresentation(hash,32);
-
-        std::cout<<clientEnvironment.loggedName<<"\n";
-        std::cout<<clientEnvironment.sessionToken<<"\n";
-        std::cout<<hexStr<<"\n";
-
-        requestName.writeString(hexStr);
-    }
-    else
-        requestName.writeString(clientEnvironment.wantedName);
-
-    requestName.writeFloat(clientEnvironment.wantedColor.r);
-    requestName.writeFloat(clientEnvironment.wantedColor.g);
-    requestName.writeFloat(clientEnvironment.wantedColor.b);
-    serverConnection->send(&requestName,true);
-
-    info("Connection established, requesting types...");
-
-    while(serverData->waitingForServerResponse)
-    {
-        serverConnection->run();
-        if(serverData->kicked)
-        {
-            error("Kicked or server full or outdated client or malformed server response.");
-            joinServer->getChild("StatusText")->setText("Kicked by server!");
-            clientEnvironment.waitingToPickServer = true;
-            serverData->kicked = false;
-            goto coolLabel;
-            return 0;
-        }
-    }
-
-    int shadowRes = 1024;
-    switch(clientEnvironment.settings->shadowResolution)
-    {
-        default: case shadowsOff: case shadow1k: shadowRes = 1024; break;
-        case shadow2k: shadowRes = 2048; break;
-        case shadow4k: shadowRes = 4096; break;
-    }
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-
-    serverData->env = new environment(shadowRes,shadowRes);
-
-    godRayDebug->getChild("Decay")->setText(std::to_string(serverData->env->godRayDecay));
-    godRayDebug->getChild("Density")->setText(std::to_string(serverData->env->godRayDensity));
-    godRayDebug->getChild("Exposure")->setText(std::to_string(serverData->env->godRayExposure));
-    godRayDebug->getChild("Weight")->setText(std::to_string(serverData->env->godRayWeight));
-
-    /*serverData->env->loadDaySkyBox("assets/sky/bluecloud_");
-    serverData->env->loadNightSkyBox("assets/sky/space_");*/
-    serverData->env->loadSunModel("assets/sky/sun.txt");
-
-    serverData->playerCamera = new perspectiveCamera;;
-    serverData->playerCamera->setFieldOfVision(clientEnvironment.settings->fieldOfView);
-    serverData->playerCamera->name = "Player";
-    serverData->playerCamera->setDirection(glm::vec3(0.4,0,0.4));
-    serverData->playerCamera->setPosition(glm::vec3(0,0,0));
-    serverData->playerCamera->setAspectRatio(((double)context.getWidth())/((double)context.getHeight()));
-
     GLuint quadVAO = createQuadVAO();
     GLuint cubeVAO = createCubeVAO();
-    //GLuint boxEdgesVAO = createBoxEdgesVAO();
-
+    clientEnvironment.prints = new printLoader(".\\assets\\brick\\prints");
     texture *bdrf = generateBDRF(quadVAO);
+    material grass("assets/ground/grass1/grass.txt");
+
     //std::string iblName = "mountain";
     //std::string iblName = "MoonlessGolf";
     //std::string iblName = "sunset";
@@ -548,1729 +327,1992 @@ int main(int argc, char *argv[])
     renderTarget *waterReflection = 0;
     renderTarget *waterRefraction = 0;
     renderTarget *waterDepth = 0;
-    texture *dudvTexture = 0;
+    texture *dudvTexture = new texture;
+    dudvTexture->setWrapping(GL_REPEAT);
+    dudvTexture->createFromFile("assets/dudv.png");
     tessellation water(0);
 
-    if(clientEnvironment.settings->waterQuality != waterStatic)
-    {
-        perspectiveCamera waterCamera;
-        waterCamera.setFieldOfVision(serverData->playerCamera->getFieldOfVision());
-        waterCamera.name = "Water";
-        renderTarget::renderTargetSettings waterReflectionSettings;
+    blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",clientEnvironment.brickSelector,true);
 
-        switch(clientEnvironment.settings->waterQuality)
-        {
-            case waterQuarter:
-                waterReflectionSettings.resX = context.getResolution().x / 4.0;
-                waterReflectionSettings.resY = context.getResolution().y / 4.0;
-                break;
+    CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
 
-            case waterHalf:
-                waterReflectionSettings.resX = context.getResolution().x / 2.0;
-                waterReflectionSettings.resY = context.getResolution().y / 2.0;
-                break;
-
-            default:
-            case waterFull:
-                waterReflectionSettings.resX = context.getResolution().x;
-                waterReflectionSettings.resY = context.getResolution().y;
-                break;
-        }
-
-        waterReflectionSettings.numColorChannels = 4;
-        waterReflectionSettings.clearColor = glm::vec4(0,0,0,0);
-        waterReflectionSettings.texWrapping = GL_REPEAT;
-        waterReflectionSettings.useColor = true;
-        waterReflection = new renderTarget(waterReflectionSettings);
-        waterRefraction = new renderTarget(waterReflectionSettings);
-        waterRefraction->settings.clearColor = glm::vec4(0.15,0.15,0.3,0.0);
-        renderTarget::renderTargetSettings waterDepthSettings;
-        waterDepthSettings.useDepth = true;
-        waterDepthSettings.resX = waterReflectionSettings.resX;
-        waterDepthSettings.resY = waterReflectionSettings.resY;
-        waterDepth = new renderTarget(waterDepthSettings);
-        dudvTexture = new texture;
-        dudvTexture->setWrapping(GL_REPEAT);
-        dudvTexture->createFromFile("assets/dudv.png");
-    }
+    clientEnvironment.picker = new avatarPicker(context.getResolution().x,context.getResolution().y);
 
     btDefaultCollisionConfiguration *collisionConfiguration = new btDefaultCollisionConfiguration();
     btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
     btBroadphaseInterface* broadphase = new btDbvtBroadphase();
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
     btGImpactCollisionAlgorithm::registerAlgorithm(dispatcher);
-    btDynamicsWorld *world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
-    btVector3 gravity = btVector3(0,-70,0);
-    world->setGravity(gravity);
-    world->setForceUpdateAllAabbs(false);
-    serverData->world = world;
 
-    btCollisionShape *plane = new btStaticPlaneShape(btVector3(0,1,0),0);
-    btDefaultMotionState* planeState = new btDefaultMotionState();
-    btRigidBody::btRigidBodyConstructionInfo planeCon(0,planeState,plane);
-    btRigidBody *groundPlane = new btRigidBody(planeCon);
-    groundPlane->setFriction(1.0);
-    //groundPlane->setUserIndex(bodyUserIndex_plane);
-    world->addRigidBody(groundPlane);
+    CEGUI::Window *bounceText = addGUIFromFile("justText.layout");
+    bounceText->setVisible(true);
+    bounceText->moveToBack();
 
-    selectionBox *box = new selectionBox(world,cubeVAO);
-
-    material grass("assets/ground/grass1/grass.txt");
-    //terrain theMap("assets/heightmap2.png",world);
-
-    for(unsigned int a = 0; a<clientEnvironment.prints->names.size(); a++)
-        serverData->staticBricks.allocatePerTexture(clientEnvironment.prints->textures[a],false,false,true);
-
-    //model wheelModel("assets/ball/ball.txt");
-    clientEnvironment.newWheelModel = new newModel("assets/ball/ball.txt");
-
-    unsigned int last10Secs = SDL_GetTicks();
-    unsigned int frames = 0;
-
-    //bool play = false;
-
-    int waterFrame = 0;
-
-    glm::vec3 lastCamPos = serverData->playerCamera->getPosition();
-
-    int camMode = cammode_firstPerson;
-    float desiredFov = clientEnvironment.settings->fieldOfView;
-    float currentZoom = clientEnvironment.settings->fieldOfView;
-
-    double totalSteps = 0;
-
+    float hue = 0;
+    float lastTick = SDL_GetTicks();
+    float deltaT = 0;
+    float horBounceDir = 1;
+    float vertBounceDir = 1;
     float bottomBarOpen = 0;
     float bottomBarClose = 0.165;
     float bottomBarOpenTime = 500;
     float bottomBarLastAct = SDL_GetTicks();
     bool bottomBarShouldBeOpen = false;
-
-    tempBrick myTempBrick(serverData->staticBricks);
-
+    glm::vec3 lastCamPos = glm::vec3(0,0,0);
+    unsigned int last10Secs = SDL_GetTicks();
+    unsigned int frames = 0;
+    int waterFrame = 0;
+    int camMode = cammode_firstPerson;
+    float desiredFov = clientEnvironment.settings->fieldOfView;
+    float currentZoom = clientEnvironment.settings->fieldOfView;
+    double totalSteps = 0;
     glm::vec3 lastPlayerDir = glm::vec3(0,0,0);
     int lastPlayerControlMask = 0;
     int transSendInterval = 30;
     int lastSentTransData = 0;
     bool doJump = false;
-    //serverData->inventoryOpen = hud->getChild("Inventory")->isVisible();
-
-    info("Starting main game loop!");
-
     bool showPreview = false;
     bool hitDebug = true;
     bool justTurnOnChat = false;
     float lastPhysicsStep = 0.0;
-
     unsigned int debugMode = 3;
+    bool connected = false;
 
-    //TODO: remove this, it's for debugging client physics:
-    //serverData->debugLocations.push_back(glm::vec3(0,0,0));
-    //serverData->debugColors.push_back(glm::vec3(1,1,1));
+    //Start connect screen
+    //Start-up has finished
 
-    serverData->bulletTrails = new bulletTrailsHolder;
+    context.setMouseLock(false);
 
-    bool cont = true;
-    while(cont)
+    gameState currentState = STATE_MAINMENU;
+    while(currentState != STATE_QUITTING)
     {
-        if(clientEnvironment.exitToWindows)
-            cont = false;
-
-        if(clientEnvironment.fatalNotifyStarted)
+        switch(currentState)
         {
-            int *status = (int*)clientEnvironment.messageBox->getUserData();
-            if(status)
+            case STATE_AVATARPICKER:
             {
-                if(status[0] == 0)
+                //TODO: To be moved from avatarPicker.cpp
+                break;
+            }
+            case STATE_MAINMENU:
+            {
+                if(clientEnvironment.serverData)
                 {
-                    cont = false;
+                    delete clientEnvironment.serverData;
+                    clientEnvironment.serverData = 0;
+                }
+
+                hud->setVisible(false);
+                joinServer->setVisible(true);
+
+                const Uint8 *states = SDL_GetKeyboardState(NULL);
+
+                SDL_Event e;
+                while(SDL_PollEvent(&e))
+                {
+                    if(e.type == SDL_QUIT)
+                    {
+                        currentState = STATE_QUITTING;
+                        break;
+                    }
+
+                    processEventsCEGUI(e,states);
+
+                    if(e.type == SDL_WINDOWEVENT)
+                    {
+                        if(e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                        {
+                            context.setSize(e.window.data1,e.window.data2);
+                        }
+                    }
+                }
+
+                deltaT = SDL_GetTicks() - lastTick;
+
+                //After auto-updating, land of dran text may dissapear without this:
+                if(deltaT > 20)
+                    deltaT = 20;
+
+                lastTick = SDL_GetTicks();
+
+                CEGUI::UVector2 pos = bounceText->getPosition();
+                if(pos.d_x.d_scale > 0.75)
+                    horBounceDir = -1;
+                if(pos.d_y.d_scale > 0.9)
+                    vertBounceDir = -1;
+
+                if(pos.d_x.d_scale < -0.1)
+                    horBounceDir = 1;
+                if(pos.d_y.d_scale < -0.05)
+                    vertBounceDir = 1;
+                pos += CEGUI::UVector2(CEGUI::UDim(horBounceDir * deltaT * 0.0002,0),CEGUI::UDim(vertBounceDir * deltaT * 0.0001,0));
+                bounceText->setPosition(pos);
+
+                hue += deltaT * 0.00003;
+                if(hue > 1)
+                    hue -= 1;
+
+                HsvColor hsv;
+                hsv.h = hue*255;
+                hsv.s = 0.5*255;
+                hsv.v = 0.5*255;
+                RgbColor rgb = HsvToRgb(hsv);
+
+                context.clear(((float)rgb.r)/255.0,((float)rgb.g)/255.0,((float)rgb.b)/255.0);
+                context.select();
+                CEGUI::System::getSingleton().getRenderer()->setDisplaySize(CEGUI::Size<float>(context.getResolution().x,context.getResolution().y));
+                glViewport(0,0,context.getResolution().x,context.getResolution().y);
+                glDisable(GL_DEPTH_TEST);
+                glActiveTexture(GL_TEXTURE0);
+                CEGUI::System::getSingleton().renderAllGUIContexts();
+                context.swap();
+                glEnable(GL_DEPTH_TEST);
+
+                if(clientEnvironment.clickedMainMenuExit)
+                {
+                    currentState = STATE_QUITTING;
                     break;
                 }
-            }
-        }
 
-        //Options:
+                SDL_Delay(1);
 
-        hud->getChild("Inventory")->setVisible(clientEnvironment.currentlyOpen == inventory);
-        if(clientEnvironment.currentlyOpen != paintCan)
-            clientEnvironment.palette->close();
+                if(!clientEnvironment.waitingToPickServer)
+                {
+                    bounceText->setVisible(false);
+                    currentState = STATE_CONNECTING;
+                }
 
-        if(clientEnvironment.settings->guiScalingChanged)
-        {
-            switch(clientEnvironment.settings->guiScaling)
-            {
-                case biggest:
-                clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.9), 0.03875, 1, 0.70375*0.9));
-                ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("OpenSans-30");
-                bottomBarClose = 0.165;
-                brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*1.0),0,0.5+((0.8-0.5)*1.0),0.165 * 1.0));
-                break;
-
-                case bigger:
-                clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.8), 0.03875, 1, 0.70375*0.8));
-                ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("OpenSans-20");
-                bottomBarClose = 0.165 * 0.9;
-                brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.9),0,0.5+((0.8-0.5)*0.9),0.165 * 0.9));
-                break;
-
-                case normalScaling:
-                clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.7), 0.03875, 1, 0.70375*0.7));
-                ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("DejaVuSans-12");
-                bottomBarClose = 0.165 * 0.8;
-                brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.8),0,0.5+((0.8-0.5)*0.8),0.165 * 0.8));
-                break;
-
-                case smaller:
-                clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.6), 0.03875, 1, 0.70375*0.6));
-                ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("DejaVuSans-10");
-                bottomBarClose = 0.165 * 0.7;
-                brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.6),0,0.5+((0.8-0.5)*0.6),0.165 * 0.6));
                 break;
             }
-
-            clientEnvironment.settings->guiScalingChanged = false;
-        }
-
-        //serverData->playerCamera->setFieldOfVision(clientEnvironment.settings->fieldOfView);
-        clientEnvironment.brickSelector->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
-        escapeMenu->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
-        evalWindow->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
-        saveLoadWindow->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
-        clientEnvironment.wrench->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
-        clientEnvironment.wheelWrench->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
-        clientEnvironment.steeringWrench->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
-        clientEnvironment.playerList->setAlpha(((float)clientEnvironment.settings->hudOpacity)/100.0);
-        godRayDebug->setAlpha(((float)clientEnvironment.settings->hudOpacity)/100.0);
-        //chat->moveToBack();
-
-        float gain = clientEnvironment.settings->masterVolume;
-        gain /= 100.0;
-        float musicGain = clientEnvironment.settings->musicVolume;
-        musicGain /= 100.0;
-        clientEnvironment.speaker->setVolumes(gain,musicGain);
-
-        //Input:
-
-        GLenum error = glGetError();
-        if(error != GL_NO_ERROR)
-        {
-            std::cout<<"Error: "<<error<<"\n";
-        }
-
-        lastCamPos = serverData->playerCamera->getPosition();
-
-        frames++;
-        if(last10Secs < SDL_GetTicks())
-        {
-            double fps = frames;
-            totalSteps /= ((double)frames);
-            if(serverData->cameraTarget)
-                stats->setText("Sent/recv: " + std::to_string(serverConnection->numPacketsSent) + "/" + std::to_string(serverConnection->numPacketsReceived) + " FPS: " + std::to_string(fps)  + " Player Keyframes: " + std::to_string(serverData->cameraTarget->modelInterpolator.keyFrames.size()));
-            last10Secs = SDL_GetTicks() + 1000;
-            frames = 0;
-            totalSteps = 0;
-        }
-
-        deltaT = SDL_GetTicks() - lastTick;
-        lastTick = SDL_GetTicks();
-
-        /*for(unsigned int a = 0; a<32; a++)
-        {
-            if(clientEnvironment.speaker->carToTrack[a])
+            case STATE_PLAYING:
             {
-                glm::vec3 pos = clientEnvironment.speaker->carToTrack[a]->carTransform.getPosition();
-                glm::vec3 vel = clientEnvironment.speaker->carToTrack[a]->carTransform.guessVelocity() * glm::vec3(0.4);
-                alSource3f(clientEnvironment.speaker->loopSources[a],AL_POSITION,pos.x,pos.y,pos.z);
-                alSource3f(clientEnvironment.speaker->loopSources[a],AL_VELOCITY,vel.x,vel.y,vel.z);
-            }
-        }*/
+                hud->setVisible(true);
+                joinServer->setVisible(false);
+                updater->setVisible(false);
 
-        Uint32 mouseState = SDL_GetMouseState(NULL,NULL);
-        //SDL's macros are fucked up
-        int leftDown = 0, rightDown = 0;
-        if(mouseState == 1)
-            leftDown = 1;
-        else if(mouseState == 4)
-            rightDown = 1;
-        else if(mouseState == 5)
-        {
-            leftDown = 1;
-            rightDown = 1;
-        }
+                serverStuff *serverData = clientEnvironment.serverData;
+                btDynamicsWorld *world = serverData->world;
 
-        if(useClientPhysics)
-        {
-            //Buoyancy and jetting
-            if(serverData->currentPlayer)
-            {
-                if(rightDown && serverData->canJet)
+                if(clientEnvironment.exitToWindows)
                 {
-                    serverData->currentPlayer->body->setGravity(btVector3(0,20,0));
+                    currentState = STATE_QUITTING;
+                    break;
                 }
-                else
-                {
-                    btTransform t = serverData->currentPlayer->body->getWorldTransform();
-                    btVector3 o = t.getOrigin();
 
-                    if(o.y() < serverData->waterLevel-2.0)
+                if(clientEnvironment.fatalNotifyStarted)
+                {
+                    int *status = (int*)clientEnvironment.messageBox->getUserData();
+                    if(status)
                     {
-                        serverData->currentPlayer->body->setDamping(0.4,0.0);
-                        serverData->currentPlayer->body->setGravity(btVector3(0,-0.5,0) * world->getGravity());
-                    }
-                    else if(o.y() < serverData->waterLevel)
-                    {
-                        serverData->currentPlayer->body->setDamping(0.4,0.0);
-                        serverData->currentPlayer->body->setGravity(btVector3(0,0,0));
-                    }
-                    else
-                    {
-                        serverData->currentPlayer->body->setDamping(0.0,0.0);
-                        serverData->currentPlayer->body->setGravity(world->getGravity());
-                    }
-                }
-            }
-
-            //if(SDL_GetTicks() - lastPhysicsStep >= 15)
-            //{
-                float physicsDeltaT = SDL_GetTicks() - lastPhysicsStep;
-                //if(!showPreview)
-                    world->stepSimulation(physicsDeltaT / 1000.0);
-                lastPhysicsStep = SDL_GetTicks();
-            //}
-        }
-
-        const Uint8 *states = SDL_GetKeyboardState(NULL);
-        playerInput.getKeyStates();
-
-        box->performRaycast(serverData->playerCamera->getPosition(),serverData->playerCamera->getDirection(),0);
-
-        //Clicking ray cast
-        btVector3 raystart = glmToBt(serverData->playerCamera->getPosition());
-        btVector3 rayend = glmToBt(serverData->playerCamera->getPosition() + serverData->playerCamera->getDirection() * glm::vec3(30.0));
-        btCollisionWorld::AllHitsRayResultCallback res(raystart,rayend);
-        world->rayTest(raystart,rayend,res);
-
-        int idx = -1;
-        float dist = 9999999;
-
-        if(serverData->cameraTarget)
-        {
-            for(int a = 0; a<res.m_collisionObjects.size(); a++)
-            {
-                //if(res.m_collisionObjects[a] != serverData->cameraTarget->body)
-                //{
-                    if(fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition())) < dist)
-                    {
-                        dist = fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition()));
-                        idx = a;
-                    }
-                //}
-            }
-        }
-        else if(camMode == cammode_firstPerson)
-            camMode = cammode_thirdPerson;
-
-        if(serverData->ghostCar)
-        {
-            serverData->ghostCar->carTransform.keyFrames.clear();
-            serverData->ghostCar->carTransform.highestProcessed = 0;
-            if(idx != -1)
-                serverData->ghostCar->carTransform.addTransform(0,BtToGlm(res.m_hitPointWorld[idx]) + glm::vec3(0,5,0),glm::quat(1,0,0,0));
-            else
-                serverData->ghostCar->carTransform.addTransform(0,BtToGlm(rayend) + glm::vec3(0,5,0),glm::quat(1,0,0,0));
-        }
-
-        /*if(stageOfSelection == -1)
-        {
-            start = glm::vec3(0,0,0);
-            end = glm::vec3(0,0,0);
-        }
-
-        if(idx != -1)
-        {
-            if(stageOfSelection == 1)
-                end = BtToGlm(res.m_hitPointWorld[idx]);
-        }*/
-
-        bool supress = evalWindow->isActive() && evalWindow->isVisible();
-        supress |= clientEnvironment.wheelWrench->isActive() && clientEnvironment.wheelWrench->isVisible();
-        supress |= clientEnvironment.wrench->isActive() && clientEnvironment.wrench->isVisible();
-        supress |= saveLoadWindow->getChild("CarFilePath")->isActive();
-        supress |= saveLoadWindow->getChild("BuildFilePath")->isActive();
-
-        SDL_Event event;
-        while(SDL_PollEvent(&event))
-        {
-            playerInput.handleInput(event);
-
-            if(event.type == SDL_QUIT)
-            {
-                cont = false;
-                break;
-            }
-
-            processEventsCEGUI(event,states);
-
-            if(event.type == SDL_WINDOWEVENT)
-            {
-                if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-                {
-                    context.setSize(event.window.data1,event.window.data2);
-                }
-            }
-
-            if(event.type == SDL_KEYDOWN)
-            {
-                if(event.key.keysym.sym == SDLK_BACKQUOTE)
-                {
-                    debugMode++;
-                    if(debugMode > 3)
-                        debugMode = 1;
-                }
-
-                if(event.key.keysym.sym == SDLK_PAGEUP)
-                {
-                    clientEnvironment.chat->getVertScrollbar()->setStepSize(36.3222);
-                    //float maxScroll = chat->getVertScrollbar()->getDocumentSize() - chat->getVertScrollbar()->getPageSize();
-                    if(clientEnvironment.chat->getVertScrollbar()->getScrollPosition() >= 36.3222)
-                        clientEnvironment.chat->getVertScrollbar()->setScrollPosition(clientEnvironment.chat->getVertScrollbar()->getScrollPosition() - 36.3222);
-                }
-                if(event.key.keysym.sym == SDLK_PAGEDOWN)
-                {
-                    clientEnvironment.chat->getVertScrollbar()->setStepSize(36.3222);
-                    //float maxScroll = chat->getVertScrollbar()->getDocumentSize() - chat->getVertScrollbar()->getPageSize();
-                    clientEnvironment.chat->getVertScrollbar()->setScrollPosition(clientEnvironment.chat->getVertScrollbar()->getScrollPosition() + 36.3222);
-                }
-                if(event.key.keysym.sym == SDLK_t && !supress)
-                {
-                    if(!chatEditbox->isActive())
-                    {
-                        chatEditbox->activate();
-                        justTurnOnChat = true;
-                        chatEditbox->setMousePassThroughEnabled(false);
-                    }
-                }
-
-                if(event.key.keysym.sym == SDLK_RETURN && chatEditbox->isActive())
-                {
-                    sendChat();
-                }
-
-                if(event.key.keysym.sym == SDLK_ESCAPE)
-                {
-                    if(chatEditbox->isActive())
-                    {
-                        chatEditbox->deactivate();
-                        chatEditbox->setText("");
-                        chatEditbox->moveToBack();
-                        chatEditbox->setMousePassThroughEnabled(true);
-                    }
-                    else
-                    {
-                        bool anyVisible = false;
-                        if(escapeMenu->isVisible())
-                            anyVisible = true;
-                        if(optionsWindow->isVisible())
-                           anyVisible = true;
-                        if(clientEnvironment.brickSelector->isVisible())
-                           anyVisible = true;
-                        if(evalWindow->isVisible())
-                           anyVisible = true;
-                        if(clientEnvironment.wrench->isVisible())
-                           anyVisible = true;
-                        if(clientEnvironment.wheelWrench->isVisible())
-                           anyVisible = true;
-                        if(clientEnvironment.steeringWrench->isVisible())
-                           anyVisible = true;
-                        if(saveLoadWindow->isVisible())
-                            anyVisible = true;
-                        if(clientEnvironment.playerList->isVisible())
-                            anyVisible = true;
-                        if(godRayDebug->isVisible())
-                            anyVisible = true;
-
-
-                        if(anyVisible)
+                        if(status[0] == 0)
                         {
-                            context.setMouseLock(true);
-                            escapeMenu->setVisible(false);
-                            clientEnvironment.brickSelector->setVisible(false);
-                            optionsWindow->setVisible(false);
-                            evalWindow->setVisible(false);
-                            clientEnvironment.wrench->setVisible(false);
-                            clientEnvironment.wheelWrench->setVisible(false);
-                            clientEnvironment.steeringWrench->setVisible(false);
-                            saveLoadWindow->setVisible(false);
-                            clientEnvironment.playerList->setVisible(false);
-                            godRayDebug->setVisible(false);
+                            currentState = STATE_QUITTING;
+                            break;
+                        }
+                    }
+                }
+
+                //Options:
+
+                hud->getChild("Inventory")->setVisible(clientEnvironment.currentlyOpen == inventory);
+                if(clientEnvironment.currentlyOpen != paintCan)
+                    clientEnvironment.palette->close();
+
+                if(clientEnvironment.settings->guiScalingChanged)
+                {
+                    switch(clientEnvironment.settings->guiScaling)
+                    {
+                        case biggest:
+                        clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.9), 0.03875, 1, 0.70375*0.9));
+                        ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("OpenSans-30");
+                        bottomBarClose = 0.165;
+                        brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*1.0),0,0.5+((0.8-0.5)*1.0),0.165 * 1.0));
+                        break;
+
+                        case bigger:
+                        clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.8), 0.03875, 1, 0.70375*0.8));
+                        ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("OpenSans-20");
+                        bottomBarClose = 0.165 * 0.9;
+                        brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.9),0,0.5+((0.8-0.5)*0.9),0.165 * 0.9));
+                        break;
+
+                        case normalScaling:
+                        clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.7), 0.03875, 1, 0.70375*0.7));
+                        ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("DejaVuSans-12");
+                        bottomBarClose = 0.165 * 0.8;
+                        brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.8),0,0.5+((0.8-0.5)*0.8),0.165 * 0.8));
+                        break;
+
+                        case smaller:
+                        clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.6), 0.03875, 1, 0.70375*0.6));
+                        ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("DejaVuSans-10");
+                        bottomBarClose = 0.165 * 0.7;
+                        brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.6),0,0.5+((0.8-0.5)*0.6),0.165 * 0.6));
+                        break;
+                    }
+
+                    clientEnvironment.settings->guiScalingChanged = false;
+                }
+
+                //serverData->playerCamera->setFieldOfVision(clientEnvironment.settings->fieldOfView);
+                clientEnvironment.brickSelector->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+                escapeMenu->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+                evalWindow->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+                saveLoadWindow->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+                clientEnvironment.wrench->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+                clientEnvironment.wheelWrench->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+                clientEnvironment.steeringWrench->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+                clientEnvironment.playerList->setAlpha(((float)clientEnvironment.settings->hudOpacity)/100.0);
+                godRayDebug->setAlpha(((float)clientEnvironment.settings->hudOpacity)/100.0);
+                //chat->moveToBack();
+
+                float gain = clientEnvironment.settings->masterVolume;
+                gain /= 100.0;
+                float musicGain = clientEnvironment.settings->musicVolume;
+                musicGain /= 100.0;
+                clientEnvironment.speaker->setVolumes(gain,musicGain);
+
+                //Input:
+
+                GLenum error = glGetError();
+                if(error != GL_NO_ERROR)
+                {
+                    std::cout<<"Error: "<<error<<"\n";
+                }
+
+                lastCamPos = serverData->playerCamera->getPosition();
+
+                frames++;
+                if(last10Secs < SDL_GetTicks())
+                {
+                    double fps = frames;
+                    totalSteps /= ((double)frames);
+                    if(serverData->cameraTarget)
+                        stats->setText("Sent/recv: " + std::to_string(serverConnection->numPacketsSent) + "/" + std::to_string(serverConnection->numPacketsReceived) + " FPS: " + std::to_string(fps)  + " Player Keyframes: " + std::to_string(serverData->cameraTarget->modelInterpolator.keyFrames.size()));
+                    last10Secs = SDL_GetTicks() + 1000;
+                    frames = 0;
+                    totalSteps = 0;
+                }
+
+                deltaT = SDL_GetTicks() - lastTick;
+                lastTick = SDL_GetTicks();
+
+                /*for(unsigned int a = 0; a<32; a++)
+                {
+                    if(clientEnvironment.speaker->carToTrack[a])
+                    {
+                        glm::vec3 pos = clientEnvironment.speaker->carToTrack[a]->carTransform.getPosition();
+                        glm::vec3 vel = clientEnvironment.speaker->carToTrack[a]->carTransform.guessVelocity() * glm::vec3(0.4);
+                        alSource3f(clientEnvironment.speaker->loopSources[a],AL_POSITION,pos.x,pos.y,pos.z);
+                        alSource3f(clientEnvironment.speaker->loopSources[a],AL_VELOCITY,vel.x,vel.y,vel.z);
+                    }
+                }*/
+
+                Uint32 mouseState = SDL_GetMouseState(NULL,NULL);
+                //SDL's macros are fucked up
+                int leftDown = 0, rightDown = 0;
+                if(mouseState == 1)
+                    leftDown = 1;
+                else if(mouseState == 4)
+                    rightDown = 1;
+                else if(mouseState == 5)
+                {
+                    leftDown = 1;
+                    rightDown = 1;
+                }
+
+                if(useClientPhysics)
+                {
+                    //Buoyancy and jetting
+                    if(serverData->currentPlayer)
+                    {
+                        if(rightDown && serverData->canJet)
+                        {
+                            serverData->currentPlayer->body->setGravity(btVector3(0,20,0));
                         }
                         else
                         {
-                            context.setMouseLock(false);
-                            escapeMenu->setVisible(true);
-                            escapeMenu->moveToFront();
-                        }
-                    }
-                }
+                            btTransform t = serverData->currentPlayer->body->getWorldTransform();
+                            btVector3 o = t.getOrigin();
 
-
-                if(event.key.keysym.sym == SDLK_F5)
-                {
-                    godRayDebug->setVisible(true);
-                }
-
-                if(states[SDL_SCANCODE_LCTRL] && event.key.keysym.sym == SDLK_z)
-                {
-                    packet undoPacket;
-                    undoPacket.writeUInt(4,4);
-                    serverData->connection->send(&undoPacket,true);
-                }
-
-                if(states[SDL_SCANCODE_LCTRL] && event.key.keysym.sym == SDLK_w)
-                {
-                    packet data;
-                    data.writeUInt(9,4);
-                    if(clientEnvironment.currentlyOpen == inventory)
-                        data.writeUInt(serverData->selectedSlot,3);
-                    else
-                        data.writeUInt(7,3);
-                    serverData->connection->send(&data,true);
-                }
-            }
-
-            if(event.type == SDL_MOUSEMOTION)
-            {
-                if(context.getMouseLocked() && (serverData->freeLook || serverData->boundToObject))
-                {
-                    glm::vec2 res = context.getResolution();
-                    float x = (((float)event.motion.xrel)/res.x);
-                    float y = (((float)event.motion.yrel)/res.y);
-                    x *= ((float)clientEnvironment.settings->mouseSensitivity) / 100.0;
-                    y *= ((float)clientEnvironment.settings->mouseSensitivity) / 100.0;
-                    serverData->playerCamera->turn(clientEnvironment.settings->invertMouseY ? y : -y,-x);
-
-                    box->drag(serverData->playerCamera->getPosition(),serverData->playerCamera->getDirection());
-                }
-            }
-
-            if(event.type == SDL_MOUSEWHEEL)
-            {
-                //if(!clientEnvironment.brickSelector->isMouseContainedInArea() && !evalWindow->isMouseContainedInArea())
-                if(context.getMouseLocked())
-                {
-                    if(clientEnvironment.currentlyOpen == inventory)
-                    {
-                        if(event.wheel.y > 0)
-                        {
-                            serverData->selectedSlot--;
-                            if(serverData->selectedSlot < 0 || serverData->selectedSlot >= inventorySize)
-                                serverData->selectedSlot = inventorySize - 1;
-                        }
-                        else if(event.wheel.y < 0)
-                        {
-                            serverData->selectedSlot++;
-                            if(serverData->selectedSlot >= inventorySize)
-                                serverData->selectedSlot = 0;
-                        }
-                    }
-                    else if(clientEnvironment.currentlyOpen == brickBar)
-                    {
-                        myTempBrick.scroll(hud,clientEnvironment.brickSelector,serverData->staticBricks,event.wheel.y);
-                    }
-                    else
-                    {
-                        clientEnvironment.palette->scroll(event.wheel.y);
-                        myTempBrick.basicChanged = myTempBrick.basicChanged || myTempBrick.isBasic;
-                        myTempBrick.specialChanged = myTempBrick.specialChanged || !myTempBrick.isBasic;
-                    }
-                }
-            }
-
-            if(event.type == SDL_MOUSEBUTTONUP)
-            {
-                if(event.button.button == SDL_BUTTON_LEFT)
-                {
-                    if(box->currentPhase == selectionBox::selectionPhase::stretching)
-                        box->currentPhase = selectionBox::selectionPhase::selecting;
-                }
-            }
-
-            if(event.type == SDL_MOUSEBUTTONDOWN)
-            {
-                if(context.getMouseLocked())
-                {
-                    packet data;
-                    data.writeUInt(clientPacketType_clicked,4);
-                    data.writeBit(event.button.button == SDL_BUTTON_LEFT);
-                    data.writeFloat(serverData->playerCamera->getPosition().x);
-                    data.writeFloat(serverData->playerCamera->getPosition().y);
-                    data.writeFloat(serverData->playerCamera->getPosition().z);
-                    data.writeFloat(serverData->playerCamera->getDirection().x);
-                    data.writeFloat(serverData->playerCamera->getDirection().y);
-                    data.writeFloat(serverData->playerCamera->getDirection().z);
-                    if(clientEnvironment.currentlyOpen == inventory)
-                        data.writeUInt(serverData->selectedSlot,3);
-                    else
-                        data.writeUInt(7,3);
-                    serverData->connection->send(&data,true);
-
-                    if(event.button.button == SDL_BUTTON_LEFT && serverData->currentPlayer)
-                    {
-                        item *currentlyHeldItem = 0;
-                        if(clientEnvironment.currentlyOpen == inventory && serverData->cameraTarget)
-                        {
-                            for(int a = 0; a<serverData->items.size(); a++)
+                            if(o.y() < serverData->waterLevel-2.0)
                             {
-                                if(serverData->items[a]->heldBy == serverData->cameraTarget && !serverData->items[a]->hidden)
+                                serverData->currentPlayer->body->setDamping(0.4,0.0);
+                                serverData->currentPlayer->body->setGravity(btVector3(0,-0.5,0) * world->getGravity());
+                            }
+                            else if(o.y() < serverData->waterLevel)
+                            {
+                                serverData->currentPlayer->body->setDamping(0.4,0.0);
+                                serverData->currentPlayer->body->setGravity(btVector3(0,0,0));
+                            }
+                            else
+                            {
+                                serverData->currentPlayer->body->setDamping(0.0,0.0);
+                                serverData->currentPlayer->body->setGravity(world->getGravity());
+                            }
+                        }
+                    }
+
+                    //if(SDL_GetTicks() - lastPhysicsStep >= 15)
+                    //{
+                        float physicsDeltaT = SDL_GetTicks() - lastPhysicsStep;
+                        //if(!showPreview)
+                            world->stepSimulation(physicsDeltaT / 1000.0);
+                        lastPhysicsStep = SDL_GetTicks();
+                    //}
+                }
+
+                const Uint8 *states = SDL_GetKeyboardState(NULL);
+                playerInput.getKeyStates();
+
+                serverData->box->performRaycast(serverData->playerCamera->getPosition(),serverData->playerCamera->getDirection(),0);
+
+                //Clicking ray cast
+                btVector3 raystart = glmToBt(serverData->playerCamera->getPosition());
+                btVector3 rayend = glmToBt(serverData->playerCamera->getPosition() + serverData->playerCamera->getDirection() * glm::vec3(30.0));
+                btCollisionWorld::AllHitsRayResultCallback res(raystart,rayend);
+                world->rayTest(raystart,rayend,res);
+
+                int idx = -1;
+                float dist = 9999999;
+
+                if(serverData->cameraTarget)
+                {
+                    for(int a = 0; a<res.m_collisionObjects.size(); a++)
+                    {
+                        //if(res.m_collisionObjects[a] != serverData->cameraTarget->body)
+                        //{
+                            if(fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition())) < dist)
+                            {
+                                dist = fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition()));
+                                idx = a;
+                            }
+                        //}
+                    }
+                }
+                else if(camMode == cammode_firstPerson)
+                    camMode = cammode_thirdPerson;
+
+                if(serverData->ghostCar)
+                {
+                    serverData->ghostCar->carTransform.keyFrames.clear();
+                    serverData->ghostCar->carTransform.highestProcessed = 0;
+                    if(idx != -1)
+                        serverData->ghostCar->carTransform.addTransform(0,BtToGlm(res.m_hitPointWorld[idx]) + glm::vec3(0,5,0),glm::quat(1,0,0,0));
+                    else
+                        serverData->ghostCar->carTransform.addTransform(0,BtToGlm(rayend) + glm::vec3(0,5,0),glm::quat(1,0,0,0));
+                }
+
+                bool supress = evalWindow->isActive() && evalWindow->isVisible();
+                supress |= clientEnvironment.wheelWrench->isActive() && clientEnvironment.wheelWrench->isVisible();
+                supress |= clientEnvironment.wrench->isActive() && clientEnvironment.wrench->isVisible();
+                supress |= saveLoadWindow->getChild("CarFilePath")->isActive();
+                supress |= saveLoadWindow->getChild("BuildFilePath")->isActive();
+
+                SDL_Event event;
+                while(SDL_PollEvent(&event))
+                {
+                    playerInput.handleInput(event);
+
+                    if(event.type == SDL_QUIT)
+                    {
+                        currentState = STATE_QUITTING;
+                        break;
+                    }
+
+                    processEventsCEGUI(event,states);
+
+                    if(event.type == SDL_WINDOWEVENT)
+                    {
+                        if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                        {
+                            context.setSize(event.window.data1,event.window.data2);
+                        }
+                    }
+
+                    if(event.type == SDL_KEYDOWN)
+                    {
+                        if(event.key.keysym.sym == SDLK_BACKQUOTE)
+                        {
+                            /*debugMode++;
+                            if(debugMode > 3)
+                                debugMode = 1;*/
+
+
+                            CEGUI::ScrolledContainer *box = (CEGUI::ScrolledContainer *)((CEGUI::ScrollablePane*)clientEnvironment.picker->decalPicker->getChild("Decals"))->getContentPane();
+                            while(box->getChildCount() > 0)
+                                box->removeChild(box->getChildAtIdx(0));
+
+                            for(int a = 0; a<clientEnvironment.speaker->sounds.size(); a++)
+                                delete clientEnvironment.speaker->sounds[a];
+                            clientEnvironment.speaker->sounds.clear();
+
+                            currentState = STATE_MAINMENU;
+                            context.setMouseLock(false);
+                            clientEnvironment.waitingToPickServer = true;
+                            bounceText->setVisible(true);
+                            bounceText->moveToBack();
+                            delete serverData;
+                            serverData = 0;
+                            clientEnvironment.serverData = 0;
+                            break;
+                        }
+
+                        if(event.key.keysym.sym == SDLK_PAGEUP)
+                        {
+                            clientEnvironment.chat->getVertScrollbar()->setStepSize(36.3222);
+                            //float maxScroll = chat->getVertScrollbar()->getDocumentSize() - chat->getVertScrollbar()->getPageSize();
+                            if(clientEnvironment.chat->getVertScrollbar()->getScrollPosition() >= 36.3222)
+                                clientEnvironment.chat->getVertScrollbar()->setScrollPosition(clientEnvironment.chat->getVertScrollbar()->getScrollPosition() - 36.3222);
+                        }
+                        if(event.key.keysym.sym == SDLK_PAGEDOWN)
+                        {
+                            clientEnvironment.chat->getVertScrollbar()->setStepSize(36.3222);
+                            //float maxScroll = chat->getVertScrollbar()->getDocumentSize() - chat->getVertScrollbar()->getPageSize();
+                            clientEnvironment.chat->getVertScrollbar()->setScrollPosition(clientEnvironment.chat->getVertScrollbar()->getScrollPosition() + 36.3222);
+                        }
+                        if(event.key.keysym.sym == SDLK_t && !supress)
+                        {
+                            if(!chatEditbox->isActive())
+                            {
+                                chatEditbox->activate();
+                                justTurnOnChat = true;
+                                chatEditbox->setMousePassThroughEnabled(false);
+                            }
+                        }
+
+                        if(event.key.keysym.sym == SDLK_RETURN && chatEditbox->isActive())
+                        {
+                            sendChat();
+                        }
+
+                        if(event.key.keysym.sym == SDLK_ESCAPE)
+                        {
+                            if(chatEditbox->isActive())
+                            {
+                                chatEditbox->deactivate();
+                                chatEditbox->setText("");
+                                chatEditbox->moveToBack();
+                                chatEditbox->setMousePassThroughEnabled(true);
+                            }
+                            else
+                            {
+                                bool anyVisible = false;
+                                if(escapeMenu->isVisible())
+                                    anyVisible = true;
+                                if(optionsWindow->isVisible())
+                                   anyVisible = true;
+                                if(clientEnvironment.brickSelector->isVisible())
+                                   anyVisible = true;
+                                if(evalWindow->isVisible())
+                                   anyVisible = true;
+                                if(clientEnvironment.wrench->isVisible())
+                                   anyVisible = true;
+                                if(clientEnvironment.wheelWrench->isVisible())
+                                   anyVisible = true;
+                                if(clientEnvironment.steeringWrench->isVisible())
+                                   anyVisible = true;
+                                if(saveLoadWindow->isVisible())
+                                    anyVisible = true;
+                                if(clientEnvironment.playerList->isVisible())
+                                    anyVisible = true;
+                                if(godRayDebug->isVisible())
+                                    anyVisible = true;
+
+
+                                if(anyVisible)
                                 {
-                                    currentlyHeldItem = serverData->items[a];
-                                    break;
+                                    context.setMouseLock(true);
+                                    escapeMenu->setVisible(false);
+                                    clientEnvironment.brickSelector->setVisible(false);
+                                    optionsWindow->setVisible(false);
+                                    evalWindow->setVisible(false);
+                                    clientEnvironment.wrench->setVisible(false);
+                                    clientEnvironment.wheelWrench->setVisible(false);
+                                    clientEnvironment.steeringWrench->setVisible(false);
+                                    saveLoadWindow->setVisible(false);
+                                    clientEnvironment.playerList->setVisible(false);
+                                    godRayDebug->setVisible(false);
+                                }
+                                else
+                                {
+                                    context.setMouseLock(false);
+                                    escapeMenu->setVisible(true);
+                                    escapeMenu->moveToFront();
                                 }
                             }
                         }
 
-                        if(currentlyHeldItem)
-                        {
-                            if(currentlyHeldItem->lastFire + currentlyHeldItem->fireCooldownMS < SDL_GetTicks())
-                            {
-                                currentlyHeldItem->lastFire = SDL_GetTicks();
-                                if(currentlyHeldItem->nextFireAnim != -1)
-                                    currentlyHeldItem->play(currentlyHeldItem->nextFireAnim,true,currentlyHeldItem->nextFireAnimSpeed,false);
-                                if(currentlyHeldItem->nextFireSound != -1)
-                                    clientEnvironment.speaker->playSound2D(currentlyHeldItem->nextFireSound,currentlyHeldItem->nextFireSoundPitch,currentlyHeldItem->nextFireSoundGain);
 
-                                if(currentlyHeldItem->nextFireEmitter != -1)
+                        if(event.key.keysym.sym == SDLK_F5)
+                        {
+                            godRayDebug->setVisible(true);
+                        }
+
+                        if(states[SDL_SCANCODE_LCTRL] && event.key.keysym.sym == SDLK_z)
+                        {
+                            packet undoPacket;
+                            undoPacket.writeUInt(4,4);
+                            serverData->connection->send(&undoPacket,true);
+                        }
+
+                        if(states[SDL_SCANCODE_LCTRL] && event.key.keysym.sym == SDLK_w)
+                        {
+                            packet data;
+                            data.writeUInt(9,4);
+                            if(clientEnvironment.currentlyOpen == inventory)
+                                data.writeUInt(serverData->selectedSlot,3);
+                            else
+                                data.writeUInt(7,3);
+                            serverData->connection->send(&data,true);
+                        }
+                    }
+
+                    if(event.type == SDL_MOUSEMOTION)
+                    {
+                        if(context.getMouseLocked() && (serverData->freeLook || serverData->boundToObject))
+                        {
+                            glm::vec2 res = context.getResolution();
+                            float x = (((float)event.motion.xrel)/res.x);
+                            float y = (((float)event.motion.yrel)/res.y);
+                            x *= ((float)clientEnvironment.settings->mouseSensitivity) / 100.0;
+                            y *= ((float)clientEnvironment.settings->mouseSensitivity) / 100.0;
+                            serverData->playerCamera->turn(clientEnvironment.settings->invertMouseY ? y : -y,-x);
+
+                            serverData->box->drag(serverData->playerCamera->getPosition(),serverData->playerCamera->getDirection());
+                        }
+                    }
+
+                    if(event.type == SDL_MOUSEWHEEL)
+                    {
+                        //if(!clientEnvironment.brickSelector->isMouseContainedInArea() && !evalWindow->isMouseContainedInArea())
+                        if(context.getMouseLocked())
+                        {
+                            if(clientEnvironment.currentlyOpen == inventory)
+                            {
+                                if(event.wheel.y > 0)
                                 {
-                                    for(int a = 0; a<serverData->emitterTypes.size(); a++)
+                                    serverData->selectedSlot--;
+                                    if(serverData->selectedSlot < 0 || serverData->selectedSlot >= inventorySize)
+                                        serverData->selectedSlot = inventorySize - 1;
+                                }
+                                else if(event.wheel.y < 0)
+                                {
+                                    serverData->selectedSlot++;
+                                    if(serverData->selectedSlot >= inventorySize)
+                                        serverData->selectedSlot = 0;
+                                }
+                            }
+                            else if(clientEnvironment.currentlyOpen == brickBar)
+                            {
+                                serverData->ourTempBrick->scroll(hud,clientEnvironment.brickSelector,serverData->staticBricks,event.wheel.y);
+                            }
+                            else
+                            {
+                                clientEnvironment.palette->scroll(event.wheel.y);
+                                serverData->ourTempBrick->basicChanged = serverData->ourTempBrick->basicChanged || serverData->ourTempBrick->isBasic;
+                                serverData->ourTempBrick->specialChanged = serverData->ourTempBrick->specialChanged || !serverData->ourTempBrick->isBasic;
+                            }
+                        }
+                    }
+
+                    if(event.type == SDL_MOUSEBUTTONUP)
+                    {
+                        if(event.button.button == SDL_BUTTON_LEFT)
+                        {
+                            if(serverData->box->currentPhase == selectionBox::selectionPhase::stretching)
+                                serverData->box->currentPhase = selectionBox::selectionPhase::selecting;
+                        }
+                    }
+
+                    if(event.type == SDL_MOUSEBUTTONDOWN)
+                    {
+                        if(context.getMouseLocked())
+                        {
+                            packet data;
+                            data.writeUInt(clientPacketType_clicked,4);
+                            data.writeBit(event.button.button == SDL_BUTTON_LEFT);
+                            data.writeFloat(serverData->playerCamera->getPosition().x);
+                            data.writeFloat(serverData->playerCamera->getPosition().y);
+                            data.writeFloat(serverData->playerCamera->getPosition().z);
+                            data.writeFloat(serverData->playerCamera->getDirection().x);
+                            data.writeFloat(serverData->playerCamera->getDirection().y);
+                            data.writeFloat(serverData->playerCamera->getDirection().z);
+                            if(clientEnvironment.currentlyOpen == inventory)
+                                data.writeUInt(serverData->selectedSlot,3);
+                            else
+                                data.writeUInt(7,3);
+                            serverData->connection->send(&data,true);
+
+                            if(event.button.button == SDL_BUTTON_LEFT && serverData->currentPlayer)
+                            {
+                                item *currentlyHeldItem = 0;
+                                if(clientEnvironment.currentlyOpen == inventory && serverData->cameraTarget)
+                                {
+                                    for(int a = 0; a<serverData->items.size(); a++)
                                     {
-                                        if(serverData->emitterTypes[a]->serverID == currentlyHeldItem->nextFireEmitter)
+                                        if(serverData->items[a]->heldBy == serverData->cameraTarget && !serverData->items[a]->hidden)
                                         {
-                                            emitter *e = new emitter;
-                                            e->creationTime = SDL_GetTicks();
-                                            e->type = serverData->emitterTypes[a];
-                                            e->attachedToItem = currentlyHeldItem;
-                                            e->justAttached = true;
-                                            e->meshName = currentlyHeldItem->nextFireEmitterMesh;
-                                            serverData->emitters.push_back(e);
+                                            currentlyHeldItem = serverData->items[a];
                                             break;
                                         }
                                     }
                                 }
 
-                                if(currentlyHeldItem->useBulletTrail)
+                                if(currentlyHeldItem)
                                 {
-                                    bulletTrail trail;
-                                    trail.color = currentlyHeldItem->bulletTrailColor;
+                                    if(currentlyHeldItem->lastFire + currentlyHeldItem->fireCooldownMS < SDL_GetTicks())
+                                    {
+                                        currentlyHeldItem->lastFire = SDL_GetTicks();
+                                        if(currentlyHeldItem->nextFireAnim != -1)
+                                            currentlyHeldItem->play(currentlyHeldItem->nextFireAnim,true,currentlyHeldItem->nextFireAnimSpeed,false);
+                                        if(currentlyHeldItem->nextFireSound != -1)
+                                            clientEnvironment.speaker->playSound2D(currentlyHeldItem->nextFireSound,currentlyHeldItem->nextFireSoundPitch,currentlyHeldItem->nextFireSoundGain);
 
-                                    trail.end = serverData->playerCamera->getPosition() + (serverData->playerCamera->getDirection() * glm::vec3(1.0));
-                                    trail.start = serverData->playerCamera->getPosition() + (serverData->playerCamera->getDirection() * glm::vec3(60.0));
+                                        if(currentlyHeldItem->nextFireEmitter != -1)
+                                        {
+                                            for(int a = 0; a<serverData->emitterTypes.size(); a++)
+                                            {
+                                                if(serverData->emitterTypes[a]->serverID == currentlyHeldItem->nextFireEmitter)
+                                                {
+                                                    emitter *e = new emitter;
+                                                    e->creationTime = SDL_GetTicks();
+                                                    e->type = serverData->emitterTypes[a];
+                                                    e->attachedToItem = currentlyHeldItem;
+                                                    e->justAttached = true;
+                                                    e->meshName = currentlyHeldItem->nextFireEmitterMesh;
+                                                    serverData->emitters.push_back(e);
+                                                    break;
+                                                }
+                                            }
+                                        }
 
-                                    trail.creationTime = SDL_GetTicks();
-                                    trail.deletionTime = SDL_GetTicks() + glm::length(trail.end-trail.start) * 13 * currentlyHeldItem->bulletTrailSpeed;
+                                        if(currentlyHeldItem->useBulletTrail)
+                                        {
+                                            bulletTrail trail;
+                                            trail.color = currentlyHeldItem->bulletTrailColor;
 
-                                    serverData->bulletTrails->bulletTrails.push_back(trail);
+                                            trail.end = serverData->playerCamera->getPosition() + (serverData->playerCamera->getDirection() * glm::vec3(1.0));
+                                            trail.start = serverData->playerCamera->getPosition() + (serverData->playerCamera->getDirection() * glm::vec3(60.0));
+
+                                            trail.creationTime = SDL_GetTicks();
+                                            trail.deletionTime = SDL_GetTicks() + glm::length(trail.end-trail.start) * 13 * currentlyHeldItem->bulletTrailSpeed;
+
+                                            serverData->bulletTrails->bulletTrails.push_back(trail);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    serverData->currentPlayer->stop("grab");
+                                    serverData->currentPlayer->play("grab",true);
                                 }
                             }
                         }
-                        else
+
+                        if(event.button.button == SDL_BUTTON_RIGHT)
                         {
-                            serverData->currentPlayer->stop("grab");
-                            serverData->currentPlayer->play("grab",true);
+                            if(serverData->ghostCar)
+                            {
+                                delete serverData->ghostCar;
+                                serverData->ghostCar = 0;
+                            }
+
+                            serverData->box->currentPhase = selectionBox::selectionPhase::idle;
+                        }
+
+                        if(event.button.button == SDL_BUTTON_LEFT && context.getMouseLocked())
+                        {
+                            if(serverData->ghostCar)
+                            {
+                                if(idx != -1)
+                                    sendBrickCarToServer(&clientEnvironment,serverData->ghostCar,BtToGlm(res.m_hitPointWorld[idx]));
+                                else
+                                    sendBrickCarToServer(&clientEnvironment,serverData->ghostCar,BtToGlm(rayend) + glm::vec3(0,5,0));
+                                delete serverData->ghostCar;
+                                serverData->ghostCar = 0;
+                            }
+
+                            //We actually clicked on something in the world...
+                            if(idx != -1 && serverData->cameraTarget)
+                            {
+                                if(clientEnvironment.currentlyOpen == brickBar)
+                                    serverData->ourTempBrick->teleport(BtToGlm(res.m_hitPointWorld[idx]));
+
+                                if(serverData->box->currentPhase == selectionBox::selectionPhase::waitingForClick)
+                                {
+                                    serverData->box->minExtents = res.m_hitPointWorld[idx];
+                                    serverData->box->maxExtents = res.m_hitPointWorld[idx];
+                                    serverData->box->currentPhase = selectionBox::selectionPhase::selecting;
+                                    serverData->box->movePulls();
+                                }
+                                else if(serverData->box->currentPhase == selectionBox::selectionPhase::selecting)
+                                {
+                                    serverData->box->currentPhase = selectionBox::selectionPhase::stretching;
+                                }
+                            }
                         }
                     }
                 }
 
-                if(event.button.button == SDL_BUTTON_RIGHT)
-                {
-                    if(serverData->ghostCar)
-                    {
-                        delete serverData->ghostCar;
-                        serverData->ghostCar = 0;
-                    }
+                //In case we quit or returned to main menu during event polling
+                if(currentState != STATE_PLAYING)
+                    break;
 
-                    box->currentPhase = selectionBox::selectionPhase::idle;
+                if(justTurnOnChat)
+                {
+                    justTurnOnChat = false;
+                    chatEditbox->setText("");
                 }
+                supress |= chatEditbox->isActive();
 
-                if(event.button.button == SDL_BUTTON_LEFT && context.getMouseLocked())
+                playerInput.supress(supress);
+
+                if(playerInput.commandPressed(toggleGUI))
+                    hud->setVisible(!hud->isVisible());
+
+                if(playerInput.commandPressed(debugInfo))
                 {
-                    if(serverData->ghostCar)
-                    {
-                        if(idx != -1)
-                            sendBrickCarToServer(&clientEnvironment,serverData->ghostCar,BtToGlm(res.m_hitPointWorld[idx]));
-                        else
-                            sendBrickCarToServer(&clientEnvironment,serverData->ghostCar,BtToGlm(rayend) + glm::vec3(0,5,0));
-                        delete serverData->ghostCar;
-                        serverData->ghostCar = 0;
-                    }
-
-                    //We actually clicked on something in the world...
-                    if(idx != -1 && serverData->cameraTarget)
-                    {
-                        if(clientEnvironment.currentlyOpen == brickBar)
-                            myTempBrick.teleport(BtToGlm(res.m_hitPointWorld[idx]));
-
-                        if(box->currentPhase == selectionBox::selectionPhase::waitingForClick)
-                        {
-                            box->minExtents = res.m_hitPointWorld[idx];
-                            box->maxExtents = res.m_hitPointWorld[idx];
-                            box->currentPhase = selectionBox::selectionPhase::selecting;
-                            box->movePulls();
-                        }
-                        else if(box->currentPhase == selectionBox::selectionPhase::selecting)
-                        {
-                            box->currentPhase = selectionBox::selectionPhase::stretching;
-                        }
-                    }
-                }
-            }
-        }
-
-        if(justTurnOnChat)
-        {
-            justTurnOnChat = false;
-            chatEditbox->setText("");
-        }
-        supress |= chatEditbox->isActive();
-
-        playerInput.supress(supress);
-
-        if(playerInput.commandPressed(toggleGUI))
-            hud->setVisible(!hud->isVisible());
-
-        if(playerInput.commandPressed(debugInfo))
-        {
-            if(serverData->currentPlayer)
-            {
-                btTransform t = serverData->currentPlayer->body->getWorldTransform();
-                btVector3 v = t.getOrigin();
-                std::cout<<"Physics pos: "<<v.x()<<","<<v.y()<<","<<v.z()<<"\n";
-            }
-
-            std::cout<<"Position: "<<serverData->playerCamera->getPosition().x<<","<<serverData->playerCamera->getPosition().y<<","<<serverData->playerCamera->getPosition().z<<"\n";
-            std::cout<<"Direction: "<<serverData->playerCamera->getDirection().x<<","<<serverData->playerCamera->getDirection().y<<","<<serverData->playerCamera->getDirection().z<<"\n";
-
-            std::cout<<"Num dynamics: "<<serverData->newDynamics.size()<<"\n";
-            std::cout<<"Num items: "<<serverData->items.size()<<"\n";
-            std::cout<<"Num emitters: "<<serverData->emitters.size()<<"\n";
-            std::cout<<"Num lights: "<<serverData->lights.size()<<"\n";
-            std::cout<<"Num cars: "<<serverData->livingBricks.size()<<"\n";
-            std::cout<<"Last crit packet ID: "<<serverData->connection->nextPacketID<<"\n";
-            std::cout<<"Highest server crit ID: "<<serverData->connection->highestServerCritID<<"\n";
-            std::cout<<"Sound locations: "<<location::locations.size()<<"\n";
-
-            std::cout<<"Program open for "<<SDL_GetTicks()<<"ms\n";
-
-            //for(int a = 0; a<32; a++)
-            //    std::cout<<"Of packet type "<<a<<" received "<<serverData->numGottenPackets[a]<<" packets.\n";
-        }
-
-        if(playerInput.commandPressed(playersListButton))
-        {
-            clientEnvironment.playerList->setVisible(true);
-            clientEnvironment.playerList->moveToFront();
-        }
-
-        if(playerInput.commandPressed(dropCameraAtPlayer))
-        {
-            packet data;
-            data.writeUInt(14,4);
-            data.writeBit(true);
-            serverData->connection->send(&data,true);
-        }
-
-        if(playerInput.commandPressed(dropPlayerAtCamera))
-        {
-            packet data;
-            data.writeUInt(14,4);
-            data.writeBit(false);
-            data.writeFloat(serverData->playerCamera->getPosition().x);
-            data.writeFloat(serverData->playerCamera->getPosition().y);
-            data.writeFloat(serverData->playerCamera->getPosition().z);
-            serverData->connection->send(&data,true);
-        }
-
-        if(playerInput.commandPressed(changeMaterial))
-        {
-            clientEnvironment.currentlyOpen = paintCan;
-
-            switch(myTempBrick.mat)
-            {
-                case brickMaterial::none: default: myTempBrick.mat = undulo; break;
-                case brickMaterial::undulo: myTempBrick.mat = bob; break;
-                case brickMaterial::bob: myTempBrick.mat = peral; break;
-                case brickMaterial::peral: myTempBrick.mat = chrome; break;
-                case brickMaterial::chrome: myTempBrick.mat = glow; break;
-                case brickMaterial::glow: myTempBrick.mat = blink; break;
-                case brickMaterial::blink: myTempBrick.mat = swirl; break;
-                case brickMaterial::swirl: myTempBrick.mat = slippery; break;
-                case brickMaterial::slippery: myTempBrick.mat = foil; break;
-                case brickMaterial::foil: myTempBrick.mat = none; break;
-            }
-
-            clientEnvironment.palette->window->getChild("PaintName")->setText(getBrickMatName(myTempBrick.mat));
-
-            clientEnvironment.palette->open();
-        }
-        if(playerInput.commandPressed(startSelection))
-            box->currentPhase = selectionBox::selectionPhase::waitingForClick;
-        if(playerInput.commandPressed(dropPlayerAtCamera) && serverData->cameraTarget)
-        {
-            //serverData->cameraTarget->setPosition(btVector3(serverData->playerCamera->getPosition().x,serverData->playerCamera->getPosition().y,serverData->playerCamera->getPosition().z));
-            //serverData->cameraTarget->setLinearVelocity(glm::vec3(0,0,0));
-        }
-        if(playerInput.commandPressed(changeCameraMode))
-        {
-            if(camMode == cammode_firstPerson)
-                camMode = cammode_thirdPerson;
-            else if(camMode == cammode_thirdPerson)
-                camMode = cammode_firstPerson;
-            /*camMode++;
-            if(camMode > 2)
-                camMode = 0;*/
-        }
-        if(playerInput.commandPressed(openBrickSelector))
-        {
-            context.setMouseLock(false);
-            clientEnvironment.brickSelector->setVisible(true);
-            clientEnvironment.brickSelector->moveToFront();
-        }
-        if(playerInput.commandPressed(openInventory))
-        {
-            if(clientEnvironment.currentlyOpen == inventory)
-                clientEnvironment.currentlyOpen = allClosed;
-            else
-                clientEnvironment.currentlyOpen = inventory;
-        }
-        if(playerInput.commandPressed(openEvalWindow))
-        {
-            context.setMouseLock(false);
-            evalWindow->setVisible(true);
-            evalWindow->moveToFront();
-            if(evalWindow->getChild("Code")->isVisible())
-            {
-                CEGUI::Listbox *codeBox = (CEGUI::Listbox*)evalWindow->getChild("Code/Editbox");
-                codeBox->activate();
-            }
-        }
-
-        if(playerInput.commandPressed(openOptions))
-        {
-            context.setMouseLock(false);
-            optionsWindow->moveToFront();
-            optionsWindow->setVisible(true);
-        }
-        if(playerInput.commandPressed(toggleMouseLock))
-            context.setMouseLock(!context.getMouseLocked());
-
-        if(playerInput.commandPressed(changePaintColumn))
-        {
-            clientEnvironment.currentlyOpen = paintCan;
-            glm::vec3 pos = serverData->playerCamera->getPosition();
-            //clientEnvironment.speaker->playSound("Rattle",false,pos.x,pos.y,pos.z);
-            clientEnvironment.speaker->playSound2D(clientEnvironment.speaker->resolveSound("Rattle"));
-            clientEnvironment.palette->advanceColumn();
-            myTempBrick.basicChanged = myTempBrick.basicChanged || myTempBrick.isBasic;
-            myTempBrick.specialChanged = myTempBrick.specialChanged || !myTempBrick.isBasic;
-        }
-
-        bottomBarShouldBeOpen = clientEnvironment.currentlyOpen == brickBar; //myTempBrick.brickSlotSelected != -1;
-        float bottomBarPos = std::clamp(((float)SDL_GetTicks() - bottomBarLastAct) / bottomBarOpenTime,0.f,1.f);
-        if(bottomBarShouldBeOpen)
-            bottomBarPos = bottomBarClose + bottomBarPos * (bottomBarOpen - bottomBarClose);
-        else
-            bottomBarPos = bottomBarOpen + bottomBarPos * (bottomBarClose - bottomBarOpen);
-        CEGUI::UVector2 oldPos = brickPopup->getPosition();
-        CEGUI::UDim x = oldPos.d_x;
-        CEGUI::UDim y = oldPos.d_y;
-        y.d_scale = bottomBarPos;
-        brickPopup->setPosition(CEGUI::UVector2(x,y));
-
-        if(myTempBrick.brickSlotSelected != -1)
-        {
-            CEGUI::UDim dx = brickHighlighter->getPosition().d_x;
-            CEGUI::UDim dy = brickHighlighter->getPosition().d_y;
-            dx.d_scale = 0.0020202 + (myTempBrick.brickSlotSelected-1) * 0.111;
-            brickHighlighter->setPosition(CEGUI::UVector2(dx,dy));
-        }
-
-        bool guiOpened=false,guiClosed=false;
-        myTempBrick.selectBrick(playerInput,hud,clientEnvironment.brickSelector,serverData->staticBricks,guiOpened,guiClosed);
-        if(guiOpened && !guiClosed)
-        {
-            if(clientEnvironment.currentlyOpen != brickBar)
-                bottomBarLastAct = SDL_GetTicks();
-            clientEnvironment.currentlyOpen = brickBar;
-
-        }
-        if(guiClosed && !guiOpened)
-        {
-            if(clientEnvironment.currentlyOpen == brickBar)
-                bottomBarLastAct = SDL_GetTicks();
-            clientEnvironment.currentlyOpen = allClosed;
-        }
-
-        if(myTempBrick.brickSlotSelected != -1)
-            myTempBrick.manipulate(playerInput,hud,clientEnvironment.brickSelector,serverData->playerCamera->getYaw(),clientEnvironment.speaker,serverData->staticBricks);
-
-        if(playerInput.commandPressed(plantBrick))
-        {
-            if(box->currentPhase == selectionBox::selectionPhase::selecting)
-            {
-                packet data;
-                data.writeUInt(5,4);
-                data.writeFloat(box->minExtents.x());
-                data.writeFloat(box->minExtents.y());
-                data.writeFloat(box->minExtents.z());
-                data.writeFloat(box->maxExtents.x());
-                data.writeFloat(box->maxExtents.y());
-                data.writeFloat(box->maxExtents.z());
-                serverData->connection->send(&data,true);
-
-                box->currentPhase = selectionBox::selectionPhase::idle;
-            }
-            else
-                myTempBrick.plant(serverData->staticBricks,world,serverData);
-        }
-
-        myTempBrick.update(serverData->staticBricks,clientEnvironment.palette);
-
-        if(serverData->adminCam && camMode != cammode_adminCam)
-            camMode = cammode_adminCam;
-        else if(!serverData->adminCam && camMode == cammode_adminCam)
-            camMode = cammode_firstPerson;
-
-        if(camMode == cammode_adminCam) //admin cam
-        {
-            crossHair->setVisible(false);
-            serverData->playerCamera->thirdPerson = false;
-            float cameraSpeed = 0.035;
-            if(states[SDL_SCANCODE_LCTRL] == SDL_PRESSED)
-                cameraSpeed = 0.2;
-            if(playerInput.commandKeyDown(walkForward))
-                serverData->playerCamera->walkForward(deltaT * cameraSpeed);
-            if(playerInput.commandKeyDown(walkBackward))
-                serverData->playerCamera->walkForward(-deltaT * cameraSpeed);
-            if(playerInput.commandKeyDown(walkLeft))
-                serverData->playerCamera->walkRight(-deltaT * cameraSpeed);
-            if(playerInput.commandKeyDown(walkRight))
-                serverData->playerCamera->walkRight(deltaT * cameraSpeed);
-        }
-        else
-        {
-            if(serverData->boundToObject && serverData->cameraTarget)
-            {
-                if(camMode == cammode_firstPerson) //1st person
-                {
-                    crossHair->setVisible(true);
-                    serverData->playerCamera->thirdPerson = false;
-
-                    glm::vec3 pos;
-                    if(serverData->currentPlayer && !serverData->giveUpControlOfCurrentPlayer)
+                    if(serverData->currentPlayer)
                     {
                         btTransform t = serverData->currentPlayer->body->getWorldTransform();
                         btVector3 v = t.getOrigin();
-                        pos.x = v.x();
-                        pos.y = v.y();
-                        pos.z = v.z();
-                    }
-                    else
-                    {
-                        if(serverData->currentPlayer)
-                            serverData->currentPlayer->useGlobalTransform = false;
-                        pos = serverData->cameraTarget->modelInterpolator.getPosition();
+                        std::cout<<"Physics pos: "<<v.x()<<","<<v.y()<<","<<v.z()<<"\n";
                     }
 
-                    pos += serverData->cameraTarget->type->eyeOffset;
-                    serverData->playerCamera->setPosition( pos );
+                    std::cout<<"Position: "<<serverData->playerCamera->getPosition().x<<","<<serverData->playerCamera->getPosition().y<<","<<serverData->playerCamera->getPosition().z<<"\n";
+                    std::cout<<"Direction: "<<serverData->playerCamera->getDirection().x<<","<<serverData->playerCamera->getDirection().y<<","<<serverData->playerCamera->getDirection().z<<"\n";
+
+                    std::cout<<"Num dynamics: "<<serverData->newDynamics.size()<<"\n";
+                    std::cout<<"Num items: "<<serverData->items.size()<<"\n";
+                    std::cout<<"Num emitters: "<<serverData->emitters.size()<<"\n";
+                    std::cout<<"Num lights: "<<serverData->lights.size()<<"\n";
+                    std::cout<<"Num cars: "<<serverData->livingBricks.size()<<"\n";
+                    std::cout<<"Last crit packet ID: "<<serverData->connection->nextPacketID<<"\n";
+                    std::cout<<"Highest server crit ID: "<<serverData->connection->highestServerCritID<<"\n";
+                    std::cout<<"Sound locations: "<<location::locations.size()<<"\n";
+
+                    std::cout<<"Program open for "<<SDL_GetTicks()<<"ms\n";
+
+                    //for(int a = 0; a<32; a++)
+                    //    std::cout<<"Of packet type "<<a<<" received "<<serverData->numGottenPackets[a]<<" packets.\n";
                 }
-                else //3rd person
+
+                if(playerInput.commandPressed(playersListButton))
+                {
+                    clientEnvironment.playerList->setVisible(true);
+                    clientEnvironment.playerList->moveToFront();
+                }
+
+                if(playerInput.commandPressed(dropCameraAtPlayer))
+                {
+                    packet data;
+                    data.writeUInt(14,4);
+                    data.writeBit(true);
+                    serverData->connection->send(&data,true);
+                }
+
+                if(playerInput.commandPressed(dropPlayerAtCamera))
+                {
+                    packet data;
+                    data.writeUInt(14,4);
+                    data.writeBit(false);
+                    data.writeFloat(serverData->playerCamera->getPosition().x);
+                    data.writeFloat(serverData->playerCamera->getPosition().y);
+                    data.writeFloat(serverData->playerCamera->getPosition().z);
+                    serverData->connection->send(&data,true);
+                }
+
+                if(playerInput.commandPressed(changeMaterial))
+                {
+                    clientEnvironment.currentlyOpen = paintCan;
+
+                    switch(serverData->ourTempBrick->mat)
+                    {
+                        case brickMaterial::none: default: serverData->ourTempBrick->mat = undulo; break;
+                        case brickMaterial::undulo: serverData->ourTempBrick->mat = bob; break;
+                        case brickMaterial::bob: serverData->ourTempBrick->mat = peral; break;
+                        case brickMaterial::peral: serverData->ourTempBrick->mat = chrome; break;
+                        case brickMaterial::chrome: serverData->ourTempBrick->mat = glow; break;
+                        case brickMaterial::glow: serverData->ourTempBrick->mat = blink; break;
+                        case brickMaterial::blink: serverData->ourTempBrick->mat = swirl; break;
+                        case brickMaterial::swirl: serverData->ourTempBrick->mat = slippery; break;
+                        case brickMaterial::slippery: serverData->ourTempBrick->mat = foil; break;
+                        case brickMaterial::foil: serverData->ourTempBrick->mat = none; break;
+                    }
+
+                    clientEnvironment.palette->window->getChild("PaintName")->setText(getBrickMatName(serverData->ourTempBrick->mat));
+
+                    clientEnvironment.palette->open();
+                }
+                if(playerInput.commandPressed(startSelection))
+                    serverData->box->currentPhase = selectionBox::selectionPhase::waitingForClick;
+                if(playerInput.commandPressed(dropPlayerAtCamera) && serverData->cameraTarget)
+                {
+                    //serverData->cameraTarget->setPosition(btVector3(serverData->playerCamera->getPosition().x,serverData->playerCamera->getPosition().y,serverData->playerCamera->getPosition().z));
+                    //serverData->cameraTarget->setLinearVelocity(glm::vec3(0,0,0));
+                }
+                if(playerInput.commandPressed(changeCameraMode))
+                {
+                    if(camMode == cammode_firstPerson)
+                        camMode = cammode_thirdPerson;
+                    else if(camMode == cammode_thirdPerson)
+                        camMode = cammode_firstPerson;
+                    /*camMode++;
+                    if(camMode > 2)
+                        camMode = 0;*/
+                }
+                if(playerInput.commandPressed(openBrickSelector))
+                {
+                    context.setMouseLock(false);
+                    clientEnvironment.brickSelector->setVisible(true);
+                    clientEnvironment.brickSelector->moveToFront();
+                }
+                if(playerInput.commandPressed(openInventory))
+                {
+                    if(clientEnvironment.currentlyOpen == inventory)
+                        clientEnvironment.currentlyOpen = allClosed;
+                    else
+                        clientEnvironment.currentlyOpen = inventory;
+                }
+                if(playerInput.commandPressed(openEvalWindow))
+                {
+                    context.setMouseLock(false);
+                    evalWindow->setVisible(true);
+                    evalWindow->moveToFront();
+                    if(evalWindow->getChild("Code")->isVisible())
+                    {
+                        CEGUI::Listbox *codeBox = (CEGUI::Listbox*)evalWindow->getChild("Code/Editbox");
+                        codeBox->activate();
+                    }
+                }
+
+                if(playerInput.commandPressed(openOptions))
+                {
+                    context.setMouseLock(false);
+                    optionsWindow->moveToFront();
+                    optionsWindow->setVisible(true);
+                }
+                if(playerInput.commandPressed(toggleMouseLock))
+                    context.setMouseLock(!context.getMouseLocked());
+
+                if(playerInput.commandPressed(changePaintColumn))
+                {
+                    clientEnvironment.currentlyOpen = paintCan;
+                    glm::vec3 pos = serverData->playerCamera->getPosition();
+                    //clientEnvironment.speaker->playSound("Rattle",false,pos.x,pos.y,pos.z);
+                    clientEnvironment.speaker->playSound2D(clientEnvironment.speaker->resolveSound("Rattle"));
+                    clientEnvironment.palette->advanceColumn();
+                    serverData->ourTempBrick->basicChanged = serverData->ourTempBrick->basicChanged || serverData->ourTempBrick->isBasic;
+                    serverData->ourTempBrick->specialChanged = serverData->ourTempBrick->specialChanged || !serverData->ourTempBrick->isBasic;
+                }
+
+                bottomBarShouldBeOpen = clientEnvironment.currentlyOpen == brickBar; //serverData->ourTempBrick->brickSlotSelected != -1;
+                float bottomBarPos = std::clamp(((float)SDL_GetTicks() - bottomBarLastAct) / bottomBarOpenTime,0.f,1.f);
+                if(bottomBarShouldBeOpen)
+                    bottomBarPos = bottomBarClose + bottomBarPos * (bottomBarOpen - bottomBarClose);
+                else
+                    bottomBarPos = bottomBarOpen + bottomBarPos * (bottomBarClose - bottomBarOpen);
+                CEGUI::UVector2 oldPos = brickPopup->getPosition();
+                CEGUI::UDim x = oldPos.d_x;
+                CEGUI::UDim y = oldPos.d_y;
+                y.d_scale = bottomBarPos;
+                brickPopup->setPosition(CEGUI::UVector2(x,y));
+
+                if(serverData->ourTempBrick->brickSlotSelected != -1)
+                {
+                    CEGUI::UDim dx = brickHighlighter->getPosition().d_x;
+                    CEGUI::UDim dy = brickHighlighter->getPosition().d_y;
+                    dx.d_scale = 0.0020202 + (serverData->ourTempBrick->brickSlotSelected-1) * 0.111;
+                    brickHighlighter->setPosition(CEGUI::UVector2(dx,dy));
+                }
+
+                bool guiOpened=false,guiClosed=false;
+                serverData->ourTempBrick->selectBrick(playerInput,hud,clientEnvironment.brickSelector,serverData->staticBricks,guiOpened,guiClosed);
+                if(guiOpened && !guiClosed)
+                {
+                    if(clientEnvironment.currentlyOpen != brickBar)
+                        bottomBarLastAct = SDL_GetTicks();
+                    clientEnvironment.currentlyOpen = brickBar;
+
+                }
+                if(guiClosed && !guiOpened)
+                {
+                    if(clientEnvironment.currentlyOpen == brickBar)
+                        bottomBarLastAct = SDL_GetTicks();
+                    clientEnvironment.currentlyOpen = allClosed;
+                }
+
+                if(serverData->ourTempBrick->brickSlotSelected != -1)
+                    serverData->ourTempBrick->manipulate(playerInput,hud,clientEnvironment.brickSelector,serverData->playerCamera->getYaw(),clientEnvironment.speaker,serverData->staticBricks);
+
+                if(playerInput.commandPressed(plantBrick))
+                {
+                    if(serverData->box->currentPhase == selectionBox::selectionPhase::selecting)
+                    {
+                        packet data;
+                        data.writeUInt(5,4);
+                        data.writeFloat(serverData->box->minExtents.x());
+                        data.writeFloat(serverData->box->minExtents.y());
+                        data.writeFloat(serverData->box->minExtents.z());
+                        data.writeFloat(serverData->box->maxExtents.x());
+                        data.writeFloat(serverData->box->maxExtents.y());
+                        data.writeFloat(serverData->box->maxExtents.z());
+                        serverData->connection->send(&data,true);
+
+                        serverData->box->currentPhase = selectionBox::selectionPhase::idle;
+                    }
+                    else
+                        serverData->ourTempBrick->plant(serverData->staticBricks,world,serverData->connection);
+                }
+
+                serverData->ourTempBrick->update(serverData->staticBricks,clientEnvironment.palette);
+
+                if(serverData->adminCam && camMode != cammode_adminCam)
+                    camMode = cammode_adminCam;
+                else if(!serverData->adminCam && camMode == cammode_adminCam)
+                    camMode = cammode_firstPerson;
+
+                if(camMode == cammode_adminCam) //admin cam
                 {
                     crossHair->setVisible(false);
-                    serverData->playerCamera->thirdPerson = true;
-
-                    //3rd person camera follow distance backwards raycast:
-                    btVector3 v;
-                    if(serverData->currentPlayer && serverData->currentPlayer->body)
+                    serverData->playerCamera->thirdPerson = false;
+                    float cameraSpeed = 0.035;
+                    if(states[SDL_SCANCODE_LCTRL] == SDL_PRESSED)
+                        cameraSpeed = 0.2;
+                    if(playerInput.commandKeyDown(walkForward))
+                        serverData->playerCamera->walkForward(deltaT * cameraSpeed);
+                    if(playerInput.commandKeyDown(walkBackward))
+                        serverData->playerCamera->walkForward(-deltaT * cameraSpeed);
+                    if(playerInput.commandKeyDown(walkLeft))
+                        serverData->playerCamera->walkRight(-deltaT * cameraSpeed);
+                    if(playerInput.commandKeyDown(walkRight))
+                        serverData->playerCamera->walkRight(deltaT * cameraSpeed);
+                }
+                else
+                {
+                    if(serverData->boundToObject && serverData->cameraTarget)
                     {
-                        btTransform t = serverData->currentPlayer->body->getWorldTransform();
-                        v = t.getOrigin();
-                    }
-                    else
-                    {
-                        v = glmToBt(serverData->cameraTarget->modelInterpolator.getPosition());
-                    }
-
-                    v += glmToBt(serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0));
-
-                    btVector3 raystart = glmToBt(glm::vec3(v.x(),v.y(),v.z()));
-                    btVector3 rayend = glmToBt(glm::vec3(v.x(),v.y(),v.z()) - serverData->playerCamera->getDirection() * glm::vec3(30.0));
-                    btCollisionWorld::ClosestRayResultCallback res(raystart,rayend);
-                    world->rayTest(raystart,rayend,res);
-
-                    /*int idx = -1;
-                    float dist = 9999999;
-
-                    if(serverData->cameraTarget)
-                    {
-                        for(int a = 0; a<res.m_collisionObjects.size(); a++)
+                        if(camMode == cammode_firstPerson) //1st person
                         {
-                            if(res.m_collisionObjects[a] != serverData->cameraTarget->body)
+                            crossHair->setVisible(true);
+                            serverData->playerCamera->thirdPerson = false;
+
+                            glm::vec3 pos;
+                            if(serverData->currentPlayer && !serverData->giveUpControlOfCurrentPlayer)
                             {
-                                if(fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition())) < dist)
+                                btTransform t = serverData->currentPlayer->body->getWorldTransform();
+                                btVector3 v = t.getOrigin();
+                                pos.x = v.x();
+                                pos.y = v.y();
+                                pos.z = v.z();
+                            }
+                            else
+                            {
+                                if(serverData->currentPlayer)
+                                    serverData->currentPlayer->useGlobalTransform = false;
+                                pos = serverData->cameraTarget->modelInterpolator.getPosition();
+                            }
+
+                            pos += serverData->cameraTarget->type->eyeOffset;
+                            serverData->playerCamera->setPosition( pos );
+                        }
+                        else //3rd person
+                        {
+                            crossHair->setVisible(false);
+                            serverData->playerCamera->thirdPerson = true;
+
+                            //3rd person camera follow distance backwards raycast:
+                            btVector3 v;
+                            if(serverData->currentPlayer && serverData->currentPlayer->body)
+                            {
+                                btTransform t = serverData->currentPlayer->body->getWorldTransform();
+                                v = t.getOrigin();
+                            }
+                            else
+                            {
+                                v = glmToBt(serverData->cameraTarget->modelInterpolator.getPosition());
+                            }
+
+                            v += glmToBt(serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0));
+
+                            btVector3 raystart = glmToBt(glm::vec3(v.x(),v.y(),v.z()));
+                            btVector3 rayend = glmToBt(glm::vec3(v.x(),v.y(),v.z()) - serverData->playerCamera->getDirection() * glm::vec3(30.0));
+                            btCollisionWorld::ClosestRayResultCallback res(raystart,rayend);
+                            world->rayTest(raystart,rayend,res);
+
+                            /*int idx = -1;
+                            float dist = 9999999;
+
+                            if(serverData->cameraTarget)
+                            {
+                                for(int a = 0; a<res.m_collisionObjects.size(); a++)
                                 {
-                                    dist = fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition()));
-                                    idx = a;
+                                    if(res.m_collisionObjects[a] != serverData->cameraTarget->body)
+                                    {
+                                        if(fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition())) < dist)
+                                        {
+                                            dist = fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition()));
+                                            idx = a;
+                                        }
+                                    }
                                 }
+                            }*/
+
+                            if(serverData->currentPlayer && serverData->currentPlayer->body && !serverData->giveUpControlOfCurrentPlayer)
+                            {
+                                btTransform t = serverData->currentPlayer->body->getWorldTransform();
+                                v = t.getOrigin();
+                                serverData->playerCamera->thirdPersonTarget = glm::vec3(v.x(),v.y(),v.z()) + serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
+                                serverData->playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
+                                serverData->playerCamera->setPosition(glm::vec3(v.x(),v.y(),v.z()));
+                                serverData->playerCamera->turn(0,0);
+                                serverData->currentPlayer->useGlobalTransform = true;
+                                btQuaternion bulletRot = t.getRotation();
+                                glm::quat rot = glm::quat(bulletRot.w(),bulletRot.x(),bulletRot.y(),bulletRot.z());
+                                serverData->currentPlayer->globalTransform = glm::translate(glm::vec3(v.x(),v.y(),v.z())) * glm::toMat4(rot);
+                            }
+                            else
+                            {
+                                if(serverData->currentPlayer)
+                                    serverData->currentPlayer->useGlobalTransform = false;
+
+                                serverData->playerCamera->thirdPersonTarget = serverData->cameraTarget->modelInterpolator.getPosition() + serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
+                                serverData->playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
+                                serverData->playerCamera->setPosition(serverData->cameraTarget->modelInterpolator.getPosition());
+                                serverData->playerCamera->turn(0,0);
                             }
                         }
-                    }*/
-
-                    if(serverData->currentPlayer && serverData->currentPlayer->body && !serverData->giveUpControlOfCurrentPlayer)
-                    {
-                        btTransform t = serverData->currentPlayer->body->getWorldTransform();
-                        v = t.getOrigin();
-                        serverData->playerCamera->thirdPersonTarget = glm::vec3(v.x(),v.y(),v.z()) + serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
-                        serverData->playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
-                        serverData->playerCamera->setPosition(glm::vec3(v.x(),v.y(),v.z()));
-                        serverData->playerCamera->turn(0,0);
-                        serverData->currentPlayer->useGlobalTransform = true;
-                        btQuaternion bulletRot = t.getRotation();
-                        glm::quat rot = glm::quat(bulletRot.w(),bulletRot.x(),bulletRot.y(),bulletRot.z());
-                        serverData->currentPlayer->globalTransform = glm::translate(glm::vec3(v.x(),v.y(),v.z())) * glm::toMat4(rot);
+                        //TODO: Should just store which item is the current held not-hidden item, loop is bad
+                        for(int a = 0; a<serverData->items.size(); a++)
+                        {
+                            if(serverData->currentPlayer && serverData->items[a]->heldBy == serverData->currentPlayer && !serverData->items[a]->hidden)
+                            {
+                                if(serverData->giveUpControlOfCurrentPlayer)
+                                    serverData->items[a]->updateTransform(false,serverData->playerCamera->getYaw(),serverData->playerCamera->getPitch());
+                                else
+                                    serverData->items[a]->updateTransform(true,serverData->playerCamera->getYaw(),serverData->playerCamera->getPitch());
+                                serverData->items[a]->calculateMeshTransforms(deltaT); //The item we are currently holding
+                            }
+                        }
                     }
-                    else
+                    else //static cam
                     {
-                        if(serverData->currentPlayer)
-                            serverData->currentPlayer->useGlobalTransform = false;
-
-                        serverData->playerCamera->thirdPersonTarget = serverData->cameraTarget->modelInterpolator.getPosition() + serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
-                        serverData->playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
-                        serverData->playerCamera->setPosition(serverData->cameraTarget->modelInterpolator.getPosition());
-                        serverData->playerCamera->turn(0,0);
+                        serverData->playerCamera->thirdPerson = false;
+                        serverData->playerCamera->setPosition(serverData->cameraPos);
+                        if(!serverData->freeLook)
+                        {
+                            serverData->playerCamera->setDirection(serverData->cameraDir);
+                            serverData->playerCamera->turn(0,0);
+                        }
                     }
                 }
-                //TODO: Should just store which item is the current held not-hidden item, loop is bad
-                for(int a = 0; a<serverData->items.size(); a++)
-                {
-                    if(serverData->currentPlayer && serverData->items[a]->heldBy == serverData->currentPlayer && !serverData->items[a]->hidden)
-                    {
-                        if(serverData->giveUpControlOfCurrentPlayer)
-                            serverData->items[a]->updateTransform(false,serverData->playerCamera->getYaw(),serverData->playerCamera->getPitch());
-                        else
-                            serverData->items[a]->updateTransform(true,serverData->playerCamera->getYaw(),serverData->playerCamera->getPitch());
-                        serverData->items[a]->calculateMeshTransforms(deltaT); //The item we are currently holding
-                    }
-                }
-            }
-            else //static cam
-            {
-                serverData->playerCamera->thirdPerson = false;
-                serverData->playerCamera->setPosition(serverData->cameraPos);
-                if(!serverData->freeLook)
-                {
-                    serverData->playerCamera->setDirection(serverData->cameraDir);
-                    serverData->playerCamera->turn(0,0);
-                }
-            }
-        }
 
-        if(playerInput.commandKeyDown(zoom))
-            desiredFov = 15;
-        else
-            desiredFov = clientEnvironment.settings->fieldOfView;
-
-        currentZoom += (desiredFov - currentZoom) * deltaT * 0.0025;
-        serverData->playerCamera->setFieldOfVision(currentZoom);
-
-        glm::vec3 microphoneDir = glm::vec3(sin(serverData->playerCamera->getYaw()),0,cos(serverData->playerCamera->getYaw()));
-        //clientEnvironment.speaker->microphone(serverData->playerCamera->getPosition()+glm::vec3(0.05,0.05,0.05),microphoneDir);
-        clientEnvironment.speaker->update(serverData->playerCamera->getPosition(),microphoneDir);
-
-        if(playerInput.commandKeyDown(jump))
-            doJump = true;
-
-        for(unsigned int a = 0; a<serverData->items.size(); a++)
-        {
-            heldItemType *type = serverData->items[a]->itemType;
-            if(type->useDefaultSwing)
-            {
-                if(serverData->items[a]->heldBy == serverData->cameraTarget)
-                    serverData->items[a]->advance(context.getMouseLocked() && mouseState & SDL_BUTTON_LEFT,deltaT);
+                if(playerInput.commandKeyDown(zoom))
+                    desiredFov = 15;
                 else
-                    serverData->items[a]->advance(false,deltaT);
-            }
-            else
-                serverData->items[a]->advance(false,deltaT);
-            serverData->items[a]->bufferSubData();
-        }
+                    desiredFov = clientEnvironment.settings->fieldOfView;
 
-        for(int a = 0; a<serverData->newDynamics.size(); a++)
-        {
-            serverData->newDynamics[a]->hidden = (serverData->newDynamics[a] == serverData->cameraTarget) && (camMode == cammode_firstPerson);
-            serverData->newDynamics[a]->calculateMeshTransforms(deltaT);
-            serverData->newDynamics[a]->bufferSubData();
-        }
-        for(int a = 0; a<serverData->items.size(); a++)
-            if(!(serverData->currentPlayer && serverData->items[a]->heldBy == serverData->currentPlayer && !serverData->items[a]->hidden))
-                serverData->items[a]->calculateMeshTransforms(deltaT); //Any item we are not currently holding
+                currentZoom += (desiredFov - currentZoom) * deltaT * 0.0025;
+                serverData->playerCamera->setFieldOfVision(currentZoom);
 
-        auto emitterIter = serverData->emitters.begin();
-        while(emitterIter != serverData->emitters.end())
-        {
-            emitter *e = *emitterIter;
-            if(e->type->lifetimeMS != 0 && !e->attachedToCar && !e->attachedToBasicBrick && !e->attachedToSpecialBrick)
-            {
-                if(e->creationTime + e->type->lifetimeMS < SDL_GetTicks())
-                {
-                    delete e;
-                    emitterIter = serverData->emitters.erase(emitterIter);
-                    continue;
-                }
-            }
-            bool usePhysicsPos = serverData->currentPlayer && !serverData->giveUpControlOfCurrentPlayer;
-            e->update(serverData->playerCamera->position,
-                      serverData->playerCamera->direction,
-                      usePhysicsPos,
-                      (camMode == cammode_firstPerson) && (serverData->currentPlayer == e->attachedToModel || (e->attachedToItem && serverData->currentPlayer == e->attachedToItem->heldBy)),
-                      serverData->playerCamera->getYaw(),
-                      serverData->playerCamera->getPitch());
-            ++emitterIter;
-        }
+                glm::vec3 microphoneDir = glm::vec3(sin(serverData->playerCamera->getYaw()),0,cos(serverData->playerCamera->getYaw()));
+                //clientEnvironment.speaker->microphone(serverData->playerCamera->getPosition()+glm::vec3(0.05,0.05,0.05),microphoneDir);
+                clientEnvironment.speaker->update(serverData->playerCamera->getPosition(),microphoneDir);
 
-        for(unsigned int a = 0; a<serverData->particleTypes.size(); a++)
-            serverData->particleTypes[a]->deadParticlesCheck(serverData->playerCamera->getPosition(),deltaT);
-
-        sortLights(serverData->lights,serverData->playerCamera->getPosition(),deltaT);
-
-        //Networking:
-
-        serverData->tryApplyHeldPackets();
-
-        checkForCameraToBind(serverData);
-
-        if(connected)
-        {
-            glm::vec3 up = glm::vec3(0,1,0);
-            serverData->playerCamera->nominalUp = up;
-
-            if(serverData->cameraLean && camMode == 0 && serverData->cameraTarget)
-            {
-                serverData->totalLean += playerInput.commandKeyDown(walkLeft) ? deltaT * 0.001 : 0;
-                serverData->totalLean -= playerInput.commandKeyDown(walkRight) ? deltaT * 0.001 : 0;
-                if(!(playerInput.commandKeyDown(walkRight) || playerInput.commandKeyDown(walkLeft)))
-                    serverData->totalLean *= 0.9;
-
-                if(serverData->totalLean > 0.17)
-                    serverData->totalLean = 0.17;
-                if(serverData->totalLean < -0.17)
-                    serverData->totalLean = -0.17;
-
-                glm::vec3 playerForward = glm::vec3(0,0,1);//serverData->playerCamera->getDirection();
-                glm::vec3 playerRight = glm::normalize(glm::cross(up,playerForward));
-
-                glm::vec3 dir = glm::normalize(glm::vec3(serverData->totalLean * playerRight.x,1,serverData->totalLean * playerRight.z));
-                glm::vec4 afterDir = glm::toMat4(serverData->cameraTarget->modelInterpolator.getRotation()) * glm::vec4(dir.x,dir.y,dir.z,0);
-                serverData->playerCamera->nominalUp = glm::vec3(afterDir.x,afterDir.y,afterDir.z);
-            }
-
-            bool didJump = false;
-            int netControlState = 0;
-            netControlState |= (!states[SDL_SCANCODE_LCTRL] && playerInput.commandKeyDown(walkForward)) ? 1 : 0;
-            netControlState |= playerInput.commandKeyDown(walkBackward) ? 2 : 0;
-            netControlState |= playerInput.commandKeyDown(walkLeft) ? 4 : 0;
-            netControlState |= playerInput.commandKeyDown(walkRight) ? 8 : 0;
-            netControlState |= doJump ? 16 : 0;
-            //if(camMode == 2)
-              //  netControlState = 0;
-            if(evalWindow->isActive() && evalWindow->isVisible())
-                netControlState = 0;
-
-            //Move client player for client physics:
-            if(serverData->currentPlayer && !serverData->giveUpControlOfCurrentPlayer && camMode != cammode_adminCam)
-            {
-                if(SDL_GetTicks() - serverData->currentPlayer->flingPreventionStartTime > 100)
-                {
-                    if(serverData->currentPlayer->control(atan2(serverData->playerCamera->getDirection().x,serverData->playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,serverData->canJet && rightDown))
-                        didJump = true;
-                    if(didJump)
-                        clientEnvironment.speaker->playSound2D(clientEnvironment.speaker->resolveSound("Jump"));
-                        //clientEnvironment.speaker->playSound("Jump",false,serverData->playerCamera->getPosition().x,serverData->playerCamera->getPosition().y-1.0,serverData->playerCamera->getPosition().z);
-                }
-            }
-
-            int fullControlState  = netControlState + (leftDown << 5);
-            fullControlState |= (clientEnvironment.currentlyOpen == inventory) ? 0b1000000 : 0;
-            fullControlState |= serverData->selectedSlot << 7;
-            fullControlState += rightDown << 11;
-            fullControlState |= (clientEnvironment.currentlyOpen == paintCan) ? (1 << 12) : 0;
-            fullControlState |= chatEditbox->isActive() ? (1 << 13) : 0;
-
-            glm::vec3 playerDirDiff = serverData->playerCamera->getDirection() - lastPlayerDir;
-            if(fabs(glm::length(playerDirDiff)) > 0.02 || fullControlState != lastPlayerControlMask || doJump || SDL_GetTicks() > (unsigned)(lastSentTransData + 1000))
-            {
-                if(SDL_GetTicks() > (unsigned)(lastSentTransData + 5))
-                {
-                    lastPlayerControlMask = fullControlState;
-
-                    packet transPacket;
-                    transPacket.writeUInt(2,4);
-                    if(camMode == 2)
-                        netControlState = 0;
-                    transPacket.writeUInt(netControlState,5);
-                    transPacket.writeBit(didJump);//This one controls if the sound is played
-                    transPacket.writeBit(context.getMouseLocked() && leftDown);
-                    transPacket.writeBit(context.getMouseLocked() && rightDown);
-                    transPacket.writeBit(clientEnvironment.currentlyOpen == paintCan);
-                    if(clientEnvironment.currentlyOpen == paintCan)
-                    {
-                        glm::vec4 paintColor = clientEnvironment.palette->getColor();
-                        transPacket.writeFloat(paintColor.r);
-                        transPacket.writeFloat(paintColor.g);
-                        transPacket.writeFloat(paintColor.b);
-                        transPacket.writeFloat(paintColor.a);
-                    }
-
-                    doJump = false;
-
-                    lastPlayerDir = serverData->playerCamera->getDirection();
-                    transPacket.writeFloat(serverData->playerCamera->getDirection().x);
-                    transPacket.writeFloat(serverData->playerCamera->getDirection().y);
-                    transPacket.writeFloat(serverData->playerCamera->getDirection().z);
-                    if(clientEnvironment.currentlyOpen == inventory)
-                        transPacket.writeUInt(serverData->selectedSlot,3);
-                    else
-                        transPacket.writeUInt(7,3);
-
-                    transPacket.writeBit(serverData->adminCam);
-                    if(serverData->adminCam)
-                    {
-                        transPacket.writeFloat(serverData->playerCamera->getPosition().x);
-                        transPacket.writeFloat(serverData->playerCamera->getPosition().y);
-                        transPacket.writeFloat(serverData->playerCamera->getPosition().z);
-                    }
-                    transPacket.writeBit(chatEditbox->isActive());
-
-                    bool actuallyUseClientPhysics = useClientPhysics;
-                    if(!serverData->currentPlayer)
-                        actuallyUseClientPhysics = false;
-                    if(serverData->giveUpControlOfCurrentPlayer)
-                        actuallyUseClientPhysics = false;
-
-                    transPacket.writeBit(actuallyUseClientPhysics);
-                    if(actuallyUseClientPhysics)
-                    {
-                        btTransform t = serverData->currentPlayer->body->getWorldTransform();
-                        btVector3 o = t.getOrigin();
-                        transPacket.writeFloat(o.x());
-                        transPacket.writeFloat(o.y());
-                        transPacket.writeFloat(o.z());
-                        btVector3 v = serverData->currentPlayer->body->getLinearVelocity();
-                        transPacket.writeFloat(v.x());
-                        transPacket.writeFloat(v.y());
-                        transPacket.writeFloat(v.z());
-                    }
-
-                    serverConnection->send(&transPacket,false);
-
-                    lastSentTransData = SDL_GetTicks();
-                }
-            }
-
-            float progress = ((float)serverData->staticBricks.getBrickCount()) / ((float)serverData->skippingCompileNextBricks);
-            setBrickLoadProgress(progress,serverData->staticBricks.getBrickCount());
-
-            serverConnection->run();
-        }
-
-        for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
-        {
-            //std::cout<<"Advancing: "<<deltaT<<"\n";
-            serverData->livingBricks[a]->carTransform.advance(deltaT);
-            //std::cout<<"\n";
-
-            for(int wheel = 0; wheel<serverData->livingBricks[a]->newWheels.size(); wheel++)
-            {
-                serverData->livingBricks[a]->newWheels[wheel]->calculateMeshTransforms(deltaT);
-                serverData->livingBricks[a]->newWheels[wheel]->bufferSubData();
-            }
-        }
-
-        for(unsigned int a = 0; a<serverData->items.size(); a++)
-        {
-            if(!(!serverData->giveUpControlOfCurrentPlayer && serverData->currentPlayer && serverData->items[a]->heldBy == serverData->currentPlayer && !serverData->items[a]->hidden))
-                serverData->items[a]->updateTransform();
-        }
-
-        //std::cout<<serverData->staticBricks.opaqueBasicBricks.size()<<" bricks\n";
-
-        auto fakeKillIter = serverData->fakeKills.begin();
-        while(fakeKillIter != serverData->fakeKills.end())
-        {
-            if((*fakeKillIter).endTime < SDL_GetTicks())
-            {
-                if((*fakeKillIter).basic)
-                    serverData->staticBricks.removeBasicBrick((*fakeKillIter).basic,serverData->world);
-                if((*fakeKillIter).special)
-                    serverData->staticBricks.removeSpecialBrick((*fakeKillIter).special,serverData->world);
-                fakeKillIter = serverData->fakeKills.erase(fakeKillIter);
-            }
-            else
-            {
-                (*fakeKillIter).linVel.y -= deltaT / 2500.0;
-                float progress = (*fakeKillIter).endTime - (*fakeKillIter).startTime;
-                progress = ((float)SDL_GetTicks() - (float)(*fakeKillIter).startTime) / progress;
-                if((*fakeKillIter).basic)
-                {
-                    (*fakeKillIter).basic->position += (*fakeKillIter).linVel;
-                    (*fakeKillIter).basic->rotation = glm::slerp((*fakeKillIter).basic->rotation,glm::quat((*fakeKillIter).angVel),progress);
-                    serverData->staticBricks.updateBasicBrick((*fakeKillIter).basic,serverData->world);
-                }
-                if((*fakeKillIter).special)
-                {
-                    (*fakeKillIter).special->position += (*fakeKillIter).linVel;
-                    (*fakeKillIter).special->rotation = glm::slerp((*fakeKillIter).special->rotation,glm::quat((*fakeKillIter).angVel),progress);
-                    serverData->staticBricks.updateSpecialBrick((*fakeKillIter).special,serverData->world,0);
-                }
-                fakeKillIter++;
-            }
-        }
-
-        /*glFlush();
-        glFinish();
-        SDL_Delay(1);*/
-
-        //Graphics:
-        //Sun direction sundirection
-        //serverData->env->iblShadowsCalc(serverData->playerCamera,glm::vec3(0.496595,0.50,0.856871));
-        serverData->env->iblShadowsCalc(serverData->playerCamera,glm::vec3(0.540455,0.742971,0.394844));
-
-        glActiveTexture(GL_TEXTURE0 + cubeMapRadiance);
-        glBindTexture(GL_TEXTURE_CUBE_MAP,IBLRad);
-        glActiveTexture(GL_TEXTURE0 + cubeMapIrradiance);
-        glBindTexture(GL_TEXTURE_CUBE_MAP,IBLIrr);
-        bdrf->bind(brdf);
-
-        std::string oldName = "";
-
-        serverData->env->godRayPass->bind();
-        if(clientEnvironment.settings->godRayQuality != godRaysOff)
-        {
-            godPrePassSunUnis->use();
-
-                glUniform1i(godPrePassSunUnis->doingGodRayPass,true);
-                oldName = serverData->playerCamera->name;
-                serverData->playerCamera->name = "Shadow";
-                serverData->playerCamera->render(godPrePassSunUnis);
-                serverData->env->passUniforms(godPrePassSunUnis);
-                serverData->env->drawSun(godPrePassSunUnis);
-                glUniform1i(godPrePassSunUnis->doingGodRayPass,false);
-
-            godPrePassBrickUnis->use();
-
-                glUniform1i(godPrePassBrickUnis->doingGodRayPass,true);
-                serverData->playerCamera->render(godPrePassBrickUnis);
-                serverData->playerCamera->name = oldName;
-                serverData->staticBricks.renderEverything(godPrePassBrickUnis,true,0,SDL_GetTicks()/25);
-                for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
-                    serverData->livingBricks[a]->renderAlive(godPrePassBrickUnis,true,SDL_GetTicks()/25);
-                glUniform1i(godPrePassBrickUnis->doingGodRayPass,false);
-        }
-        serverData->env->godRayPass->unbind();
-
-        //Begin drawing to water textures
-
-        waterFrame++;
-        if(waterFrame >= 2)
-            waterFrame = 0;
-
-        if(clientEnvironment.settings->waterQuality != waterStatic && waterRefraction)
-        {
-            if(waterFrame == 0)
-            {
-                waterReflection->bind();
-
-                    oldModelUnis->use();
-                        glUniform1f(oldModelUnis->clipHeight,serverData->waterLevel);
-                        serverData->playerCamera->renderReflection(oldModelUnis,serverData->waterLevel);
-                        serverData->env->passUniforms(oldModelUnis);
-                        clientEnvironment.settings->render(oldModelUnis);
-                        glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
-                        glBindTexture(GL_TEXTURE_CUBE_MAP,IBL);
-                        serverData->env->drawSky(oldModelUnis);
-
-                        glEnable(GL_CLIP_DISTANCE0);
-
-                    modelUnis->use();
-                        glUniform1f(modelUnis->clipHeight,serverData->waterLevel);
-                        clientEnvironment.settings->render(modelUnis);
-                        serverData->playerCamera->renderReflection(modelUnis,serverData->waterLevel);
-                        serverData->env->passUniforms(modelUnis);
-                        for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
-                            serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
-
-                        clientEnvironment.newWheelModel->renderInstanced(modelUnis);
-
-
-                        /*for(unsigned int a = 0; a<serverData->dynamics.size(); a++)
-                                serverData->dynamics[a]->render(&basic);*/
-
-                     /*tessUnis->use();
-                        glUniform1f(tess.clipHeight,waterLevel);
-                        serverData->playerCamera->render(tess);
-                        serverData->env->passUniforms(tess);
-                        grass.use(tess);
-                        theMap.render(tess);*/
-
-                    simpleBrickUnis->use();
-                        glUniform1i(simpleBrickUnis->target->getUniformLocation("debugMode"),debugMode);
-
-                        glUniform1f(simpleBrickUnis->clipHeight,serverData->waterLevel);
-                        serverData->playerCamera->renderReflection(simpleBrickUnis,serverData->waterLevel);
-                        serverData->env->passUniforms(simpleBrickUnis);
-                        clientEnvironment.settings->render(simpleBrickUnis);
-
-                        glEnable(GL_BLEND);
-                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        serverData->staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
-                        for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
-                            serverData->livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
-                        glDisable(GL_BLEND);
-
-                waterReflection->unbind();
-            }
-            else if(waterFrame == 1)
-            {
-                glEnable(GL_CLIP_DISTANCE0);
-                waterRefraction->bind();
-
-                    modelUnis->use();
-                        glUniform1f(modelUnis->clipHeight,-serverData->waterLevel);
-                        clientEnvironment.settings->render(modelUnis);
-                        serverData->playerCamera->render(modelUnis);
-                        serverData->env->passUniforms(modelUnis);
-                        for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
-                            serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
-
-                        clientEnvironment.newWheelModel->renderInstanced(modelUnis);
-
-                    oldModelUnis->use();
-                        glUniform1f(oldModelUnis->clipHeight,-serverData->waterLevel);
-                        serverData->playerCamera->render(oldModelUnis);
-                        serverData->env->passUniforms(oldModelUnis);
-
-                    /*tessUnis->use();
-                        serverData->playerCamera->render(tess);
-                        glUniform1f(tess.clipHeight,-waterLevel);
-                        serverData->env->passUniforms(tess);
-                        grass.use(tess);
-                        theMap.render(tess);*/
-
-                    simpleBrickUnis->use();
-                    glUniform1i(simpleBrickUnis->target->getUniformLocation("debugMode"),debugMode);
-                    serverData->env->passUniforms(simpleBrickUnis);
-                    clientEnvironment.settings->render(simpleBrickUnis);
-                        glUniform1f(simpleBrickUnis->clipHeight,-serverData->waterLevel);
-                        serverData->playerCamera->render(simpleBrickUnis);
-                        glEnable(GL_BLEND);
-                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        serverData->staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
-                        for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
-                            serverData->livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
-                        glDisable(GL_BLEND);
-
-
-                waterRefraction->unbind();
-            }
-            glDisable(GL_CLIP_DISTANCE0);
-
-            /*waterDepth->bind();
-                 /*tessUnis->use();
-                    glUniform1f(tess.clipHeight,-waterLevel);
-                    serverData->playerCamera->render(tess);
-                    grass.use(tess); //TODO: Yes, at the moment, this is required for some reason...
-                    theMap.render(tess);
-
-                brickUnis->use();
-                    serverData->playerCamera->render(brickUnis);
-                    serverData->env->passUniforms(brickUnis);
-                    serverData->staticBricks.renderEverything(brickUnis,true,0,SDL_GetTicks()/25);
-                    for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
-                        serverData->livingBricks[a]->renderAlive(brickUnis,true,SDL_GetTicks()/25);
-
-            waterDepth->unbind();*/
-        }
-
-        //End drawing to water textures
-
-        if(clientEnvironment.settings->shadowResolution != shadowsOff)
-        {
-            //Begin drawing shadows to shadow texture
-            glDisable(GL_CULL_FACE);
-            glCullFace(GL_FRONT);
-            glEnable(GL_BLEND);
-
-            serverData->env->shadowBuffer->bind();
-
-                modelShadowUnis->use();
-                    serverData->env->passLightMatricies(modelShadowUnis);
-                    for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
-                        serverData->newDynamicTypes[a]->renderInstancedWithoutMaterials();
-
-
-                shadowBrickUnis->use();
-                        serverData->env->passLightMatricies(shadowBrickUnis);
-                        serverData->staticBricks.renderEverything(shadowBrickUnis,true,0,SDL_GetTicks()/25);
-                        for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
-                            serverData->livingBricks[a]->renderAlive(shadowBrickUnis,true,SDL_GetTicks()/25);
-
-            serverData->env->shadowBuffer->unbind();
-
-            glDisable(GL_BLEND);
-            glCullFace(GL_BACK);
-            glEnable(GL_CULL_FACE);
-            //End drawing shadows to shadow texture
-        }
-
-        //Begin drawing final scene
-        context.clear(serverData->env->skyColor.r,serverData->env->skyColor.g,serverData->env->skyColor.b);
-        context.select();
-
-            oldModelUnis->use();
-                clientEnvironment.settings->render(oldModelUnis);
-                serverData->playerCamera->render(oldModelUnis); //change
-                serverData->env->passUniforms(oldModelUnis);
-                renderLights(oldModelUnis,serverData->lights);
-
-                glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
-                glBindTexture(GL_TEXTURE_CUBE_MAP,IBL);
-
-                serverData->env->drawSky(oldModelUnis);
-
-                if(clientEnvironment.settings->waterQuality != waterStatic && waterRefraction)
-                {
-                    waterUnis->use();
-                        clientEnvironment.settings->render(waterUnis);
-                        glUniform1f(waterUnis->deltaT,((float)SDL_GetTicks()) / 1000.0);     //why both of these...?
-                        glUniform1f(waterUnis->waterDelta,((float)SDL_GetTicks())*0.0001);
-                        glUniform1f(waterUnis->target->getUniformLocation("waterLevel"),serverData->waterLevel); //TODO: Don't string match this every frame
-                        serverData->env->passUniforms(waterUnis,true);
-                        serverData->playerCamera->render(waterUnis);
-
-                        waterReflection->colorResult->bind(reflection);
-                        waterRefraction->colorResult->bind(refraction);
-                        //waterDepth->depthResult->bind(shadowNearMap);
-                        dudvTexture->bind(normal);
-
-                        water.render(waterUnis);
-
-                        oldModelUnis->use();
-                }
-
-                //Render faces for players, pretty much:
-                for(unsigned int a = 0; a<serverData->newDynamicTypes.size(); a++)
-                    serverData->newDynamicTypes[a]->renderNonInstanced(oldModelUnis);
-
-                //Start rendering item icons...
-                oldModelUnis->setModelMatrix(glm::mat4(1.0));
+                if(playerInput.commandKeyDown(jump))
+                    doJump = true;
 
                 for(unsigned int a = 0; a<serverData->items.size(); a++)
                 {
-                    //Skip updating transforms for items that we are currently holding, since we should use client physics transform for that instead of interpolated server snapshots...
+                    heldItemType *type = serverData->items[a]->itemType;
+                    if(type->useDefaultSwing)
+                    {
+                        if(serverData->items[a]->heldBy == serverData->cameraTarget)
+                            serverData->items[a]->advance(context.getMouseLocked() && mouseState & SDL_BUTTON_LEFT,deltaT);
+                        else
+                            serverData->items[a]->advance(false,deltaT);
+                    }
+                    else
+                        serverData->items[a]->advance(false,deltaT);
+                    serverData->items[a]->bufferSubData();
+                }
+
+                for(int a = 0; a<serverData->newDynamics.size(); a++)
+                {
+                    serverData->newDynamics[a]->hidden = (serverData->newDynamics[a] == serverData->cameraTarget) && (camMode == cammode_firstPerson);
+                    serverData->newDynamics[a]->calculateMeshTransforms(deltaT);
+                    serverData->newDynamics[a]->bufferSubData();
+                }
+                for(int a = 0; a<serverData->items.size(); a++)
+                    if(!(serverData->currentPlayer && serverData->items[a]->heldBy == serverData->currentPlayer && !serverData->items[a]->hidden))
+                        serverData->items[a]->calculateMeshTransforms(deltaT); //Any item we are not currently holding
+
+                auto emitterIter = serverData->emitters.begin();
+                while(emitterIter != serverData->emitters.end())
+                {
+                    emitter *e = *emitterIter;
+                    if(e->type->lifetimeMS != 0 && !e->attachedToCar && !e->attachedToBasicBrick && !e->attachedToSpecialBrick)
+                    {
+                        if(e->creationTime + e->type->lifetimeMS < SDL_GetTicks())
+                        {
+                            delete e;
+                            emitterIter = serverData->emitters.erase(emitterIter);
+                            continue;
+                        }
+                    }
+                    bool usePhysicsPos = serverData->currentPlayer && !serverData->giveUpControlOfCurrentPlayer;
+                    e->update(serverData->playerCamera->position,
+                              serverData->playerCamera->direction,
+                              usePhysicsPos,
+                              (camMode == cammode_firstPerson) && (serverData->currentPlayer == e->attachedToModel || (e->attachedToItem && serverData->currentPlayer == e->attachedToItem->heldBy)),
+                              serverData->playerCamera->getYaw(),
+                              serverData->playerCamera->getPitch());
+                    ++emitterIter;
+                }
+
+                for(unsigned int a = 0; a<serverData->particleTypes.size(); a++)
+                    serverData->particleTypes[a]->deadParticlesCheck(serverData->playerCamera->getPosition(),deltaT);
+
+                sortLights(serverData->lights,serverData->playerCamera->getPosition(),deltaT);
+
+                //Networking:
+
+                serverData->tryApplyHeldPackets();
+
+                checkForCameraToBind(serverData);
+
+                if(connected)
+                {
+                    glm::vec3 up = glm::vec3(0,1,0);
+                    serverData->playerCamera->nominalUp = up;
+
+                    if(serverData->cameraLean && camMode == 0 && serverData->cameraTarget)
+                    {
+                        serverData->totalLean += playerInput.commandKeyDown(walkLeft) ? deltaT * 0.001 : 0;
+                        serverData->totalLean -= playerInput.commandKeyDown(walkRight) ? deltaT * 0.001 : 0;
+                        if(!(playerInput.commandKeyDown(walkRight) || playerInput.commandKeyDown(walkLeft)))
+                            serverData->totalLean *= 0.9;
+
+                        if(serverData->totalLean > 0.17)
+                            serverData->totalLean = 0.17;
+                        if(serverData->totalLean < -0.17)
+                            serverData->totalLean = -0.17;
+
+                        glm::vec3 playerForward = glm::vec3(0,0,1);//serverData->playerCamera->getDirection();
+                        glm::vec3 playerRight = glm::normalize(glm::cross(up,playerForward));
+
+                        glm::vec3 dir = glm::normalize(glm::vec3(serverData->totalLean * playerRight.x,1,serverData->totalLean * playerRight.z));
+                        glm::vec4 afterDir = glm::toMat4(serverData->cameraTarget->modelInterpolator.getRotation()) * glm::vec4(dir.x,dir.y,dir.z,0);
+                        serverData->playerCamera->nominalUp = glm::vec3(afterDir.x,afterDir.y,afterDir.z);
+                    }
+
+                    bool didJump = false;
+                    int netControlState = 0;
+                    netControlState |= (!states[SDL_SCANCODE_LCTRL] && playerInput.commandKeyDown(walkForward)) ? 1 : 0;
+                    netControlState |= playerInput.commandKeyDown(walkBackward) ? 2 : 0;
+                    netControlState |= playerInput.commandKeyDown(walkLeft) ? 4 : 0;
+                    netControlState |= playerInput.commandKeyDown(walkRight) ? 8 : 0;
+                    netControlState |= doJump ? 16 : 0;
+                    //if(camMode == 2)
+                      //  netControlState = 0;
+                    if(evalWindow->isActive() && evalWindow->isVisible())
+                        netControlState = 0;
+
+                    //Move client player for client physics:
+                    if(serverData->currentPlayer && !serverData->giveUpControlOfCurrentPlayer && camMode != cammode_adminCam)
+                    {
+                        if(SDL_GetTicks() - serverData->currentPlayer->flingPreventionStartTime > 100)
+                        {
+                            if(serverData->currentPlayer->control(atan2(serverData->playerCamera->getDirection().x,serverData->playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,serverData->canJet && rightDown))
+                                didJump = true;
+                            if(didJump)
+                                clientEnvironment.speaker->playSound2D(clientEnvironment.speaker->resolveSound("Jump"));
+                                //clientEnvironment.speaker->playSound("Jump",false,serverData->playerCamera->getPosition().x,serverData->playerCamera->getPosition().y-1.0,serverData->playerCamera->getPosition().z);
+                        }
+                    }
+
+                    int fullControlState  = netControlState + (leftDown << 5);
+                    fullControlState |= (clientEnvironment.currentlyOpen == inventory) ? 0b1000000 : 0;
+                    fullControlState |= serverData->selectedSlot << 7;
+                    fullControlState += rightDown << 11;
+                    fullControlState |= (clientEnvironment.currentlyOpen == paintCan) ? (1 << 12) : 0;
+                    fullControlState |= chatEditbox->isActive() ? (1 << 13) : 0;
+
+                    glm::vec3 playerDirDiff = serverData->playerCamera->getDirection() - lastPlayerDir;
+                    if(fabs(glm::length(playerDirDiff)) > 0.02 || fullControlState != lastPlayerControlMask || doJump || SDL_GetTicks() > (unsigned)(lastSentTransData + 1000))
+                    {
+                        if(SDL_GetTicks() > (unsigned)(lastSentTransData + 5))
+                        {
+                            lastPlayerControlMask = fullControlState;
+
+                            packet transPacket;
+                            transPacket.writeUInt(2,4);
+                            if(camMode == 2)
+                                netControlState = 0;
+                            transPacket.writeUInt(netControlState,5);
+                            transPacket.writeBit(didJump);//This one controls if the sound is played
+                            transPacket.writeBit(context.getMouseLocked() && leftDown);
+                            transPacket.writeBit(context.getMouseLocked() && rightDown);
+                            transPacket.writeBit(clientEnvironment.currentlyOpen == paintCan);
+                            if(clientEnvironment.currentlyOpen == paintCan)
+                            {
+                                glm::vec4 paintColor = clientEnvironment.palette->getColor();
+                                transPacket.writeFloat(paintColor.r);
+                                transPacket.writeFloat(paintColor.g);
+                                transPacket.writeFloat(paintColor.b);
+                                transPacket.writeFloat(paintColor.a);
+                            }
+
+                            doJump = false;
+
+                            lastPlayerDir = serverData->playerCamera->getDirection();
+                            transPacket.writeFloat(serverData->playerCamera->getDirection().x);
+                            transPacket.writeFloat(serverData->playerCamera->getDirection().y);
+                            transPacket.writeFloat(serverData->playerCamera->getDirection().z);
+                            if(clientEnvironment.currentlyOpen == inventory)
+                                transPacket.writeUInt(serverData->selectedSlot,3);
+                            else
+                                transPacket.writeUInt(7,3);
+
+                            transPacket.writeBit(serverData->adminCam);
+                            if(serverData->adminCam)
+                            {
+                                transPacket.writeFloat(serverData->playerCamera->getPosition().x);
+                                transPacket.writeFloat(serverData->playerCamera->getPosition().y);
+                                transPacket.writeFloat(serverData->playerCamera->getPosition().z);
+                            }
+                            transPacket.writeBit(chatEditbox->isActive());
+
+                            bool actuallyUseClientPhysics = useClientPhysics;
+                            if(!serverData->currentPlayer)
+                                actuallyUseClientPhysics = false;
+                            if(serverData->giveUpControlOfCurrentPlayer)
+                                actuallyUseClientPhysics = false;
+
+                            transPacket.writeBit(actuallyUseClientPhysics);
+                            if(actuallyUseClientPhysics)
+                            {
+                                btTransform t = serverData->currentPlayer->body->getWorldTransform();
+                                btVector3 o = t.getOrigin();
+                                transPacket.writeFloat(o.x());
+                                transPacket.writeFloat(o.y());
+                                transPacket.writeFloat(o.z());
+                                btVector3 v = serverData->currentPlayer->body->getLinearVelocity();
+                                transPacket.writeFloat(v.x());
+                                transPacket.writeFloat(v.y());
+                                transPacket.writeFloat(v.z());
+                            }
+
+                            serverConnection->send(&transPacket,false);
+
+                            lastSentTransData = SDL_GetTicks();
+                        }
+                    }
+
+                    float progress = ((float)serverData->staticBricks.getBrickCount()) / ((float)serverData->skippingCompileNextBricks);
+                    setBrickLoadProgress(progress,serverData->staticBricks.getBrickCount());
+
+                    serverConnection->run();
+                }
+
+                for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                {
+                    //std::cout<<"Advancing: "<<deltaT<<"\n";
+                    serverData->livingBricks[a]->carTransform.advance(deltaT);
+                    //std::cout<<"\n";
+
+                    for(int wheel = 0; wheel<serverData->livingBricks[a]->newWheels.size(); wheel++)
+                    {
+                        serverData->livingBricks[a]->newWheels[wheel]->calculateMeshTransforms(deltaT);
+                        serverData->livingBricks[a]->newWheels[wheel]->bufferSubData();
+                    }
+                }
+
+                for(unsigned int a = 0; a<serverData->items.size(); a++)
+                {
                     if(!(!serverData->giveUpControlOfCurrentPlayer && serverData->currentPlayer && serverData->items[a]->heldBy == serverData->currentPlayer && !serverData->items[a]->hidden))
                         serverData->items[a]->updateTransform();
                 }
 
-                //Render paint can or not...
-                if(serverData->paintCan && serverData->fixedPaintCanItem && clientEnvironment.currentlyOpen == paintCan && serverData->cameraTarget)
+                //std::cout<<serverData->staticBricks.opaqueBasicBricks.size()<<" bricks\n";
+
+                auto fakeKillIter = serverData->fakeKills.begin();
+                while(fakeKillIter != serverData->fakeKills.end())
                 {
-                    serverData->fixedPaintCanItem->pitch = -1.57;
-                    serverData->fixedPaintCanItem->hidden = false;
-                    serverData->fixedPaintCanItem->heldBy = serverData->cameraTarget;
-                    serverData->fixedPaintCanItem->updateTransform(true,serverData->playerCamera->getYaw());
+                    if((*fakeKillIter).endTime < SDL_GetTicks())
+                    {
+                        if((*fakeKillIter).basic)
+                            serverData->staticBricks.removeBasicBrick((*fakeKillIter).basic,serverData->world);
+                        if((*fakeKillIter).special)
+                            serverData->staticBricks.removeSpecialBrick((*fakeKillIter).special,serverData->world);
+                        fakeKillIter = serverData->fakeKills.erase(fakeKillIter);
+                    }
+                    else
+                    {
+                        (*fakeKillIter).linVel.y -= deltaT / 2500.0;
+                        float progress = (*fakeKillIter).endTime - (*fakeKillIter).startTime;
+                        progress = ((float)SDL_GetTicks() - (float)(*fakeKillIter).startTime) / progress;
+                        if((*fakeKillIter).basic)
+                        {
+                            (*fakeKillIter).basic->position += (*fakeKillIter).linVel;
+                            (*fakeKillIter).basic->rotation = glm::slerp((*fakeKillIter).basic->rotation,glm::quat((*fakeKillIter).angVel),progress);
+                            serverData->staticBricks.updateBasicBrick((*fakeKillIter).basic,serverData->world);
+                        }
+                        if((*fakeKillIter).special)
+                        {
+                            (*fakeKillIter).special->position += (*fakeKillIter).linVel;
+                            (*fakeKillIter).special->rotation = glm::slerp((*fakeKillIter).special->rotation,glm::quat((*fakeKillIter).angVel),progress);
+                            serverData->staticBricks.updateSpecialBrick((*fakeKillIter).special,serverData->world,0);
+                        }
+                        fakeKillIter++;
+                    }
+                }
+
+                /*glFlush();
+                glFinish();
+                SDL_Delay(1);*/
+
+                //Graphics:
+                //Sun direction sundirection
+                //serverData->env->iblShadowsCalc(serverData->playerCamera,glm::vec3(0.496595,0.50,0.856871));
+                serverData->env->iblShadowsCalc(serverData->playerCamera,glm::vec3(0.540455,0.742971,0.394844));
+
+                glActiveTexture(GL_TEXTURE0 + cubeMapRadiance);
+                glBindTexture(GL_TEXTURE_CUBE_MAP,IBLRad);
+                glActiveTexture(GL_TEXTURE0 + cubeMapIrradiance);
+                glBindTexture(GL_TEXTURE_CUBE_MAP,IBLIrr);
+                bdrf->bind(brdf);
+
+                std::string oldName = "";
+
+                serverData->env->godRayPass->bind();
+                if(clientEnvironment.settings->godRayQuality != godRaysOff)
+                {
+                    godPrePassSunUnis->use();
+
+                        glUniform1i(godPrePassSunUnis->doingGodRayPass,true);
+                        oldName = serverData->playerCamera->name;
+                        serverData->playerCamera->name = "Shadow";
+                        serverData->playerCamera->render(godPrePassSunUnis);
+                        serverData->env->passUniforms(godPrePassSunUnis);
+                        serverData->env->drawSun(godPrePassSunUnis);
+                        glUniform1i(godPrePassSunUnis->doingGodRayPass,false);
+
+                    godPrePassBrickUnis->use();
+
+                        glUniform1i(godPrePassBrickUnis->doingGodRayPass,true);
+                        serverData->playerCamera->render(godPrePassBrickUnis);
+                        serverData->playerCamera->name = oldName;
+                        serverData->staticBricks.renderEverything(godPrePassBrickUnis,true,0,SDL_GetTicks()/25);
+                        for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                            serverData->livingBricks[a]->renderAlive(godPrePassBrickUnis,true,SDL_GetTicks()/25);
+                        glUniform1i(godPrePassBrickUnis->doingGodRayPass,false);
+                }
+                serverData->env->godRayPass->unbind();
+
+                //Begin drawing to water textures
+
+                waterFrame++;
+                if(waterFrame >= 2)
+                    waterFrame = 0;
+
+                if(clientEnvironment.settings->waterQuality != waterStatic && waterRefraction)
+                {
+                    if(waterFrame == 0)
+                    {
+                        waterReflection->bind();
+
+                            oldModelUnis->use();
+                                glUniform1f(oldModelUnis->clipHeight,serverData->waterLevel);
+                                serverData->playerCamera->renderReflection(oldModelUnis,serverData->waterLevel);
+                                serverData->env->passUniforms(oldModelUnis);
+                                clientEnvironment.settings->render(oldModelUnis);
+                                glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
+                                glBindTexture(GL_TEXTURE_CUBE_MAP,IBL);
+                                serverData->env->drawSky(oldModelUnis);
+
+                                glEnable(GL_CLIP_DISTANCE0);
+
+                            modelUnis->use();
+                                glUniform1f(modelUnis->clipHeight,serverData->waterLevel);
+                                clientEnvironment.settings->render(modelUnis);
+                                serverData->playerCamera->renderReflection(modelUnis,serverData->waterLevel);
+                                serverData->env->passUniforms(modelUnis);
+                                for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
+                                    serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
+
+                                clientEnvironment.newWheelModel->renderInstanced(modelUnis);
+
+
+                                /*for(unsigned int a = 0; a<serverData->dynamics.size(); a++)
+                                        serverData->dynamics[a]->render(&basic);*/
+
+                             /*tessUnis->use();
+                                glUniform1f(tess.clipHeight,waterLevel);
+                                serverData->playerCamera->render(tess);
+                                serverData->env->passUniforms(tess);
+                                grass.use(tess);
+                                theMap.render(tess);*/
+
+                            simpleBrickUnis->use();
+                                glUniform1i(simpleBrickUnis->target->getUniformLocation("debugMode"),debugMode);
+
+                                glUniform1f(simpleBrickUnis->clipHeight,serverData->waterLevel);
+                                serverData->playerCamera->renderReflection(simpleBrickUnis,serverData->waterLevel);
+                                serverData->env->passUniforms(simpleBrickUnis);
+                                clientEnvironment.settings->render(simpleBrickUnis);
+
+                                glEnable(GL_BLEND);
+                                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                                serverData->staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
+                                for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                                    serverData->livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
+                                glDisable(GL_BLEND);
+
+                        waterReflection->unbind();
+                    }
+                    else if(waterFrame == 1)
+                    {
+                        glEnable(GL_CLIP_DISTANCE0);
+                        waterRefraction->bind();
+
+                            modelUnis->use();
+                                glUniform1f(modelUnis->clipHeight,-serverData->waterLevel);
+                                clientEnvironment.settings->render(modelUnis);
+                                serverData->playerCamera->render(modelUnis);
+                                serverData->env->passUniforms(modelUnis);
+                                for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
+                                    serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
+
+                                clientEnvironment.newWheelModel->renderInstanced(modelUnis);
+
+                            oldModelUnis->use();
+                                glUniform1f(oldModelUnis->clipHeight,-serverData->waterLevel);
+                                serverData->playerCamera->render(oldModelUnis);
+                                serverData->env->passUniforms(oldModelUnis);
+
+                            /*tessUnis->use();
+                                serverData->playerCamera->render(tess);
+                                glUniform1f(tess.clipHeight,-waterLevel);
+                                serverData->env->passUniforms(tess);
+                                grass.use(tess);
+                                theMap.render(tess);*/
+
+                            simpleBrickUnis->use();
+                            glUniform1i(simpleBrickUnis->target->getUniformLocation("debugMode"),debugMode);
+                            serverData->env->passUniforms(simpleBrickUnis);
+                            clientEnvironment.settings->render(simpleBrickUnis);
+                                glUniform1f(simpleBrickUnis->clipHeight,-serverData->waterLevel);
+                                serverData->playerCamera->render(simpleBrickUnis);
+                                glEnable(GL_BLEND);
+                                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                                serverData->staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
+                                for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                                    serverData->livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
+                                glDisable(GL_BLEND);
+
+
+                        waterRefraction->unbind();
+                    }
+                    glDisable(GL_CLIP_DISTANCE0);
+
+                    /*waterDepth->bind();
+                         /*tessUnis->use();
+                            glUniform1f(tess.clipHeight,-waterLevel);
+                            serverData->playerCamera->render(tess);
+                            grass.use(tess); //TODO: Yes, at the moment, this is required for some reason...
+                            theMap.render(tess);
+
+                        brickUnis->use();
+                            serverData->playerCamera->render(brickUnis);
+                            serverData->env->passUniforms(brickUnis);
+                            serverData->staticBricks.renderEverything(brickUnis,true,0,SDL_GetTicks()/25);
+                            for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                                serverData->livingBricks[a]->renderAlive(brickUnis,true,SDL_GetTicks()/25);
+
+                    waterDepth->unbind();*/
+                }
+
+                //End drawing to water textures
+
+                if(clientEnvironment.settings->shadowResolution != shadowsOff)
+                {
+                    //Begin drawing shadows to shadow texture
+                    glDisable(GL_CULL_FACE);
+                    glCullFace(GL_FRONT);
+                    glEnable(GL_BLEND);
+
+                    serverData->env->shadowBuffer->bind();
+
+                        modelShadowUnis->use();
+                            serverData->env->passLightMatricies(modelShadowUnis);
+                            for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
+                                serverData->newDynamicTypes[a]->renderInstancedWithoutMaterials();
+
+
+                        shadowBrickUnis->use();
+                                serverData->env->passLightMatricies(shadowBrickUnis);
+                                serverData->staticBricks.renderEverything(shadowBrickUnis,true,0,SDL_GetTicks()/25);
+                                for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                                    serverData->livingBricks[a]->renderAlive(shadowBrickUnis,true,SDL_GetTicks()/25);
+
+                    serverData->env->shadowBuffer->unbind();
+
+                    glDisable(GL_BLEND);
+                    glCullFace(GL_BACK);
+                    glEnable(GL_CULL_FACE);
+                    //End drawing shadows to shadow texture
+                }
+
+                //Begin drawing final scene
+                context.clear(serverData->env->skyColor.r,serverData->env->skyColor.g,serverData->env->skyColor.b);
+                context.select();
+
+                    oldModelUnis->use();
+                        clientEnvironment.settings->render(oldModelUnis);
+                        serverData->playerCamera->render(oldModelUnis); //change
+                        serverData->env->passUniforms(oldModelUnis);
+                        renderLights(oldModelUnis,serverData->lights);
+
+                        glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
+                        glBindTexture(GL_TEXTURE_CUBE_MAP,IBL);
+
+                        serverData->env->drawSky(oldModelUnis);
+
+                        if(clientEnvironment.settings->waterQuality != waterStatic && waterRefraction)
+                        {
+                            waterUnis->use();
+                                clientEnvironment.settings->render(waterUnis);
+                                glUniform1f(waterUnis->deltaT,((float)SDL_GetTicks()) / 1000.0);     //why both of these...?
+                                glUniform1f(waterUnis->waterDelta,((float)SDL_GetTicks())*0.0001);
+                                glUniform1f(waterUnis->target->getUniformLocation("waterLevel"),serverData->waterLevel); //TODO: Don't string match this every frame
+                                serverData->env->passUniforms(waterUnis,true);
+                                serverData->playerCamera->render(waterUnis);
+
+                                waterReflection->colorResult->bind(reflection);
+                                waterRefraction->colorResult->bind(refraction);
+                                //waterDepth->depthResult->bind(shadowNearMap);
+                                dudvTexture->bind(normal);
+
+                                water.render(waterUnis);
+
+                                oldModelUnis->use();
+                        }
+
+                        //Render faces for players, pretty much:
+                        for(unsigned int a = 0; a<serverData->newDynamicTypes.size(); a++)
+                            serverData->newDynamicTypes[a]->renderNonInstanced(oldModelUnis);
+
+                        //Start rendering item icons...
+                        oldModelUnis->setModelMatrix(glm::mat4(1.0));
+
+                        for(unsigned int a = 0; a<serverData->items.size(); a++)
+                        {
+                            //Skip updating transforms for items that we are currently holding, since we should use client physics transform for that instead of interpolated server snapshots...
+                            if(!(!serverData->giveUpControlOfCurrentPlayer && serverData->currentPlayer && serverData->items[a]->heldBy == serverData->currentPlayer && !serverData->items[a]->hidden))
+                                serverData->items[a]->updateTransform();
+                        }
+
+                        //Render paint can or not...
+                        if(serverData->paintCan && serverData->fixedPaintCanItem && clientEnvironment.currentlyOpen == paintCan && serverData->cameraTarget)
+                        {
+                            serverData->fixedPaintCanItem->pitch = -1.57;
+                            serverData->fixedPaintCanItem->hidden = false;
+                            serverData->fixedPaintCanItem->heldBy = serverData->cameraTarget;
+                            serverData->fixedPaintCanItem->updateTransform(true,serverData->playerCamera->getYaw());
+                        }
+                        else
+                            serverData->fixedPaintCanItem->hidden = true;
+
+                        //Item icons...
+                        //Start all item icons as hidden by default...
+                        /*for(int a = 0; a<serverData->itemIcons.size(); a++)
+                            if(serverData->itemIcons[a]) //Paint can at a bare minimum will NOT have any icon!
+                                serverData->itemIcons[a]->hidden = true;*/
+
+                        if(clientEnvironment.currentlyOpen == inventory)
+                        {
+                            //For each inventory slot
+                            for(unsigned int a = 0; a<inventorySize; a++)
+                            {
+                                heldItemType *type = serverData->inventory[a];
+                                if(!type)
+                                {
+                                    hud->getChild("Inventory/ItemIcon" + std::to_string(a+1) + "/icon")->setProperty("Image","");
+                                    continue;
+                                }
+
+                                if(type->uiName.length() < 1)
+                                {
+                                    hud->getChild("Inventory/ItemIcon" + std::to_string(a+1) + "/icon")->setProperty("Image","");
+                                    continue;
+                                }
+
+                                hud->getChild("Inventory/ItemIcon" + std::to_string(a+1) + "/icon")->setProperty("Image",type->uiName);
+                            }
+                        }
+
+                        //Preview texture:
+                        if(showPreview)
+                        {
+                            glUniform1i(oldModelUnis->previewTexture,true);
+                            serverData->env->godRayPass->colorResult->bind(normal);
+                            glBindVertexArray(quadVAO);
+                            glDrawArrays(GL_TRIANGLES,0,6);
+                            glBindVertexArray(0);
+                            glUniform1i(oldModelUnis->previewTexture,false);
+                        }
+                        //end preview texture
+
+                        //drawDebugLocations(oldModelUnis,cubeVAO,serverData->debugLocations,serverData->debugColors);
+
+        /*            tessUnis->use();
+                        clientEnvironment.settings->render(tess);
+                        serverData->playerCamera->render(tess); //change
+                        serverData->env->passUniforms(tess);*/
+
+        //                grass.use(tess);
+         //               theMap.render(tess);
+
+                        modelUnis->use();
+                            clientEnvironment.settings->render(modelUnis);
+                            serverData->playerCamera->render(modelUnis);
+                            serverData->env->passUniforms(modelUnis);
+                            renderLights(modelUnis,serverData->lights);
+                            for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
+                                serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
+
+                        clientEnvironment.newWheelModel->renderInstanced(modelUnis);
+
+                    brickUnis->use();
+                        serverData->playerCamera->render(brickUnis);
+                        serverData->env->passUniforms(brickUnis);
+                        clientEnvironment.settings->render(brickUnis);
+                        renderLights(brickUnis,serverData->lights);
+                        glUniform1i(brickUnis->target->getUniformLocation("debugMode"),debugMode);
+
+                        glEnable(GL_BLEND);
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                        serverData->staticBricks.renderEverything(brickUnis,false,&grass,SDL_GetTicks()/25);
+                        for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                            serverData->livingBricks[a]->renderAlive(brickUnis,false,SDL_GetTicks()/25);
+                        if(serverData->ghostCar)
+                            serverData->ghostCar->renderAlive(brickUnis,false,SDL_GetTicks()/25);
+                        glDisable(GL_BLEND);
+
+                        glEnable(GL_BLEND);
+                        glDisable(GL_CULL_FACE);
+                        emitterUnis->use();
+                            serverData->playerCamera->render(emitterUnis);
+                            serverData->env->passUniforms(emitterUnis);
+                            clientEnvironment.settings->render(emitterUnis);
+
+                            for(unsigned int a = 0; a<serverData->particleTypes.size(); a++)
+                                serverData->particleTypes[a]->render(emitterUnis);
+
+
+                    serverData->bulletTrails->purge();
+                    glDisable(GL_CULL_FACE);
+                    bulletUnis->use();
+                        serverData->playerCamera->render(bulletUnis);
+                        serverData->bulletTrails->render(bulletUnis);
+                    glEnable(GL_CULL_FACE);
+
+
+                        glLineWidth(3.0);
+                        boxEdgesUnis->use();
+                            glUniform1i(boxEdgesUnis->target->getUniformLocation("drawingRopes"),true);
+                            serverData->playerCamera->render(boxEdgesUnis);
+                            for(unsigned int a = 0; a<serverData->ropes.size(); a++)
+                                serverData->ropes[a]->render();
+                            glUniform1i(boxEdgesUnis->target->getUniformLocation("drawingRopes"),false);
+
+                    glDisable(GL_DEPTH_TEST);
+                    glEnable(GL_BLEND);
+                    glDisable(GL_CULL_FACE);
+                    fontUnis->use();
+                            serverData->playerCamera->render(fontUnis);
+                            for(unsigned int a = 0; a<serverData->newDynamics.size(); a++)
+                            {
+                                if(!serverData->newDynamics[a])
+                                    continue;
+                                if(serverData->newDynamics[a]->shapeName.length() < 1)
+                                    continue;
+                                if(serverData->newDynamics[a] == serverData->cameraTarget && camMode == 0)
+                                    continue;
+
+                                glm::vec3 pos = serverData->newDynamics[a]->modelInterpolator.getPosition();
+                                if(serverData->currentPlayer == serverData->newDynamics[a] && !serverData->giveUpControlOfCurrentPlayer && serverData->currentPlayer->body)
+                                {
+                                    btVector3 o = serverData->currentPlayer->body->getWorldTransform().getOrigin();
+                                    pos = glm::vec3(o.x(),o.y(),o.z());
+                                }
+                                defaultFont.naiveRender(fontUnis,serverData->newDynamics[a]->shapeName,pos+serverData->newDynamics[a]->type->eyeOffset+glm::vec3(0,2,0),glm::length(serverData->newDynamics[a]->scale),serverData->newDynamics[a]->shapeNameColor);
+                            }
+
+                    //glEnable(GL_CULL_FACE);
+                    glDisable(GL_BLEND);
+                    glEnable(GL_DEPTH_TEST);
+
+                    //Remember, 'god rays' actually includes the underwater texture too
+                    screenOverlaysUnis->use();
+                        glUniform1f(screenOverlaysUnis->target->getUniformLocation("waterLevel"),serverData->waterLevel); //TODO: Don't string match this every frame
+                        glUniform1f(screenOverlaysUnis->target->getUniformLocation("vignetteStrength"),clientEnvironment.vignetteStrength);
+                        glUniform3f(screenOverlaysUnis->target->getUniformLocation("vignetteColor"),clientEnvironment.vignetteColor.r,clientEnvironment.vignetteColor.g,clientEnvironment.vignetteColor.b);
+                        if(clientEnvironment.vignetteStrength >= 0)
+                            clientEnvironment.vignetteStrength -= deltaT * 0.001;
+                        if(clientEnvironment.vignetteStrength < 0)
+                            clientEnvironment.vignetteStrength = 0;
+
+                        clientEnvironment.settings->render(screenOverlaysUnis);
+                        serverData->playerCamera->render(screenOverlaysUnis);
+                        serverData->env->passUniforms(screenOverlaysUnis);
+                        serverData->env->renderGodRays(screenOverlaysUnis);
+
+                    glEnable(GL_BLEND);
+
+                    boxEdgesUnis->use();
+                        serverData->playerCamera->render(boxEdgesUnis);
+                        serverData->box->render(boxEdgesUnis);
+
+                    glEnable(GL_CULL_FACE);
+
+                    //Just for the transparent blue quad of crappy water, good water is rendered first thing
+                    if(clientEnvironment.settings->waterQuality == waterStatic || !waterRefraction)
+                    {
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+                        waterUnis->use();
+                            clientEnvironment.settings->render(waterUnis);
+                            serverData->env->passUniforms(waterUnis,true);
+                            serverData->playerCamera->render(waterUnis);
+
+                            water.render(waterUnis);
+
+                        glDisable(GL_BLEND);
+                    }
+                //End drawing final scene
+
+                clientEnvironment.bottomPrint.checkForTimeouts();
+                clientEnvironment.palette->calcAnimation();
+                float chatScroll = clientEnvironment.chat->getVertScrollbar()->getScrollPosition();
+                chatScrollArrow->setVisible(chatScroll < (clientEnvironment.chat->getVertScrollbar()->getDocumentSize() - clientEnvironment.chat->getVertScrollbar()->getPageSize()));
+                CEGUI::System::getSingleton().getRenderer()->setDisplaySize(CEGUI::Size<float>(context.getResolution().x,context.getResolution().y));
+                glViewport(0,0,context.getResolution().x,context.getResolution().y);
+                glDisable(GL_DEPTH_TEST);
+                glActiveTexture(GL_TEXTURE0);
+                CEGUI::System::getSingleton().renderAllGUIContexts();
+                context.swap();
+                glEnable(GL_DEPTH_TEST);
+
+                break;
+            }
+            case STATE_CONNECTING:
+            {
+                //TODO: Multithread loading and have an actual loading screen...
+
+                info("Trying to connect to server...");
+
+                if(clientEnvironment.serverData)
+                    delete clientEnvironment.serverData;
+                clientEnvironment.serverData = new serverStuff;
+                serverStuff *serverData = clientEnvironment.serverData;
+
+                networkingPreferences netPrefs;
+                netPrefs.timeoutMS = 1000;
+                serverConnection = new client(netPrefs,clientEnvironment.wantedIP);
+                hud->getChild("Chat/Editbox")->setUserData(serverConnection);
+                serverConnection->userData = &clientEnvironment;
+                serverData->connection = serverConnection;
+                serverConnection->receiveHandle = recvHandle;
+                serverConnection->kickHandle = gotKicked;
+                syjError netErr = serverConnection->getLastError();
+                if(netErr != syjError::noError)
+                {
+                    error(getErrorString(netErr));
+                    error("Could not connect to server!");
+                    joinServer->getChild("StatusText")->setText("Could not connect!");
+                    clientEnvironment.waitingToPickServer = true;
+                    currentState = STATE_MAINMENU;;
+                    break;
                 }
                 else
-                    serverData->fixedPaintCanItem->hidden = true;
+                    connected = true;
 
-                //Item icons...
-                //Start all item icons as hidden by default...
-                /*for(int a = 0; a<serverData->itemIcons.size(); a++)
-                    if(serverData->itemIcons[a]) //Paint can at a bare minimum will NOT have any icon!
-                        serverData->itemIcons[a]->hidden = true;*/
+                serverData->staticBricks.allocateVertBuffer();
+                serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMat);
+                serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatSide,true,true);
+                serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatBottom,true);
+                serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatRamp);
+                serverData->staticBricks.blocklandTypes = &blocklandHolder;
 
-                if(clientEnvironment.currentlyOpen == inventory)
+                packet requestName;
+                requestName.writeUInt(clientPacketType_requestName,4);
+                requestName.writeUInt(hardCodedNetworkVersion,32);
+
+                requestName.writeBit(clientEnvironment.loggedIn);
+                if(clientEnvironment.loggedIn)
                 {
-                    //For each inventory slot
-                    for(unsigned int a = 0; a<inventorySize; a++)
+                    requestName.writeString(clientEnvironment.loggedName);
+
+                    unsigned char hash[32];
+
+                    br_sha256_context shaContext;
+                    br_sha256_init(&shaContext);
+                    br_sha256_update(&shaContext,clientEnvironment.sessionToken.c_str(),clientEnvironment.sessionToken.length());
+                    br_sha256_out(&shaContext,hash);
+
+                    std::string hexStr = GetHexRepresentation(hash,32);
+
+                    std::cout<<clientEnvironment.loggedName<<"\n";
+                    std::cout<<clientEnvironment.sessionToken<<"\n";
+                    std::cout<<hexStr<<"\n";
+
+                    requestName.writeString(hexStr);
+                }
+                else
+                    requestName.writeString(clientEnvironment.wantedName);
+
+                requestName.writeFloat(clientEnvironment.wantedColor.r);
+                requestName.writeFloat(clientEnvironment.wantedColor.g);
+                requestName.writeFloat(clientEnvironment.wantedColor.b);
+                serverConnection->send(&requestName,true);
+
+                info("Connection established, requesting types...");
+
+                while(serverData->waitingForServerResponse)
+                {
+                    serverConnection->run();
+                    if(serverData->kicked)
                     {
-                        heldItemType *type = serverData->inventory[a];
-                        if(!type)
-                        {
-                            hud->getChild("Inventory/ItemIcon" + std::to_string(a+1) + "/icon")->setProperty("Image","");
-                            continue;
-                        }
-
-                        if(type->uiName.length() < 1)
-                        {
-                            hud->getChild("Inventory/ItemIcon" + std::to_string(a+1) + "/icon")->setProperty("Image","");
-                            continue;
-                        }
-
-                        hud->getChild("Inventory/ItemIcon" + std::to_string(a+1) + "/icon")->setProperty("Image",type->uiName);
+                        error("Kicked or server full or outdated client or malformed server response.");
+                        joinServer->getChild("StatusText")->setText("Kicked by server!");
+                        clientEnvironment.waitingToPickServer = true;
+                        serverData->kicked = false;
+                        currentState = STATE_MAINMENU;
+                        break;
                     }
                 }
 
-                //Preview texture:
-                if(showPreview)
+                int shadowRes = 1024;
+                switch(clientEnvironment.settings->shadowResolution)
                 {
-                    glUniform1i(oldModelUnis->previewTexture,true);
-                    serverData->env->godRayPass->colorResult->bind(normal);
-                    glBindVertexArray(quadVAO);
-                    glDrawArrays(GL_TRIANGLES,0,6);
-                    glBindVertexArray(0);
-                    glUniform1i(oldModelUnis->previewTexture,false);
+                    default: case shadowsOff: case shadow1k: shadowRes = 1024; break;
+                    case shadow2k: shadowRes = 2048; break;
+                    case shadow4k: shadowRes = 4096; break;
                 }
-                //end preview texture
 
-                //drawDebugLocations(oldModelUnis,cubeVAO,serverData->debugLocations,serverData->debugColors);
+                glEnable(GL_DEPTH_TEST);
+                glEnable(GL_CULL_FACE);
 
-/*            tessUnis->use();
-                clientEnvironment.settings->render(tess);
-                serverData->playerCamera->render(tess); //change
-                serverData->env->passUniforms(tess);*/
+                serverData->env = new environment(shadowRes,shadowRes);
 
-//                grass.use(tess);
- //               theMap.render(tess);
+                godRayDebug->getChild("Decay")->setText(std::to_string(serverData->env->godRayDecay));
+                godRayDebug->getChild("Density")->setText(std::to_string(serverData->env->godRayDensity));
+                godRayDebug->getChild("Exposure")->setText(std::to_string(serverData->env->godRayExposure));
+                godRayDebug->getChild("Weight")->setText(std::to_string(serverData->env->godRayWeight));
 
-                modelUnis->use();
-                    clientEnvironment.settings->render(modelUnis);
-                    serverData->playerCamera->render(modelUnis);
-                    serverData->env->passUniforms(modelUnis);
-                    renderLights(modelUnis,serverData->lights);
-                    for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
-                        serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
+                /*serverData->env->loadDaySkyBox("assets/sky/bluecloud_");
+                serverData->env->loadNightSkyBox("assets/sky/space_");*/
+                serverData->env->loadSunModel("assets/sky/sun.txt");
 
-                clientEnvironment.newWheelModel->renderInstanced(modelUnis);
+                serverData->playerCamera = new perspectiveCamera;;
+                serverData->playerCamera->setFieldOfVision(clientEnvironment.settings->fieldOfView);
+                serverData->playerCamera->name = "Player";
+                serverData->playerCamera->setDirection(glm::vec3(0.4,0,0.4));
+                serverData->playerCamera->setPosition(glm::vec3(0,0,0));
+                serverData->playerCamera->setAspectRatio(((double)context.getWidth())/((double)context.getHeight()));
 
-            brickUnis->use();
-                serverData->playerCamera->render(brickUnis);
-                serverData->env->passUniforms(brickUnis);
-                clientEnvironment.settings->render(brickUnis);
-                renderLights(brickUnis,serverData->lights);
-                glUniform1i(brickUnis->target->getUniformLocation("debugMode"),debugMode);
+                if(clientEnvironment.settings->waterQuality != waterStatic)
+                {
+                    perspectiveCamera waterCamera;
+                    waterCamera.setFieldOfVision(serverData->playerCamera->getFieldOfVision());
+                    waterCamera.name = "Water";
+                    renderTarget::renderTargetSettings waterReflectionSettings;
 
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                serverData->staticBricks.renderEverything(brickUnis,false,&grass,SDL_GetTicks()/25);
-                for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
-                    serverData->livingBricks[a]->renderAlive(brickUnis,false,SDL_GetTicks()/25);
-                if(serverData->ghostCar)
-                    serverData->ghostCar->renderAlive(brickUnis,false,SDL_GetTicks()/25);
-                glDisable(GL_BLEND);
-
-                glEnable(GL_BLEND);
-                glDisable(GL_CULL_FACE);
-                emitterUnis->use();
-                    serverData->playerCamera->render(emitterUnis);
-                    serverData->env->passUniforms(emitterUnis);
-                    clientEnvironment.settings->render(emitterUnis);
-
-                    for(unsigned int a = 0; a<serverData->particleTypes.size(); a++)
-                        serverData->particleTypes[a]->render(emitterUnis);
-
-
-            serverData->bulletTrails->purge();
-            glDisable(GL_CULL_FACE);
-            bulletUnis->use();
-                serverData->playerCamera->render(bulletUnis);
-                serverData->bulletTrails->render(bulletUnis);
-            glEnable(GL_CULL_FACE);
-
-
-                glLineWidth(3.0);
-                boxEdgesUnis->use();
-                    glUniform1i(boxEdgesUnis->target->getUniformLocation("drawingRopes"),true);
-                    serverData->playerCamera->render(boxEdgesUnis);
-                    for(unsigned int a = 0; a<serverData->ropes.size(); a++)
-                        serverData->ropes[a]->render();
-                    glUniform1i(boxEdgesUnis->target->getUniformLocation("drawingRopes"),false);
-
-            glDisable(GL_DEPTH_TEST);
-            glEnable(GL_BLEND);
-            glDisable(GL_CULL_FACE);
-            fontUnis->use();
-                    serverData->playerCamera->render(fontUnis);
-                    for(unsigned int a = 0; a<serverData->newDynamics.size(); a++)
+                    switch(clientEnvironment.settings->waterQuality)
                     {
-                        if(!serverData->newDynamics[a])
-                            continue;
-                        if(serverData->newDynamics[a]->shapeName.length() < 1)
-                            continue;
-                        if(serverData->newDynamics[a] == serverData->cameraTarget && camMode == 0)
-                            continue;
+                        case waterQuarter:
+                            waterReflectionSettings.resX = context.getResolution().x / 4.0;
+                            waterReflectionSettings.resY = context.getResolution().y / 4.0;
+                            break;
 
-                        glm::vec3 pos = serverData->newDynamics[a]->modelInterpolator.getPosition();
-                        if(serverData->currentPlayer == serverData->newDynamics[a] && !serverData->giveUpControlOfCurrentPlayer && serverData->currentPlayer->body)
-                        {
-                            btVector3 o = serverData->currentPlayer->body->getWorldTransform().getOrigin();
-                            pos = glm::vec3(o.x(),o.y(),o.z());
-                        }
-                        defaultFont.naiveRender(fontUnis,serverData->newDynamics[a]->shapeName,pos+serverData->newDynamics[a]->type->eyeOffset+glm::vec3(0,2,0),glm::length(serverData->newDynamics[a]->scale),serverData->newDynamics[a]->shapeNameColor);
+                        case waterHalf:
+                            waterReflectionSettings.resX = context.getResolution().x / 2.0;
+                            waterReflectionSettings.resY = context.getResolution().y / 2.0;
+                            break;
+
+                        default:
+                        case waterFull:
+                            waterReflectionSettings.resX = context.getResolution().x;
+                            waterReflectionSettings.resY = context.getResolution().y;
+                            break;
                     }
 
-            //glEnable(GL_CULL_FACE);
-            glDisable(GL_BLEND);
-            glEnable(GL_DEPTH_TEST);
+                    waterReflectionSettings.numColorChannels = 4;
+                    waterReflectionSettings.clearColor = glm::vec4(0,0,0,0);
+                    waterReflectionSettings.texWrapping = GL_REPEAT;
+                    waterReflectionSettings.useColor = true;
+                    if(waterReflection)
+                        delete waterReflection;
+                    waterReflection = new renderTarget(waterReflectionSettings);
+                    if(waterRefraction)
+                        delete waterRefraction;
+                    waterRefraction = new renderTarget(waterReflectionSettings);
+                    waterRefraction->settings.clearColor = glm::vec4(0.15,0.15,0.3,0.0);
+                    renderTarget::renderTargetSettings waterDepthSettings;
+                    waterDepthSettings.useDepth = true;
+                    waterDepthSettings.resX = waterReflectionSettings.resX;
+                    waterDepthSettings.resY = waterReflectionSettings.resY;
+                    if(waterDepth)
+                        delete waterDepth;
+                    waterDepth = new renderTarget(waterDepthSettings);
+                }
 
-            //Remember, 'god rays' actually includes the underwater texture too
-            screenOverlaysUnis->use();
-                glUniform1f(screenOverlaysUnis->target->getUniformLocation("waterLevel"),serverData->waterLevel); //TODO: Don't string match this every frame
-                glUniform1f(screenOverlaysUnis->target->getUniformLocation("vignetteStrength"),clientEnvironment.vignetteStrength);
-                glUniform3f(screenOverlaysUnis->target->getUniformLocation("vignetteColor"),clientEnvironment.vignetteColor.r,clientEnvironment.vignetteColor.g,clientEnvironment.vignetteColor.b);
-                if(clientEnvironment.vignetteStrength >= 0)
-                    clientEnvironment.vignetteStrength -= deltaT * 0.001;
-                if(clientEnvironment.vignetteStrength < 0)
-                    clientEnvironment.vignetteStrength = 0;
+                btDynamicsWorld *world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+                btVector3 gravity = btVector3(0,-70,0);
+                world->setGravity(gravity);
+                world->setForceUpdateAllAabbs(false);
+                serverData->world = world;
 
-                clientEnvironment.settings->render(screenOverlaysUnis);
-                serverData->playerCamera->render(screenOverlaysUnis);
-                serverData->env->passUniforms(screenOverlaysUnis);
-                serverData->env->renderGodRays(screenOverlaysUnis);
+                btCollisionShape *plane = new btStaticPlaneShape(btVector3(0,1,0),0);
+                btDefaultMotionState* planeState = new btDefaultMotionState();
+                btRigidBody::btRigidBodyConstructionInfo planeCon(0,planeState,plane);
+                btRigidBody *groundPlane = new btRigidBody(planeCon);
+                groundPlane->setFriction(1.0);
+                //groundPlane->setUserIndex(bodyUserIndex_plane);
+                world->addRigidBody(groundPlane);
 
-            glEnable(GL_BLEND);
+                serverData->box = new selectionBox(world,cubeVAO);
 
-            boxEdgesUnis->use();
-                serverData->playerCamera->render(boxEdgesUnis);
-                box->render(boxEdgesUnis);
+                //terrain theMap("assets/heightmap2.png",world);
 
-            glEnable(GL_CULL_FACE);
+                for(unsigned int a = 0; a<clientEnvironment.prints->names.size(); a++)
+                    serverData->staticBricks.allocatePerTexture(clientEnvironment.prints->textures[a],false,false,true);
 
-            //Just for the transparent blue quad of crappy water, good water is rendered first thing
-            if(clientEnvironment.settings->waterQuality == waterStatic || !waterRefraction)
-            {
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                //model wheelModel("assets/ball/ball.txt");
+                clientEnvironment.newWheelModel = new newModel("assets/ball/ball.txt");
 
-                waterUnis->use();
-                    clientEnvironment.settings->render(waterUnis);
-                    serverData->env->passUniforms(waterUnis,true);
-                    serverData->playerCamera->render(waterUnis);
+                //bool play = false;
 
-                    water.render(waterUnis);
+                serverData->bulletTrails = new bulletTrailsHolder;
 
-                glDisable(GL_BLEND);
+                serverData->ourTempBrick = new tempBrick(serverData->staticBricks);
+
+                //TODO: remove this, it's for debugging client physics:
+                //serverData->debugLocations.push_back(glm::vec3(0,0,0));
+                //serverData->debugColors.push_back(glm::vec3(1,1,1));
+
+
+                info("Starting main game loop!");
+                //TODO: Once again, this should be put to another function and multithreaded, and a simple loop would take its place here
+                currentState = STATE_PLAYING;
+
+                break;
             }
-        //End drawing final scene
-
-        clientEnvironment.bottomPrint.checkForTimeouts();
-        clientEnvironment.palette->calcAnimation();
-        float chatScroll = clientEnvironment.chat->getVertScrollbar()->getScrollPosition();
-        chatScrollArrow->setVisible(chatScroll < (clientEnvironment.chat->getVertScrollbar()->getDocumentSize() - clientEnvironment.chat->getVertScrollbar()->getPageSize()));
-        CEGUI::System::getSingleton().getRenderer()->setDisplaySize(CEGUI::Size<float>(context.getResolution().x,context.getResolution().y));
-        glViewport(0,0,context.getResolution().x,context.getResolution().y);
-        glDisable(GL_DEPTH_TEST);
-        glActiveTexture(GL_TEXTURE0);
-        CEGUI::System::getSingleton().renderAllGUIContexts();
-        context.swap();
-        glEnable(GL_DEPTH_TEST);
+        }
     }
+
 
     info("Shutting down OpenAL");
 

@@ -58,8 +58,8 @@ namespace syj
         y.d_scale = 100;
         brickPopup->setPosition(CEGUI::UVector2(x,y));
 
-        clientEnvironment->serverData->picker->picking = true;
-        clientEnvironment->serverData->picker->runPickCycle(clientEnvironment->context,clientEnvironment->instancedShader,clientEnvironment->nonInstancedShader,clientEnvironment->serverData->connection,clientEnvironment->prefs);
+        clientEnvironment->picker->picking = true;
+        clientEnvironment->picker->runPickCycle(clientEnvironment->context,clientEnvironment->instancedShader,clientEnvironment->nonInstancedShader,clientEnvironment->serverData->connection,clientEnvironment->prefs);
         clientEnvironment->context->setMouseLock(isMouseLocked);
 
         for(unsigned int a = 0; a<clientEnvironment->serverData->newDynamics.size(); a++)

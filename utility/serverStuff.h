@@ -18,7 +18,9 @@
 #include "code/graphics/emitter.h"
 #include "code/graphics/rope.h"
 #include "code/graphics/light.h"
+#include "code/physics/tempBrick.h"
 #include "code/graphics/bulletTrails.h"
+#include "code/physics/selectionBox.h"
 
 #define inventorySize 3
 
@@ -87,8 +89,10 @@ namespace syj
 
     struct serverStuff
     {
+        selectionBox *box = 0;
+        tempBrick *ourTempBrick = 0;
+
         bool waitingForServerResponse = true;
-        avatarPicker *picker = 0;
         std::string lastGuessedEvalPass = "";
         bulletTrailsHolder *bulletTrails = 0;
 
@@ -167,6 +171,132 @@ namespace syj
 
         void renderMeshes(uniformsHolder &unis,camera *altCam = 0);
         void renderBricks(uniformsHolder &unis,bool skipMats = false,camera *altCam = 0);
+
+        ~serverStuff()
+        {
+            info("Deallocating server data structures...");
+
+            for(unsigned int a = 0; a<staticBricks.opaqueBasicBricks.size(); a++)
+            {
+                basicBrickRenderData *theBrick = staticBricks.opaqueBasicBricks[a];
+                if(!theBrick)
+                    continue;
+
+                if(&ourTempBrick->basic == theBrick)
+                    continue;
+
+                if(theBrick->body && world)
+                {
+                    world->removeRigidBody(theBrick->body);
+                    delete theBrick->body;
+                    theBrick->body = 0;
+                }
+
+                delete theBrick;
+            }
+            for(unsigned int a = 0; a<staticBricks.transparentBasicBricks.size(); a++)
+            {
+                basicBrickRenderData *theBrick = staticBricks.transparentBasicBricks[a];
+                if(!theBrick)
+                    continue;
+
+                if(&ourTempBrick->basic == theBrick)
+                    continue;
+
+                if(theBrick->body && world)
+                {
+                    world->removeRigidBody(theBrick->body);
+                    delete theBrick->body;
+                    theBrick->body = 0;
+                }
+
+                delete theBrick;
+            }
+            for(unsigned int a = 0; a<staticBricks.opaqueSpecialBricks.size(); a++)
+            {
+                specialBrickRenderData *theBrick = staticBricks.opaqueSpecialBricks[a];
+                if(!theBrick)
+                    continue;
+
+                if(&ourTempBrick->special == theBrick)
+                    continue;
+
+                if(theBrick->body && world)
+                {
+                    world->removeRigidBody(theBrick->body);
+                    delete theBrick->body;
+                    theBrick->body = 0;
+                }
+
+                delete theBrick;
+            }
+            for(unsigned int a = 0; a<staticBricks.transparentSpecialBricks.size(); a++)
+            {
+                specialBrickRenderData *theBrick = staticBricks.transparentSpecialBricks[a];
+                if(!theBrick)
+                    continue;
+
+                if(&ourTempBrick->special == theBrick)
+                    continue;
+
+                if(theBrick->body && world)
+                {
+                    world->removeRigidBody(theBrick->body);
+                    delete theBrick->body;
+                    theBrick->body = 0;
+                }
+
+                delete theBrick;
+            }
+
+            delete box;
+            delete ourTempBrick;
+            delete connection;
+            delete env;
+            delete playerCamera;
+            delete bulletTrails;
+
+            for(int a = 0; a<livingBricks.size(); a++)
+                delete livingBricks[a];
+
+            if(ghostCar)
+                delete ghostCar;
+
+            for(int a = 0; a<newDynamics.size(); a++)
+                delete newDynamics[a];
+
+            for(int a = 0; a<emitters.size(); a++)
+                delete emitters[a];
+
+            for(int a = 0; a<lights.size(); a++)
+                delete lights[a];
+
+            delete world;
+
+            for(int a = 0; a<particleTypes.size(); a++)
+                delete particleTypes[a];
+
+            for(int a = 0; a<emitterTypes.size(); a++)
+                delete emitterTypes[a];
+
+            for(int a = 0; a<newDynamicTypes.size(); a++)
+                delete newDynamicTypes[a];
+
+            for(int a= 0; a<itemTypes.size(); a++)
+                delete itemTypes[a];
+
+            for(int a = 0; a<ropes.size(); a++)
+                delete ropes[a];
+
+            info("Finished deallocating server data structures.");
+
+            //TODO: Delete ropes
+            //TODO: Delete particles?
+            //TODO: Delete items separately from dynamics?
+            //TODO: Delete all types of everything...
+            //TODO: Remove decals from avatar picker gui
+            //TODO: Remove bricks from brick selector gui
+        }
     };
 }
 #endif // SERVERSTUFF_H_INCLUDED

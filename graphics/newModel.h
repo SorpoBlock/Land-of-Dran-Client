@@ -251,6 +251,7 @@ namespace syj
         int defaultFrame = 0;
 
         newModel(std::string textFilePath);
+        ~newModel();
 
         void calculateTotalCollisionExtents(newNode *current,glm::mat4 transform);
         void renderInstanced(uniformsHolder *graphics);

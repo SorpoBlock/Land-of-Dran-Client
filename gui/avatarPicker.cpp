@@ -339,7 +339,10 @@ namespace syj
         button->setArea(CEGUI::UDim(xOffset,0),CEGUI::UDim(yOffset,0),CEGUI::UDim(xSize,0),CEGUI::UDim(0.5,0));
         box->addChild(button);
 
-        CEGUI::ImageManager::getSingleton().addFromImageFile(fileName, "assets/decals/" + fileName,"/");
+        //if(!CEGUI::ImageManager::getSingleton().isImageTypeAvailable(fileName))
+
+        if(!CEGUI::System::getSingleton().getRenderer()->isTextureDefined(fileName) && !CEGUI::ImageManager::getSingleton().isImageTypeAvailable(fileName) && !CEGUI::ImageManager::getSingleton().isDefined(fileName))
+            CEGUI::ImageManager::getSingleton().addFromImageFile(fileName, "assets/decals/" + fileName,"/");
         CEGUI::Window *image = CEGUI::WindowManager::getSingleton().createWindow("GWEN/StaticImage","Image");
         image->setProperty("Image",fileName);
         image->setMousePassThroughEnabled(true);

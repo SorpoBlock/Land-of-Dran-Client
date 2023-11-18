@@ -5,8 +5,8 @@
 #include "code/gui/brickSelector.h"
 #include "code/utility/inputMap.h"
 #include "code/gui/palette.h"
-#include "code/networking/recv.h"
 #include "code/audio/audio.h"
+#include "code/networking/client.h"
 
 namespace syj
 {
@@ -47,7 +47,7 @@ namespace syj
         void scroll(CEGUI::Window *hud,CEGUI::Window *brickSelector,newBrickRenderer &renderer,int mouseWheelChange);
         void selectBrick(inputMap &controls,CEGUI::Window *hud,CEGUI::Window *brickSelector,newBrickRenderer &renderer,bool &guiOpened,bool &guiClosed);
         void manipulate(inputMap &controls,CEGUI::Window *brickPopup,CEGUI::Window *brickSelector,float yaw,audioPlayer *speaker,newBrickRenderer &renderer);
-        void plant(newBrickRenderer &renderer,btDynamicsWorld *world,serverStuff *serverConnection);
+        void plant(newBrickRenderer &renderer,btDynamicsWorld *world,client *serverConnection);
 
         void teleport(glm::vec3 pos);
         void update(newBrickRenderer &renderer,paletteGUI *palette);

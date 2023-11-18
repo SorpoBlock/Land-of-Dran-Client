@@ -177,7 +177,7 @@ void processCommand(clientStuff *clientEnvironment,std::string commandType,packe
         for(int a = 0; a<howMany; a++)
         {
             std::string fileName = data->readString();
-            serverData->picker->addDecalToPicker(fileName);
+            clientEnvironment->picker->addDecalToPicker(fileName);
         }
     }
     else if(commandType == "stopLoop")
@@ -514,14 +514,14 @@ namespace syj
                         //TODO: Update avatar picker code
                         //if(!serverData->picker->playerModel)
                             //serverData->picker->playerModel = (model*)serverData->newDynamicTypes[0]->oldModelType;
-                        serverData->picker->pickingPlayer = new newDynamic(serverData->newDynamicTypes[0]);
-                        serverData->picker->pickingPlayer->useGlobalTransform = true;
-                        serverData->picker->pickingPlayer->hidden = true;
-                        serverData->picker->pickingPlayer->calculateMeshTransforms(0);
-                        serverData->picker->pickingPlayer->bufferSubData();
+                        clientEnvironment->picker->pickingPlayer = new newDynamic(serverData->newDynamicTypes[0]);
+                        clientEnvironment->picker->pickingPlayer->useGlobalTransform = true;
+                        clientEnvironment->picker->pickingPlayer->hidden = true;
+                        clientEnvironment->picker->pickingPlayer->calculateMeshTransforms(0);
+                        clientEnvironment->picker->pickingPlayer->bufferSubData();
 
-                        serverData->picker->loadFromPrefs(clientEnvironment->prefs);
-                        serverData->picker->sendAvatarPrefs(serverData->connection,0);
+                        clientEnvironment->picker->loadFromPrefs(clientEnvironment->prefs);
+                        clientEnvironment->picker->sendAvatarPrefs(serverData->connection,0);
                     }
                 }
             }
@@ -1345,12 +1345,12 @@ namespace syj
                 if(placeHolder)
                     placeHolder->deletionTime = SDL_GetTicks() + 1000;
 
-                if(decal >= 0 && decal < serverData->picker->faceDecals.size())
+                if(decal >= 0 && decal < clientEnvironment->picker->faceDecals.size())
                 {
                     if(tmp)
-                        tmp->decal = serverData->picker->faceDecals[decal];
+                        tmp->decal = clientEnvironment->picker->faceDecals[decal];
                     else if(placeHolder)
-                        placeHolder->decal = serverData->picker->faceDecals[decal];
+                        placeHolder->decal = clientEnvironment->picker->faceDecals[decal];
                 }
 
                 unsigned int howManyUpdates = data->readUInt(7);
