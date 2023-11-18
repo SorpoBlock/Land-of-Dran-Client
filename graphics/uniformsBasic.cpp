@@ -2,6 +2,119 @@
 
 namespace syj
 {
+    std::vector<uniformsHolder*> loadAllShaders(std::string &errorString,std::string shadersListFilePath)
+    {
+        std::vector<uniformsHolder*> programUnis;
+
+        bool shaderFailedToCompile = false;
+        program *lastProgram = 0;
+        std::string lastProgramName = "";
+
+        std::ifstream shadersList(shadersListFilePath.c_str());
+
+        if(shadersList.is_open())
+        {
+            std::string line = "";
+
+            while(!shadersList.eof())
+            {
+                getline(shadersList,line);
+
+                if(line.length() < 1)
+                    continue;
+
+                if(line.substr(0,1) == "#")
+                    continue;
+
+                int firstTab = line.find("\t");
+                int secondTab = line.find("\t",firstTab+1);
+
+                if(firstTab == std::string::npos || secondTab == std::string::npos)
+                {
+                    error("Malformed shadersList.txt line: " + line);
+                    continue;
+                }
+
+                std::string programName = line.substr(0,firstTab);
+                std::string shaderType = line.substr(firstTab+1,secondTab - (firstTab+1));
+                std::string filePath = line.substr(secondTab+1,line.length() - (secondTab-1));
+
+                if(programName.length() < 1 || shaderType.length() < 1 || filePath.length() < 1)
+                {
+                    error("Malformed shadersList.txt line: " + line);
+                    continue;
+                }
+
+                if(lastProgramName != programName)
+                {
+                    if(lastProgram != 0)
+                    {
+                        lastProgram->compile();
+                        if(!lastProgram->isCompiled())
+                        {
+                            errorString = lastProgramName + " shader failed to compile. Check logs folder. This will cause severe graphics issues.";
+                            //notify("Shader Failed to Compile",lastProgramName + " shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
+                            shaderFailedToCompile = true;
+                        }
+                        uniformsHolder *lastUnis = new uniformsHolder(*lastProgram);
+                        lastUnis->name = lastProgramName;
+                        programUnis.push_back(lastUnis);
+                    }
+
+                    lastProgram = new program;
+                }
+
+                lastProgramName = programName;
+
+                GLenum shaderEnum = 0;
+                if(shaderType == "vert")
+                    shaderEnum = GL_VERTEX_SHADER;
+                else if(shaderType == "frag")
+                    shaderEnum = GL_FRAGMENT_SHADER;
+                else if(shaderType == "geom")
+                    shaderEnum = GL_GEOMETRY_SHADER;
+                else if(shaderType == "tesc")
+                    shaderEnum = GL_TESS_CONTROL_SHADER;
+                else if(shaderType == "tese")
+                    shaderEnum = GL_TESS_EVALUATION_SHADER;
+
+                if(shaderEnum == 0)
+                {
+                    error("Invalid shader type: " + shaderType);
+                    continue;
+                }
+                else
+                {
+                    shader *tmp = new shader("shaders/" + filePath,shaderEnum);
+                    lastProgram->bindShader(tmp);
+                }
+            }
+
+            shadersList.close();
+        }
+        else
+        {
+            error("Could not open shaders/shadersList.txt!");
+            return programUnis;
+        }
+
+        if(lastProgram != 0)
+        {
+            lastProgram->compile();
+            if(!lastProgram->isCompiled())
+            {
+                errorString = lastProgramName + " shader failed to compile. Check logs folder. This will cause severe graphics issues.";
+                //notify("Shader Failed to Compile",lastProgramName + " shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
+                shaderFailedToCompile = true;
+            }
+            uniformsHolder *lastUnis = new uniformsHolder(*lastProgram);
+            lastUnis->name = lastProgramName;
+            programUnis.push_back(lastUnis);
+        }
+
+        return programUnis;
+    }
+
     uniformsHolder::uniformsHolder(program &toAdd)
     {
         target = &toAdd;

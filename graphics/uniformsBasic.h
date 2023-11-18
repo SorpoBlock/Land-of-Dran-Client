@@ -142,6 +142,8 @@ namespace syj
          uniformsHolder(program &toAdd);
          void use(bool reset = true){target->use(true);}
     };
+
+    std::vector<uniformsHolder*> loadAllShaders(std::string &errorString,std::string shadersListFilePath = "shaders/shadersList.txt");
 }
 
 #endif // UNIFORMSBASIC_H_INCLUDED
