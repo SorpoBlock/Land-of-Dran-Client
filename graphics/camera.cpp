@@ -12,17 +12,17 @@ namespace syj
 
     }
 
-    void orthographicCamera::render(uniformsHolder &holder)
+    void orthographicCamera::render(uniformsHolder *holder)
     {
         /*projectionMatrix = glm::ortho(orthoBoundNear.x,orthoBoundFar.x,orthoBoundNear.y,orthoBoundFar.y,orthoBoundNear.z,orthoBoundFar.z);
         viewMatrix =  glm::lookAt(position,position + direction,nominalUp);
         angleMatrix = glm::lookAt(glm::vec3(0,0,0),direction,nominalUp);*/
 
-        glUniformMat(holder.viewMatrix(name),viewMatrix);
-        glUniformMat(holder.angleMatrix(name),angleMatrix);
-        glUniformMat(holder.projectionMatrix(name),projectionMatrix);
-        glUniform3vec(holder.cameraDirection(name),direction);
-        glUniform3vec(holder.cameraPosition(name),position);
+        glUniformMat(holder->viewMatrix(name),viewMatrix);
+        glUniformMat(holder->angleMatrix(name),angleMatrix);
+        glUniformMat(holder->projectionMatrix(name),projectionMatrix);
+        glUniform3vec(holder->cameraDirection(name),direction);
+        glUniform3vec(holder->cameraPosition(name),position);
     }
 
     void perspectiveCamera::walkForward(float amount)
@@ -153,20 +153,20 @@ namespace syj
         projectionMatrix = glm::perspective(glm::radians(fieldOfVision), aspectRatio, nearPlane, farPlane);
     }
 
-    void perspectiveCamera::render(uniformsHolder &holder)
+    void perspectiveCamera::render(uniformsHolder *holder)
     {
-        glUniformMat(holder.viewMatrix(name),viewMatrix);
-        glUniformMat(holder.angleMatrix(name),angleMatrix);
-        glUniformMat(holder.projectionMatrix(name),projectionMatrix);
-        glUniform3vec(holder.cameraDirection(name),direction);
-        glUniform3vec(holder.cameraPosition(name),thirdPerson ? thirdPersonTarget - direction * thirdPersonDistance : position);
+        glUniformMat(holder->viewMatrix(name),viewMatrix);
+        glUniformMat(holder->angleMatrix(name),angleMatrix);
+        glUniformMat(holder->projectionMatrix(name),projectionMatrix);
+        glUniform3vec(holder->cameraDirection(name),direction);
+        glUniform3vec(holder->cameraPosition(name),thirdPerson ? thirdPersonTarget - direction * thirdPersonDistance : position);
         glm::vec3 right =   glm::normalize(glm::cross(direction,nominalUp));
         glm::vec3 up =      -glm::normalize(glm::cross(direction,right));
-        glUniform3vec(holder.cameraRight(name),right);
-        glUniform3vec(holder.cameraUp(name),up);
+        glUniform3vec(holder->cameraRight(name),right);
+        glUniform3vec(holder->cameraUp(name),up);
     }
 
-    void perspectiveCamera::renderReflection(uniformsHolder &holder,float height)
+    void perspectiveCamera::renderReflection(uniformsHolder *holder,float height)
     {
         glm::vec3 start,end,dir;
         if(thirdPerson)
@@ -201,11 +201,11 @@ namespace syj
         glm::mat4 reflectViewMatrix =  glm::lookAt(start,end,glm::vec3(0,1,0));
         glm::mat4 reflectAngleMatrix = glm::lookAt(glm::vec3(0,0,0),dir,glm::vec3(0,1,0));
 
-        glUniformMat(holder.viewMatrix(name),reflectViewMatrix);
-        glUniformMat(holder.angleMatrix(name),reflectAngleMatrix);
-        glUniformMat(holder.projectionMatrix(name),projectionMatrix);
-        glUniform3vec(holder.cameraDirection(name),dir);
-        glUniform3vec(holder.cameraPosition(name),start);
+        glUniformMat(holder->viewMatrix(name),reflectViewMatrix);
+        glUniformMat(holder->angleMatrix(name),reflectAngleMatrix);
+        glUniformMat(holder->projectionMatrix(name),projectionMatrix);
+        glUniform3vec(holder->cameraDirection(name),dir);
+        glUniform3vec(holder->cameraPosition(name),start);
     }
 
     perspectiveCamera::perspectiveCamera()

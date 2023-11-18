@@ -95,26 +95,26 @@ namespace syj
         return uniform;
     }
 
-    void program::bindShader(shader &toBind)
+    void program::bindShader(shader *toBind)
     {
         scope("program::bindShader");
 
-        switch(toBind.shaderType)
+        switch(toBind->shaderType)
         {
             case GL_VERTEX_SHADER:
-                vertex = &toBind;
+                vertex = toBind;
                 break;
             case GL_FRAGMENT_SHADER:
-                fragment = &toBind;
+                fragment = toBind;
                 break;
             case GL_TESS_CONTROL_SHADER:
-                tessControl = &toBind;
+                tessControl = toBind;
                 break;
             case GL_TESS_EVALUATION_SHADER:
-                tessEval = &toBind;
+                tessEval = toBind;
                 break;
             case GL_GEOMETRY_SHADER:
-                geometry = &toBind;
+                geometry = toBind;
                 break;
 
             default:

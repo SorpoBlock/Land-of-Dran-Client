@@ -140,6 +140,7 @@ namespace syj
 
          program *target = nullptr;
          uniformsHolder(program &toAdd);
+         void use(bool reset = true){target->use(true);}
     };
 }
 

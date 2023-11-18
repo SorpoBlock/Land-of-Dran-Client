@@ -164,8 +164,8 @@ namespace syj
         void recompileEverything();
 
         //Render all bricks completely with all materials
-        void renderEverything(uniformsHolder &unis,bool skipMats = false,material *specialPrintBrickMaterial=0,float deltaT = 0);
-        void renderTransparent(uniformsHolder &unis,bool skipMats = false,float deltaT = 0);
+        void renderEverything(uniformsHolder *unis,bool skipMats = false,material *specialPrintBrickMaterial=0,float deltaT = 0);
+        void renderTransparent(uniformsHolder *unis,bool skipMats = false,float deltaT = 0);
 
         void updateBasicBrick(basicBrickRenderData *theBrick,btDynamicsWorld *world,bool changedAlpha=false);
         void updateSpecialBrick(specialBrickRenderData *theBrick,btDynamicsWorld *world,int rotationID);

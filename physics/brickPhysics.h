@@ -71,8 +71,8 @@ namespace syj
         //void renderWheels(uniformsHolder *unis,model *wheelModel);
         void addWheels(btVector3 &halfExtents);
         void compile(btDynamicsWorld *world);
-        void renderAlive(uniformsHolder &unis,bool skipMats = false,float deltaT = 0,bool disableInterpolation = false);
-        void renderTransparentAlive(uniformsHolder &unis,bool skipMats = false,float deltaT = 0);
+        void renderAlive(uniformsHolder *unis,bool skipMats = false,float deltaT = 0,bool disableInterpolation = false);
+        void renderTransparentAlive(uniformsHolder *unis,bool skipMats = false,float deltaT = 0);
     };
 }
 

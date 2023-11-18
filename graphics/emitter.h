@@ -61,7 +61,7 @@ namespace syj
         void recompile();
         void scaleToBlockland();
         void addParticle(glm::vec3 startingPos,glm::vec3 startingVelocity);
-        void render(uniformsHolder &emitterUnis);
+        void render(uniformsHolder *emitterUnis);
         void deadParticlesCheck(glm::vec3 cameraPos = glm::vec3(0,0,0),float deltaT = 0);
 
         std::vector<particle*> particles;

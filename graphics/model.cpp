@@ -136,7 +136,7 @@ namespace syj
         if(!skipMats)
         {
             glUniform1i(graphics->target->getUniformLocation("currentMesh"),pickingID);
-            materialToUse->use(*graphics);
+            materialToUse->use(graphics);
             //Redundant texture bind...
             if(name == "Face1" && decal)
             {

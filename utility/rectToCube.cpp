@@ -2,7 +2,7 @@
 
 namespace syj
 {
-    GLuint processEquirectangularMap(program &rectToCube,GLuint cubeVAO,std::string fileName,bool mipMaps)
+    GLuint processEquirectangularMap(program *rectToCube,GLuint cubeVAO,std::string fileName,bool mipMaps)
     {
         unsigned int width=2048,height=2048;
 
@@ -57,9 +57,9 @@ namespace syj
         };
 
         // convert HDR equirectangular environment map to cubemap equivalent
-        rectToCube.use();
-        glUniform1i(rectToCube.getUniformLocation("albedoTexture"),0);
-        glUniformMat(rectToCube.getUniformLocation("projection"),captureProjection);
+        rectToCube->use();
+        glUniform1i(rectToCube->getUniformLocation("albedoTexture"),0);
+        glUniformMat(rectToCube->getUniformLocation("projection"),captureProjection);
         sourceRect.bind(albedo);
 
         glDisable(GL_CULL_FACE);
@@ -69,7 +69,7 @@ namespace syj
         glBindVertexArray(cubeVAO);
         for (unsigned int i = 0; i < 6; ++i)
         {
-            glUniformMat(rectToCube.getUniformLocation("view"),captureViews[i]);
+            glUniformMat(rectToCube->getUniformLocation("view"),captureViews[i]);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

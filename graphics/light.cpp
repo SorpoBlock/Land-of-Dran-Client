@@ -188,23 +188,23 @@ namespace syj
         std::sort(lightVec.begin(),lightVec.end(),sortLight);
     }
 
-    void renderLights(uniformsHolder &unis,std::vector<light*> &lightVec)
+    void renderLights(uniformsHolder *unis,std::vector<light*> &lightVec)
     {
         for(int a = 0; a<std::min(8,(int)lightVec.size()); a++)
         {
-            glUniform1i(unis.pointLightUsed[a],true);
-            glUniform3vec(unis.pointLightColor[a],lightVec[a]->finalLightColor);
-            glUniform3vec(unis.pointLightPos[a],lightVec[a]->position);
-            glUniform1i(unis.pointLightIsSpotlight[a],lightVec[a]->isSpotlight);
+            glUniform1i(unis->pointLightUsed[a],true);
+            glUniform3vec(unis->pointLightColor[a],lightVec[a]->finalLightColor);
+            glUniform3vec(unis->pointLightPos[a],lightVec[a]->position);
+            glUniform1i(unis->pointLightIsSpotlight[a],lightVec[a]->isSpotlight);
             if(lightVec[a]->isSpotlight)
             {
                 //std::cout<<"Is spotlight, rendering with: "<<lightVec[a]->direction.w<<"\n";
                 glm::vec4 pass = glm::vec4(lightVec[a]->finalDirection.x,lightVec[a]->finalDirection.y,lightVec[a]->finalDirection.z,lightVec[a]->direction.w);
-                glUniform4vec(unis.pointLightDirection[a],pass);
+                glUniform4vec(unis->pointLightDirection[a],pass);
             }
         }
 
         for(int a = lightVec.size(); a<8; a++)
-            glUniform1i(unis.pointLightUsed[a],false);
+            glUniform1i(unis->pointLightUsed[a],false);
     }
 }

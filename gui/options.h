@@ -46,7 +46,7 @@ namespace syj
         void setDefaults(preferenceFile *prefs);
         void overwrite(preferenceFile *prefs);
         void loadFromFile(preferenceFile *prefs);
-        void render(uniformsHolder &unis);
+        void render(uniformsHolder *unis);
 
         bool guiScalingChanged = true;
     };

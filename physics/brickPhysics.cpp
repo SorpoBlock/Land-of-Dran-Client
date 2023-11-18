@@ -321,12 +321,12 @@ namespace syj
         glEnable(GL_CULL_FACE);
     }*/
 
-    void livingBrick::renderAlive(uniformsHolder &unis,bool skipMats,float deltaT,bool disableInterpolation)
+    void livingBrick::renderAlive(uniformsHolder *unis,bool skipMats,float deltaT,bool disableInterpolation)
     {
         if(!compiled)
             return;
 
-        glUniform1i(unis.target->getUniformLocation("livingBricks"),true);
+        glUniform1i(unis->target->getUniformLocation("livingBricks"),true);
 
 /*        btTransform t = body->getWorldTransform();
         btVector3 o = t.getOrigin();
@@ -340,18 +340,18 @@ namespace syj
         glm::mat4 rotate = glm::toMat4(carTransform.getRotation());
         glm::mat4 modelMatrix = translate * rotate;
 
-        unis.setModelMatrix(modelMatrix);
+        unis->setModelMatrix(modelMatrix);
 
         renderEverything(unis,skipMats,0,deltaT);
-        glUniform1i(unis.target->getUniformLocation("livingBricks"),false);
+        glUniform1i(unis->target->getUniformLocation("livingBricks"),false);
     }
 
-    void livingBrick::renderTransparentAlive(uniformsHolder &unis,bool skipMats,float deltaT)
+    void livingBrick::renderTransparentAlive(uniformsHolder *unis,bool skipMats,float deltaT)
     {
         if(!compiled)
             return;
 
-        glUniform1i(unis.target->getUniformLocation("livingBricks"),true);
+        glUniform1i(unis->target->getUniformLocation("livingBricks"),true);
 
         /*btTransform t = body->getWorldTransform();
         btVector3 o = t.getOrigin();
@@ -363,10 +363,10 @@ namespace syj
 
         //std::cout<<"Position: "; sayVec3(o); std::cout<<"\n";
 
-        unis.setModelMatrix(modelMatrix);
+        unis->setModelMatrix(modelMatrix);
 
         renderTransparent(unis,skipMats,deltaT);
-        glUniform1i(unis.target->getUniformLocation("livingBricks"),false);
+        glUniform1i(unis->target->getUniformLocation("livingBricks"),false);
     }
 }
 

@@ -2,12 +2,12 @@
 
 namespace syj
 {
-    void environment::renderGodRays(uniformsHolder &uniforms)
+    void environment::renderGodRays(uniformsHolder *uniforms)
     {
         glEnable(GL_BLEND);
         glDisable(GL_DEPTH_TEST);
 
-        glUniform1i(uniforms.renderingRays,true);
+        glUniform1i(uniforms->renderingRays,true);
         godRayPass->colorResult->bind(albedo);
         passUniforms(uniforms);
 
@@ -15,31 +15,31 @@ namespace syj
         glDrawArrays(GL_TRIANGLES,0,6);
         glBindVertexArray(0);
 
-        glUniform1i(uniforms.renderingRays,false);
+        glUniform1i(uniforms->renderingRays,false);
 
         glDisable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);
     }
 
-    void environment::drawSun(uniformsHolder &uniforms)
+    void environment::drawSun(uniformsHolder *uniforms)
     {
         glDepthMask(0);
         glDisable(GL_CULL_FACE);
-        glUniform1i(uniforms.renderingSun,true);
+        glUniform1i(uniforms->renderingSun,true);
 
-        sun->render(&uniforms,glm::mat4(1.0),true);
+        sun->render(uniforms,glm::mat4(1.0),true);
 
-        glUniform1i(uniforms.renderingSun,false);
+        glUniform1i(uniforms->renderingSun,false);
         glEnable(GL_CULL_FACE);
         glDepthMask(1);
     }
 
-    void environment::drawSky(uniformsHolder &uniforms)
+    void environment::drawSky(uniformsHolder *uniforms)
     {
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
-        uniforms.setModelMatrix(glm::mat4(1.0));
-        glUniform1i(uniforms.renderingSky,true);
+        uniforms->setModelMatrix(glm::mat4(1.0));
+        glUniform1i(uniforms->renderingSky,true);
 
         glDepthMask(0);
         for(int a = 0; a<6; a++)
@@ -52,7 +52,7 @@ namespace syj
             glBindVertexArray(0);
         }
 
-        glUniform1i(uniforms.renderingSky,false);
+        glUniform1i(uniforms->renderingSky,false);
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glDepthMask(1);
@@ -443,12 +443,12 @@ namespace syj
         shadowNearCamera.setDirection(sunDirection);*/
     }
 
-    void environment::passLightMatricies(uniformsHolder &uniforms)
+    void environment::passLightMatricies(uniformsHolder *uniforms)
     {
-        glUniformMatrix4fv(uniforms.target->getUniformLocation("lightSpaceMatricies"),numShadowLayers,GL_FALSE,(GLfloat*)lightSpaceMatricies);
+        glUniformMatrix4fv(uniforms->target->getUniformLocation("lightSpaceMatricies"),numShadowLayers,GL_FALSE,(GLfloat*)lightSpaceMatricies);
     }
 
-    void environment::passUniforms(uniformsHolder &uniforms,bool forgoShadowMaps)
+    void environment::passUniforms(uniformsHolder *uniforms,bool forgoShadowMaps)
     {
         if(!forgoShadowMaps)
         {
@@ -464,19 +464,19 @@ namespace syj
             passLightMatricies(uniforms);
         }
 
-        glUniform3vec(uniforms.sunColor,sunColor);
-        glUniform3vec(uniforms.sunDirection,sunDirection);
-        glUniform3vec(uniforms.skyColor,skyColor);
-        glUniform3vec(uniforms.fogColor,fogColor);
-        glUniform1f(uniforms.fogMaxDist,fogDistanceMax);
-        glUniform1f(uniforms.fogMinDist,fogDistanceMin);
-        glUniform1f(uniforms.godRayDensity,godRayDensity);
-        glUniform1f(uniforms.godRayExposure,godRayExposure);
-        glUniform1f(uniforms.godRayDecay,godRayDecay);
-        glUniform1f(uniforms.godRayWeight,godRayWeight);
-//        glUniform1i(uniforms.godRaySamples,numGodRaySamples);
-        glUniform1f(uniforms.dncInterpolation,skyboxInterpolate);
-        glUniform1i(uniforms.renderingSun,0);
-        glUniform1i(uniforms.sunAboveHorizon,solarElevation > 0);
+        glUniform3vec(uniforms->sunColor,sunColor);
+        glUniform3vec(uniforms->sunDirection,sunDirection);
+        glUniform3vec(uniforms->skyColor,skyColor);
+        glUniform3vec(uniforms->fogColor,fogColor);
+        glUniform1f(uniforms->fogMaxDist,fogDistanceMax);
+        glUniform1f(uniforms->fogMinDist,fogDistanceMin);
+        glUniform1f(uniforms->godRayDensity,godRayDensity);
+        glUniform1f(uniforms->godRayExposure,godRayExposure);
+        glUniform1f(uniforms->godRayDecay,godRayDecay);
+        glUniform1f(uniforms->godRayWeight,godRayWeight);
+//        glUniform1i(uniforms->godRaySamples,numGodRaySamples);
+        glUniform1f(uniforms->dncInterpolation,skyboxInterpolate);
+        glUniform1i(uniforms->renderingSun,0);
+        glUniform1i(uniforms->sunAboveHorizon,solarElevation > 0);
     }
 }

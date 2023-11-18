@@ -73,7 +73,7 @@ namespace syj
             GLint registerUniformVec3 (std::string name,bool useDefault = false,glm::vec3 defaul = glm::vec3(0,0,0));
 
             void resetUniforms();
-            void bindShader(shader &toBind);
+            void bindShader(shader *toBind);
             void compile();
             bool isCompiled() { return _isCompiled; }
             void use(bool reset = true);

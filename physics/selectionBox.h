@@ -47,7 +47,7 @@ namespace syj
         btRigidBody *backwardPull = 0;
 
         void performRaycast(glm::vec3 start,glm::vec3 dir,btRigidBody *ignore = 0);
-        void render(uniformsHolder &unis);
+        void render(uniformsHolder *unis);
         void drag(glm::vec3 position,glm::vec3 direction);
         void movePulls();
 

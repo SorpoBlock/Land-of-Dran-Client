@@ -302,7 +302,7 @@ namespace syj
         }
     }
 
-    void particleType::render(uniformsHolder &emitterUnis)
+    void particleType::render(uniformsHolder *emitterUnis)
     {
         if(particles.size() < 1)
             return;
@@ -310,19 +310,19 @@ namespace syj
         if(baseTexture)
             baseTexture->bind(albedo);
 
-        glUniform1f(emitterUnis.lifetimeMS,lifetimeMS);
-        glUniform3f(emitterUnis.drag,dragCoefficient.x,dragCoefficient.y,dragCoefficient.z);
-        glUniform3f(emitterUnis.gravity,gravityCoefficient.x*2.0,gravityCoefficient.y*2.0,gravityCoefficient.z*2.0);
-        glUniform1f(emitterUnis.spinSpeed,spinSpeed);
+        glUniform1f(emitterUnis->lifetimeMS,lifetimeMS);
+        glUniform3f(emitterUnis->drag,dragCoefficient.x,dragCoefficient.y,dragCoefficient.z);
+        glUniform3f(emitterUnis->gravity,gravityCoefficient.x*2.0,gravityCoefficient.y*2.0,gravityCoefficient.z*2.0);
+        glUniform1f(emitterUnis->spinSpeed,spinSpeed);
         for(int a = 0; a<4; a++)
         {
-            glUniform1f(emitterUnis.sizes[a],sizes[a]);
-            glUniform4f(emitterUnis.colors[a],colors[a].r,colors[a].g,colors[a].b,colors[a].a);
-            glUniform1f(emitterUnis.times[a],times[a]);
+            glUniform1f(emitterUnis->sizes[a],sizes[a]);
+            glUniform4f(emitterUnis->colors[a],colors[a].r,colors[a].g,colors[a].b,colors[a].a);
+            glUniform1f(emitterUnis->times[a],times[a]);
         }
-        glUniform1i(emitterUnis.useInvAlpha,useInvAlpha);
-        glUniform1f(emitterUnis.currentTimeMS,SDL_GetTicks());
-        glUniform1i(emitterUnis.calculateMovement,!needSorting);
+        glUniform1i(emitterUnis->useInvAlpha,useInvAlpha);
+        glUniform1f(emitterUnis->currentTimeMS,SDL_GetTicks());
+        glUniform1i(emitterUnis->calculateMovement,!needSorting);
 
         if(useInvAlpha)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

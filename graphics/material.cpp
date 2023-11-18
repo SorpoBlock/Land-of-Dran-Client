@@ -2,14 +2,14 @@
 
 namespace syj
 {
-    void material::use(uniformsHolder &uniforms)
+    void material::use(uniformsHolder *uniforms)
     {
-        glUniform1i(uniforms.useAlbedo      ,albedoUsed);
-        glUniform1i(uniforms.useNormal      ,normalUsed);
-        glUniform1i(uniforms.useMetalness   ,metalnessUsed);
-        glUniform1i(uniforms.useAO          ,occlusionUsed);
-        glUniform1i(uniforms.useHeight      ,displacementUsed);
-        glUniform1i(uniforms.useRoughness   ,roughnessUsed);
+        glUniform1i(uniforms->useAlbedo      ,albedoUsed);
+        glUniform1i(uniforms->useNormal      ,normalUsed);
+        glUniform1i(uniforms->useMetalness   ,metalnessUsed);
+        glUniform1i(uniforms->useAO          ,occlusionUsed);
+        glUniform1i(uniforms->useHeight      ,displacementUsed);
+        glUniform1i(uniforms->useRoughness   ,roughnessUsed);
 
         if(albedoUsed)
             textures[albedo].bind(albedo);
@@ -33,7 +33,7 @@ namespace syj
         }
     }
 
-    void material::useManuelOffset(uniformsHolder &uniforms,brickShaderTexture albedoOffset,brickShaderTexture normalOffset,brickShaderTexture mohrOffset)
+    void material::useManuelOffset(brickShaderTexture albedoOffset,brickShaderTexture normalOffset,brickShaderTexture mohrOffset)
     {
         if(albedoUsed && albedoOffset != doNotUseBrickTexture)
             textures[albedo].bind((textureLocations)albedoOffset);

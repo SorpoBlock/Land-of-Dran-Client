@@ -790,7 +790,7 @@ namespace syj
             return;
 
         if(materialToUse)
-            materialToUse->use(*graphics);
+            materialToUse->use(graphics);
 
         glBindVertexArray(vao);
 

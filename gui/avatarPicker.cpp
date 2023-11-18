@@ -638,7 +638,7 @@ namespace syj
 
             pickingTexture->bind();
             instancedUnis->target->use();
-                pickingCamera.render(*instancedUnis);
+                pickingCamera.render(instancedUnis);
                 //playerModel->renderForPicking(graphics,rotMatrix * glm::scale(glm::vec3(0.02)));
                 pickingPlayer->useGlobalTransform = true;
                 pickingPlayer->hidden = false;
@@ -678,7 +678,7 @@ namespace syj
             pickingPlayer->meshColorChanged = true;
 
             instancedUnis->target->use();
-                pickingCamera.render(*instancedUnis);
+                pickingCamera.render(instancedUnis);
                 /*glUniform1i(graphics->target->getUniformLocation("avatarSelectorLighting"),true);
                 playerModel->render(graphics,rotMatrix * glm::scale(glm::vec3(0.02)),false,&nodeColors,faceDecals.size() > 0 ? faceDecals[chosenDecal] : 0);
                 glUniform1i(graphics->target->getUniformLocation("avatarSelectorLighting"),false);*/
@@ -690,7 +690,7 @@ namespace syj
                 pickingPlayer->type->renderInstanced(instancedUnis);
 
             nonInstancedUnis->target->use();
-                pickingCamera.render(*nonInstancedUnis);
+                pickingCamera.render(nonInstancedUnis);
                 pickingPlayer->type->renderNonInstanced(nonInstancedUnis);
 
             glDisable(GL_DEPTH_TEST);

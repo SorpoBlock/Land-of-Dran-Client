@@ -111,15 +111,15 @@ namespace syj
 
         void iblShadowsCalc(perspectiveCamera *playerCamera,glm::vec3 shadowDir);
         void calc(float deltaMS,glm::vec3 cameraPosition);
-        void passUniforms(uniformsHolder &uniforms,bool forgoShadowMaps = false);
+        void passUniforms(uniformsHolder *uniforms,bool forgoShadowMaps = false);
         bool loadDaySkyBox(std::string path);
         bool loadNightSkyBox(std::string path);
         bool loadSunModel(std::string path);
-        void drawSun(uniformsHolder &uniforms);
-        void drawSky(uniformsHolder &uniforms);
-        void renderGodRays(uniformsHolder &uniforms);
+        void drawSun(uniformsHolder *uniforms);
+        void drawSky(uniformsHolder *uniforms);
+        void renderGodRays(uniformsHolder *uniforms);
 
-        void passLightMatricies(uniformsHolder &uniforms);
+        void passLightMatricies(uniformsHolder *uniforms);
 
         environment(int resX,int resY);
     };

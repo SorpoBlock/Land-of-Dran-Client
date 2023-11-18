@@ -23,8 +23,8 @@ namespace syj
             void create(std::string name,preferenceFile &settings);
 
         public:
-            void use(uniformsHolder &uniforms);
-            void useManuelOffset(uniformsHolder &uniforms,brickShaderTexture albedoOffset,brickShaderTexture normalOffset,brickShaderTexture mohrOffset);
+            void use(uniformsHolder *uniforms);
+            void useManuelOffset(brickShaderTexture albedoOffset,brickShaderTexture normalOffset,brickShaderTexture mohrOffset);
             material(std::string name,preferenceFile &settings);
             material(std::string filePath);
 

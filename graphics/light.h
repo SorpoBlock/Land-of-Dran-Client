@@ -42,7 +42,7 @@ namespace syj
     };
 
     void sortLights(std::vector<light*> &lightVec,glm::vec3 cameraPos,float deltaT);
-    void renderLights(uniformsHolder &unis,std::vector<light*> &lightVec);
+    void renderLights(uniformsHolder *unis,std::vector<light*> &lightVec);
 }
 
 #endif // LIGHT_H_INCLUDED

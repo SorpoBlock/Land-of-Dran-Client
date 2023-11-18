@@ -243,274 +243,161 @@ int main(int argc, char *argv[])
 
     bool shaderFailedToCompile = false;
 
-    program basicProgram;
-    shader basicVertex("shaders/oldModel.vert.glsl",GL_VERTEX_SHADER);
-    shader basicFragment("shaders/oldModel.frag.glsl",GL_FRAGMENT_SHADER);
-    basicProgram.bindShader(basicVertex);
-    basicProgram.bindShader(basicFragment);
-    basicProgram.compile();
-    uniformsHolder basic(basicProgram);
-    basic.name = "basic";
-    if(!basicProgram.isCompiled())
+    std::vector<uniformsHolder*> programUnis;
+
+    program *lastProgram = 0;
+    std::string lastProgramName = "";
+
+    std::ifstream shadersList("shaders/shadersList.txt");
+
+    if(shadersList.is_open())
     {
-        notify("Shader Failed to Compile","Basic shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
-    ohWow.nonInstancedShader = &basic;
+        std::string line = "";
 
-    program newModelProgram;
-    shader newModelVertex("shaders/model.vert.glsl",GL_VERTEX_SHADER);
-    shader newModelFrag("shaders/model.frag.glsl",GL_FRAGMENT_SHADER);
-    newModelProgram.bindShader(newModelVertex);
-    newModelProgram.bindShader(newModelFrag);
-    newModelProgram.compile();
-    uniformsHolder newModelUnis(newModelProgram);
-    newModelUnis.name = "newModel";
-    if(!newModelProgram.isCompiled())
+        while(!shadersList.eof())
+        {
+            getline(shadersList,line);
+
+            if(line.length() < 1)
+                continue;
+
+            if(line.substr(0,1) == "#")
+                continue;
+
+            int firstTab = line.find("\t");
+            int secondTab = line.find("\t",firstTab+1);
+
+            if(firstTab == std::string::npos || secondTab == std::string::npos)
+            {
+                error("Malformed shadersList.txt line: " + line);
+                continue;
+            }
+
+            std::string programName = line.substr(0,firstTab);
+            std::string shaderType = line.substr(firstTab+1,secondTab - (firstTab+1));
+            std::string filePath = line.substr(secondTab+1,line.length() - (secondTab-1));
+
+            if(programName.length() < 1 || shaderType.length() < 1 || filePath.length() < 1)
+            {
+                error("Malformed shadersList.txt line: " + line);
+                continue;
+            }
+
+            if(lastProgramName != programName)
+            {
+                if(lastProgram != 0)
+                {
+                    lastProgram->compile();
+                    if(!lastProgram->isCompiled())
+                    {
+                        notify("Shader Failed to Compile",lastProgramName + " shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
+                        shaderFailedToCompile = true;
+                    }
+                    uniformsHolder *lastUnis = new uniformsHolder(*lastProgram);
+                    lastUnis->name = lastProgramName;
+                    programUnis.push_back(lastUnis);
+                }
+
+                lastProgram = new program;
+            }
+
+            lastProgramName = programName;
+
+            GLenum shaderEnum = 0;
+            if(shaderType == "vert")
+                shaderEnum = GL_VERTEX_SHADER;
+            else if(shaderType == "frag")
+                shaderEnum = GL_FRAGMENT_SHADER;
+            else if(shaderType == "geom")
+                shaderEnum = GL_GEOMETRY_SHADER;
+            else if(shaderType == "tesc")
+                shaderEnum = GL_TESS_CONTROL_SHADER;
+            else if(shaderType == "tese")
+                shaderEnum = GL_TESS_EVALUATION_SHADER;
+
+            if(shaderEnum == 0)
+            {
+                error("Invalid shader type: " + shaderType);
+                continue;
+            }
+            else
+            {
+                shader *tmp = new shader("shaders/" + filePath,shaderEnum);
+                lastProgram->bindShader(tmp);
+            }
+        }
+
+        shadersList.close();
+    }
+    else
     {
-        notify("Shader Failed to Compile","New model shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
-    ohWow.instancedShader = &newModelUnis;
-
-    CEGUI::Window *escapeMenu = addEscapeMenu(&ohWow,&newModelUnis);
-
-    program newModelShadowProgram;
-    shader newModelShadowVertex("shaders/modelShadow.vert.glsl",GL_VERTEX_SHADER);
-    shader newModelShadowGeometry("shaders/modelShadow.geom.glsl",GL_GEOMETRY_SHADER);
-    shader newModelShadowFrag("shaders/modelShadow.frag.glsl",GL_FRAGMENT_SHADER);
-    newModelShadowProgram.bindShader(newModelShadowVertex);
-    newModelShadowProgram.bindShader(newModelShadowGeometry);
-    newModelShadowProgram.bindShader(newModelShadowFrag);
-    newModelShadowProgram.compile();
-    uniformsHolder newModelShadowUnis(newModelShadowProgram);
-    newModelShadowUnis.name = "newModelShadow";
-    if(!newModelShadowProgram.isCompiled())
-    {
-        notify("Shader Failed to Compile","New model shadow shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
-
-    program shadowProgramNoGeo;
-    shader godPrePassSunVert("shaders/godPrePassSun.vert.glsl",GL_VERTEX_SHADER);
-    shader godPrePassSunFrag("shaders/godPrePassSun.frag.glsl",GL_FRAGMENT_SHADER);
-    shadowProgramNoGeo.bindShader(godPrePassSunVert);
-    shadowProgramNoGeo.bindShader(godPrePassSunFrag);
-    shadowProgramNoGeo.compile();
-    uniformsHolder shadowNoGeoUnis(shadowProgramNoGeo);
-    shadowNoGeoUnis.name = "shadowNoGeo";
-    if(!shadowProgramNoGeo.isCompiled())
-    {
-        notify("Shader Failed to Compile","ShadowNoGeo shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
-
-    program emitterProgram;
-    shader emitterVertex("shaders/emitter.vert.glsl",GL_VERTEX_SHADER);
-    shader emitterFragment("shaders/emitter.frag.glsl",GL_FRAGMENT_SHADER);
-    emitterProgram.bindShader(emitterVertex);
-    emitterProgram.bindShader(emitterFragment);
-    emitterProgram.compile();
-    uniformsHolder emitterUnis(emitterProgram);
-    emitterUnis.name = "emitter";
-    if(!emitterProgram.isCompiled())
-    {
-        notify("Shader Failed to Compile","Emitter shadow shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
-
-    //program tessProgram;
-    //shader tessVertex("shaders/tessVertex.glsl",GL_VERTEX_SHADER);
-    /*shader tessControl("shaders/tessControl.glsl",GL_TESS_CONTROL_SHADER);
-    shader tessEval("shaders/tessEval.glsl",GL_TESS_EVALUATION_SHADER);
-    tessProgram.bindShader(tessVertex);
-    tessProgram.bindShader(tessControl);
-    tessProgram.bindShader(tessEval);
-    tessProgram.bindShader(basicFragment);
-    tessProgram.compile();
-    uniformsHolder tess(tessProgram);
-    tess.name = "tess";
-    if(!tessProgram.isCompiled())
-        return 0;*/
-
-    /*program spriteProgram;
-    shader spriteVertex("shaders/spriteVertex.glsl",GL_VERTEX_SHADER);
-    shader spriteFragment("shaders/spriteFragment.glsl",GL_FRAGMENT_SHADER);
-    spriteProgram.bindShader(spriteVertex);
-    spriteProgram.bindShader(spriteFragment);
-    spriteProgram.compile();
-    uniformsHolder spriteUnis(spriteProgram);
-    spriteUnis.name = "sprite";
-    if(!spriteProgram.isCompiled())
-        return 0;*/
-
-    /*program shadowTessProgram;
-    shader shadowTessEval("shaders/shadowTessEval.glsl",GL_TESS_EVALUATION_SHADER);
-    shadowTessProgram.bindShader(tessVertex);
-    shadowTessProgram.bindShader(tessControl);
-    shadowTessProgram.bindShader(shadowGeometry);
-    shadowTessProgram.bindShader(shadowTessEval);
-    shadowTessProgram.bindShader(shadowFragment);
-    shadowTessProgram.compile();
-    uniformsHolder shadowTessUnis(shadowTessProgram);
-    shadowTessUnis.name = "shadowTess";
-    if(!shadowTessProgram.isCompiled())
+        error("Could not open shaders/shadersList.txt!");
         return 0;
-
-    program shadowSpriteProgram;
-    shader shadowSpriteVertex("shaders/shadowSpriteVertex.glsl",GL_VERTEX_SHADER);
-    shadowSpriteProgram.bindShader(shadowSpriteVertex);
-    shadowSpriteProgram.bindShader(shadowGeometry);
-    shadowSpriteProgram.bindShader(shadowFragment);
-    shadowSpriteProgram.compile();
-    uniformsHolder shadowSpriteUnis(shadowSpriteProgram);
-    shadowSpriteUnis.name = "shadowSprite";
-    if(!shadowSpriteProgram.isCompiled())
-        return 0;*/
-
-    program waterProgram;
-    shader waterVertex("shaders/water.vert.glsl",GL_VERTEX_SHADER);
-    shader waterControl("shaders/water.tesc.glsl",GL_TESS_CONTROL_SHADER);
-    shader waterEval("shaders/water.tese.glsl",GL_TESS_EVALUATION_SHADER);
-    shader waterFragment("shaders/water.frag.glsl",GL_FRAGMENT_SHADER);
-    waterProgram.bindShader(waterVertex);
-    waterProgram.bindShader(waterControl);
-    waterProgram.bindShader(waterEval);
-    waterProgram.bindShader(waterFragment);
-    waterProgram.compile();
-    uniformsHolder waterUnis(waterProgram);
-    waterUnis.name = "water";
-    if(!waterProgram.isCompiled())
-    {
-        notify("Shader Failed to Compile","Water shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
     }
 
-    program brickProgram;
-    shader brickVertex("shaders/brick.vert.glsl",GL_VERTEX_SHADER);
-    shader brickFragment("shaders/brick.frag.glsl",GL_FRAGMENT_SHADER);
-    brickProgram.bindShader(brickVertex);
-    brickProgram.bindShader(brickFragment);
-    brickProgram.compile();
-    uniformsHolder brickUnis(brickProgram);
-    brickUnis.name = "brick";
-    if(!brickProgram.isCompiled())
+    if(lastProgram != 0)
     {
-        notify("Shader Failed to Compile","Brick shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
+        lastProgram->compile();
+        if(!lastProgram->isCompiled())
+        {
+            notify("Shader Failed to Compile",lastProgramName + " shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
+            shaderFailedToCompile = true;
+        }
+        uniformsHolder *lastUnis = new uniformsHolder(*lastProgram);
+        lastUnis->name = lastProgramName;
+        programUnis.push_back(lastUnis);
     }
 
-    program brickSimpleProgram;
-    shader brickSimpleVertex("shaders/simpleBrick.vert.glsl",GL_VERTEX_SHADER);
-    shader brickSimpleFragment("shaders/simpleBrick.frag.glsl",GL_FRAGMENT_SHADER);
-    brickSimpleProgram.bindShader(brickSimpleVertex);
-    brickSimpleProgram.bindShader(brickSimpleFragment);
-    brickSimpleProgram.compile();
-    uniformsHolder brickSimpleUnis(brickSimpleProgram);
-    brickSimpleUnis.name = "brickSimple";
-    if(!brickSimpleProgram.isCompiled())
+    uniformsHolder  *boxEdgesUnis=0,*brickUnis=0,*bulletUnis=0,
+                    *emitterUnis=0,*fontUnis=0,*godPrePassBrickUnis=0,
+                    *godPrePassSunUnis=0,*modelUnis=0,*modelShadowUnis=0,
+                    *oldModelUnis=0,*rectToCubeUnis=0,*screenOverlaysUnis=0,
+                    *shadowBrickUnis=0,*simpleBrickUnis=0,*waterUnis=0;
+
+    info(std::to_string(programUnis.size()) + " shaders loaded.");
+    for(int a = 0; a<programUnis.size(); a++)
     {
-        notify("Shader Failed to Compile","Brick shader (simple) failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
+        std::string programName = programUnis[a]->name;
+        if(programName == "boxEdges")
+            boxEdgesUnis = programUnis[a];
+        else if(programName == "brick")
+            brickUnis = programUnis[a];
+        else if(programName == "bullet")
+            bulletUnis = programUnis[a];
+        else if(programName == "emitter")
+            emitterUnis = programUnis[a];
+        else if(programName == "font")
+            fontUnis = programUnis[a];
+        else if(programName == "godPrePassBrick")
+            godPrePassBrickUnis = programUnis[a];
+        else if(programName == "godPrePassSun")
+            godPrePassSunUnis = programUnis[a];
+        else if(programName == "model")
+            modelUnis = programUnis[a];
+        else if(programName == "modelShadow")
+            modelShadowUnis = programUnis[a];
+        else if(programName == "oldModel")
+            oldModelUnis = programUnis[a];
+        else if(programName == "rectToCube")
+            rectToCubeUnis = programUnis[a];
+        else if(programName == "screenOverlays")
+            screenOverlaysUnis = programUnis[a];
+        else if(programName == "shadowBrick")
+            shadowBrickUnis = programUnis[a];
+        else if(programName == "simpleBrick")
+            simpleBrickUnis = programUnis[a];
+        else if(programName == "water")
+            waterUnis = programUnis[a];
+        else
+        {
+            error("Invalid program: " + programName);
+            continue;
+        }
     }
 
-    program shadowBrickProgram;
-    shader shadowBrickVertex("shaders/shadowBrick.vert.glsl",GL_VERTEX_SHADER);
-    shader shadowBrickGeometry("shaders/shadowBrick.geom.glsl",GL_GEOMETRY_SHADER);
-    shader shadowBrickFragment("shaders/shadowBrick.frag.glsl",GL_FRAGMENT_SHADER);
-    shadowBrickProgram.bindShader(shadowBrickVertex);
-    shadowBrickProgram.bindShader(shadowBrickGeometry);
-    shadowBrickProgram.bindShader(shadowBrickFragment);
-    shadowBrickProgram.compile();
-    uniformsHolder shadowBrickUnis(shadowBrickProgram);
-    shadowBrickUnis.name = "shadowBrick";
-    if(!shadowBrickProgram.isCompiled())
-    {
-        notify("Shader Failed to Compile","Brick shadow shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
-
-    program shadowBrickProgramNoGeo;
-    shader godPrePassVertex("shaders/godPrePassBrick.vert.glsl",GL_VERTEX_SHADER);
-    shader godPrePassFrag("shaders/godPrePassBrick.frag.glsl",GL_FRAGMENT_SHADER);
-    shadowBrickProgramNoGeo.bindShader(godPrePassVertex);
-    shadowBrickProgramNoGeo.bindShader(godPrePassFrag);
-    shadowBrickProgramNoGeo.compile();
-    uniformsHolder shadowBrickNoGeoUnis(shadowBrickProgramNoGeo);
-    shadowBrickNoGeoUnis.name = "shadowBrick";
-    if(!shadowBrickProgramNoGeo.isCompiled())
-    {
-        notify("Shader Failed to Compile","Brick shadow no geo shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
-
-    program boxEdgesProgram;
-    shader boxEdgesVertex("shaders/boxEdges.vert.glsl",GL_VERTEX_SHADER);
-    shader boxEdgesFragment("shaders/boxEdges.frag.glsl",GL_FRAGMENT_SHADER);
-    boxEdgesProgram.bindShader(boxEdgesVertex);
-    boxEdgesProgram.bindShader(boxEdgesFragment);
-    boxEdgesProgram.compile();
-    uniformsHolder boxEdgesUnis(boxEdgesProgram);
-    boxEdgesUnis.name = "basic";
-    if(!boxEdgesProgram.isCompiled())
-    {
-        notify("Shader Failed to Compile","Box edges shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
-
-    program rectToCubeProgram;
-    shader rectToCubeVert("shaders/rectToCube.vert.glsl",GL_VERTEX_SHADER);
-    shader rectToCubeFrag("shaders/rectToCube.frag.glsl",GL_FRAGMENT_SHADER);
-    rectToCubeProgram.bindShader(rectToCubeVert);
-    rectToCubeProgram.bindShader(rectToCubeFrag);
-    rectToCubeProgram.compile();
-    if(!rectToCubeProgram.isCompiled())
-    {
-        notify("Shader Failed to Compile","Rect-to-cube shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
-
-    program fontProgram;
-    shader fontVert("shaders/font.vert.glsl",GL_VERTEX_SHADER);
-    shader fontFrag("shaders/font.frag.glsl",GL_FRAGMENT_SHADER);
-    fontProgram.bindShader(fontVert);
-    fontProgram.bindShader(fontFrag);
-    fontProgram.compile();
-    uniformsHolder fontUnis(fontProgram);
-    fontUnis.name = "font";
-    if(!fontProgram.isCompiled())
-    {
-        notify("Shader Failed to Compile","Font shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
-
-    program screenOverlaysProgram;
-    shader screenOverlaysVert("shaders/screenOverlays.vert.glsl",GL_VERTEX_SHADER);
-    shader screenOverlaysFrag("shaders/screenOverlays.frag.glsl",GL_FRAGMENT_SHADER);
-    screenOverlaysProgram.bindShader(screenOverlaysVert);
-    screenOverlaysProgram.bindShader(screenOverlaysFrag);
-    screenOverlaysProgram.compile();
-    uniformsHolder screenOverlaysUnis(screenOverlaysProgram);
-    screenOverlaysUnis.name = "screenOverlays";
-    if(!screenOverlaysProgram.isCompiled())
-    {
-        notify("Shader Failed to Compile","Screen overlays shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
-
-    program bulletProgram;;
-    shader bulletVert("shaders/bullet.vert.glsl",GL_VERTEX_SHADER);
-    shader bulletFrag("shaders/bullet.frag.glsl",GL_FRAGMENT_SHADER);
-    bulletProgram.bindShader(bulletVert);
-    bulletProgram.bindShader(bulletFrag);
-    bulletProgram.compile();
-    uniformsHolder bulletUnis(bulletProgram);
-    bulletUnis.name = "bullet";
-    if(!bulletProgram.isCompiled())
-    {
-        notify("Shader Failed to Compile","Screen overlays shader failed to compile. Check logs folder. This will cause severe graphics issues.","Close");
-        shaderFailedToCompile = true;
-    }
+    CEGUI::Window *escapeMenu = addEscapeMenu(&ohWow,modelUnis);
+    ohWow.nonInstancedShader = oldModelUnis;
+    ohWow.instancedShader = modelUnis;
 
     /*std::vector<glm::vec3> shape = defaultSquareShape();
     std::vector<glm::vec3> norms = calculateNormals(shape);
@@ -782,9 +669,9 @@ int main(int argc, char *argv[])
     //std::string iblName = "field";
     //std::string iblName = "Zollhoff";
     std::string iblName = "road";
-    GLuint IBL = processEquirectangularMap(rectToCubeProgram,cubeVAO,"assets/"+iblName+"/main.hdr");
-    GLuint IBLRad = processEquirectangularMap(rectToCubeProgram,cubeVAO,"assets/"+iblName+"/mainRad.hdr",true);
-    GLuint IBLIrr = processEquirectangularMap(rectToCubeProgram,cubeVAO,"assets/"+iblName+"/mainIrr.hdr",true);
+    GLuint IBL = processEquirectangularMap(rectToCubeUnis->target,cubeVAO,"assets/"+iblName+"/main.hdr");
+    GLuint IBLRad = processEquirectangularMap(rectToCubeUnis->target,cubeVAO,"assets/"+iblName+"/mainRad.hdr",true);
+    GLuint IBLIrr = processEquirectangularMap(rectToCubeUnis->target,cubeVAO,"assets/"+iblName+"/mainIrr.hdr",true);
 
     renderTarget *waterReflection = 0;
     renderTarget *waterRefraction = 0;
@@ -889,11 +776,6 @@ int main(int argc, char *argv[])
     bool bottomBarShouldBeOpen = false;
 
     tempBrick myTempBrick(ohWow.staticBricks);
-
-    int stageOfSelection = -1;
-    bool drawDebugLines = false;
-    glm::vec3 start;
-    glm::vec3 end;
 
     glm::vec3 lastPlayerDir = glm::vec3(0,0,0);
     int lastPlayerControlMask = 0;
@@ -2102,25 +1984,25 @@ int main(int argc, char *argv[])
         ohWow.env->godRayPass->bind();
         if(ohWow.settings->godRayQuality != godRaysOff)
         {
-            shadowProgramNoGeo.use();
+            godPrePassSunUnis->use();
 
-                glUniform1i(shadowNoGeoUnis.doingGodRayPass,true);
+                glUniform1i(godPrePassSunUnis->doingGodRayPass,true);
                 oldName = ohWow.playerCamera->name;
                 ohWow.playerCamera->name = "Shadow";
-                ohWow.playerCamera->render(shadowNoGeoUnis);
-                ohWow.env->passUniforms(shadowNoGeoUnis);
-                ohWow.env->drawSun(shadowNoGeoUnis);
-                glUniform1i(shadowNoGeoUnis.doingGodRayPass,false);
+                ohWow.playerCamera->render(godPrePassSunUnis);
+                ohWow.env->passUniforms(godPrePassSunUnis);
+                ohWow.env->drawSun(godPrePassSunUnis);
+                glUniform1i(godPrePassSunUnis->doingGodRayPass,false);
 
-            shadowBrickProgramNoGeo.use();
+            godPrePassBrickUnis->use();
 
-                glUniform1i(shadowBrickNoGeoUnis.doingGodRayPass,true);
-                ohWow.playerCamera->render(shadowBrickNoGeoUnis);
+                glUniform1i(godPrePassBrickUnis->doingGodRayPass,true);
+                ohWow.playerCamera->render(godPrePassBrickUnis);
                 ohWow.playerCamera->name = oldName;
-                ohWow.staticBricks.renderEverything(shadowBrickNoGeoUnis,true,0,SDL_GetTicks()/25);
+                ohWow.staticBricks.renderEverything(godPrePassBrickUnis,true,0,SDL_GetTicks()/25);
                 for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                    ohWow.livingBricks[a]->renderAlive(shadowBrickNoGeoUnis,true,SDL_GetTicks()/25);
-                glUniform1i(shadowBrickNoGeoUnis.doingGodRayPass,false);
+                    ohWow.livingBricks[a]->renderAlive(godPrePassBrickUnis,true,SDL_GetTicks()/25);
+                glUniform1i(godPrePassBrickUnis->doingGodRayPass,false);
         }
         ohWow.env->godRayPass->unbind();
 
@@ -2136,21 +2018,21 @@ int main(int argc, char *argv[])
             {
                 waterReflection->bind();
 
-                    basicProgram.use();
-                        glUniform1f(basic.clipHeight,ohWow.waterLevel);
-                        ohWow.playerCamera->renderReflection(basic,ohWow.waterLevel);
-                        ohWow.env->passUniforms(basic);
-                        ohWow.settings->render(basic);
+                    oldModelUnis->use();
+                        glUniform1f(oldModelUnis->clipHeight,ohWow.waterLevel);
+                        ohWow.playerCamera->renderReflection(oldModelUnis,ohWow.waterLevel);
+                        ohWow.env->passUniforms(oldModelUnis);
+                        ohWow.settings->render(oldModelUnis);
                         glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
                         glBindTexture(GL_TEXTURE_CUBE_MAP,IBL);
-                        ohWow.env->drawSky(basic);
+                        ohWow.env->drawSky(oldModelUnis);
 
                         glEnable(GL_CLIP_DISTANCE0);
                         /*for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
                         {
                             for(unsigned int wheel = 0; wheel<ohWow.livingBricks[a]->wheels.size(); wheel++)
                             {
-                                wheelModel.render(&basic,
+                                wheelModel.render(&oldModelUnis,
                                                   glm::translate(ohWow.livingBricks[a]->wheels[wheel]->getPosition()) *
                                                   glm::toMat4(ohWow.livingBricks[a]->wheels[wheel]->getRotation()) *
                                                   glm::scale(glm::vec3(0.06)) *
@@ -2160,40 +2042,40 @@ int main(int argc, char *argv[])
                         }*/
 
 
-                    newModelProgram.use();
-                        glUniform1f(newModelUnis.clipHeight,ohWow.waterLevel);
-                        ohWow.settings->render(newModelUnis);
-                        ohWow.playerCamera->renderReflection(newModelUnis,ohWow.waterLevel);
-                        ohWow.env->passUniforms(newModelUnis);
+                    modelUnis->use();
+                        glUniform1f(modelUnis->clipHeight,ohWow.waterLevel);
+                        ohWow.settings->render(modelUnis);
+                        ohWow.playerCamera->renderReflection(modelUnis,ohWow.waterLevel);
+                        ohWow.env->passUniforms(modelUnis);
                         for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                            ohWow.newDynamicTypes[a]->renderInstanced(&newModelUnis);
+                            ohWow.newDynamicTypes[a]->renderInstanced(modelUnis);
 
-                        ohWow.newWheelModel->renderInstanced(&newModelUnis);
+                        ohWow.newWheelModel->renderInstanced(modelUnis);
 
 
                         /*for(unsigned int a = 0; a<ohWow.dynamics.size(); a++)
                                 ohWow.dynamics[a]->render(&basic);*/
 
-                     /*tessProgram.use();
+                     /*tessUnis->use();
                         glUniform1f(tess.clipHeight,waterLevel);
                         ohWow.playerCamera->render(tess);
                         ohWow.env->passUniforms(tess);
                         grass.use(tess);
                         theMap.render(tess);*/
 
-                    brickSimpleProgram.use();
-                        glUniform1i(brickSimpleUnis.target->getUniformLocation("debugMode"),debugMode);
+                    simpleBrickUnis->use();
+                        glUniform1i(simpleBrickUnis->target->getUniformLocation("debugMode"),debugMode);
 
-                        glUniform1f(brickSimpleUnis.clipHeight,ohWow.waterLevel);
-                        ohWow.playerCamera->renderReflection(brickSimpleUnis,ohWow.waterLevel);
-                        ohWow.env->passUniforms(brickSimpleUnis);
-                        ohWow.settings->render(brickSimpleUnis);
+                        glUniform1f(simpleBrickUnis->clipHeight,ohWow.waterLevel);
+                        ohWow.playerCamera->renderReflection(simpleBrickUnis,ohWow.waterLevel);
+                        ohWow.env->passUniforms(simpleBrickUnis);
+                        ohWow.settings->render(simpleBrickUnis);
 
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        ohWow.staticBricks.renderEverything(brickSimpleUnis,false,&grass,SDL_GetTicks()/25);
+                        ohWow.staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
                         for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                            ohWow.livingBricks[a]->renderAlive(brickSimpleUnis,false,SDL_GetTicks()/25);
+                            ohWow.livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
                         glDisable(GL_BLEND);
 
                 waterReflection->unbind();
@@ -2203,26 +2085,26 @@ int main(int argc, char *argv[])
                 glEnable(GL_CLIP_DISTANCE0);
                 waterRefraction->bind();
 
-                    newModelProgram.use();
-                        glUniform1f(newModelUnis.clipHeight,-ohWow.waterLevel);
-                        ohWow.settings->render(newModelUnis);
-                        ohWow.playerCamera->render(newModelUnis);
-                        ohWow.env->passUniforms(newModelUnis);
+                    modelUnis->use();
+                        glUniform1f(modelUnis->clipHeight,-ohWow.waterLevel);
+                        ohWow.settings->render(modelUnis);
+                        ohWow.playerCamera->render(modelUnis);
+                        ohWow.env->passUniforms(modelUnis);
                         for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                            ohWow.newDynamicTypes[a]->renderInstanced(&newModelUnis);
+                            ohWow.newDynamicTypes[a]->renderInstanced(modelUnis);
 
-                        ohWow.newWheelModel->renderInstanced(&newModelUnis);
+                        ohWow.newWheelModel->renderInstanced(modelUnis);
 
-                    basicProgram.use();
-                        glUniform1f(basic.clipHeight,-ohWow.waterLevel);
-                        ohWow.playerCamera->render(basic);
-                        ohWow.env->passUniforms(basic);
+                    oldModelUnis->use();
+                        glUniform1f(oldModelUnis->clipHeight,-ohWow.waterLevel);
+                        ohWow.playerCamera->render(oldModelUnis);
+                        ohWow.env->passUniforms(oldModelUnis);
 
                         /*for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
                         {
                             for(unsigned int wheel = 0; wheel<ohWow.livingBricks[a]->wheels.size(); wheel++)
                             {
-                                wheelModel.render(&basic,
+                                wheelModel.render(&oldModelUnis,
                                                   glm::translate(ohWow.livingBricks[a]->wheels[wheel]->getPosition()) *
                                                   glm::toMat4(ohWow.livingBricks[a]->wheels[wheel]->getRotation()) *
                                                   glm::scale(glm::vec3(0.06)) *
@@ -2234,24 +2116,24 @@ int main(int argc, char *argv[])
                         /*(for(unsigned int a = 0; a<ohWow.dynamics.size(); a++)
                                 ohWow.dynamics[a]->render(&basic);*/
 
-                    /*tessProgram.use();
+                    /*tessUnis->use();
                         ohWow.playerCamera->render(tess);
                         glUniform1f(tess.clipHeight,-waterLevel);
                         ohWow.env->passUniforms(tess);
                         grass.use(tess);
                         theMap.render(tess);*/
 
-                    brickSimpleProgram.use();
-                    glUniform1i(brickSimpleUnis.target->getUniformLocation("debugMode"),debugMode);
-                    ohWow.env->passUniforms(brickSimpleUnis);
-                    ohWow.settings->render(brickSimpleUnis);
-                        glUniform1f(brickSimpleUnis.clipHeight,-ohWow.waterLevel);
-                        ohWow.playerCamera->render(brickSimpleUnis);
+                    simpleBrickUnis->use();
+                    glUniform1i(simpleBrickUnis->target->getUniformLocation("debugMode"),debugMode);
+                    ohWow.env->passUniforms(simpleBrickUnis);
+                    ohWow.settings->render(simpleBrickUnis);
+                        glUniform1f(simpleBrickUnis->clipHeight,-ohWow.waterLevel);
+                        ohWow.playerCamera->render(simpleBrickUnis);
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        ohWow.staticBricks.renderEverything(brickSimpleUnis,false,&grass,SDL_GetTicks()/25);
+                        ohWow.staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
                         for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                            ohWow.livingBricks[a]->renderAlive(brickSimpleUnis,false,SDL_GetTicks()/25);
+                            ohWow.livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
                         glDisable(GL_BLEND);
 
 
@@ -2260,13 +2142,13 @@ int main(int argc, char *argv[])
             glDisable(GL_CLIP_DISTANCE0);
 
             /*waterDepth->bind();
-                 /*tessProgram.use();
+                 /*tessUnis->use();
                     glUniform1f(tess.clipHeight,-waterLevel);
                     ohWow.playerCamera->render(tess);
                     grass.use(tess); //TODO: Yes, at the moment, this is required for some reason...
                     theMap.render(tess);
 
-                brickProgram.use();
+                brickUnis->use();
                     ohWow.playerCamera->render(brickUnis);
                     ohWow.env->passUniforms(brickUnis);
                     ohWow.staticBricks.renderEverything(brickUnis,true,0,SDL_GetTicks()/25);
@@ -2287,7 +2169,7 @@ int main(int argc, char *argv[])
 
             ohWow.env->shadowBuffer->bind();
 
-                /*shadowProgram.use();
+                /*shadowUnis->use();
                     ohWow.env->passLightMatricies(shadow);
 
                     for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
@@ -2303,13 +2185,13 @@ int main(int argc, char *argv[])
                         }
                     }*/
 
-                newModelShadowProgram.use();
-                    ohWow.env->passLightMatricies(newModelShadowUnis);
+                modelShadowUnis->use();
+                    ohWow.env->passLightMatricies(modelShadowUnis);
                     for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
                         ohWow.newDynamicTypes[a]->renderInstancedWithoutMaterials();
 
 
-                shadowBrickProgram.use();
+                shadowBrickUnis->use();
                         ohWow.env->passLightMatricies(shadowBrickUnis);
                         ohWow.staticBricks.renderEverything(shadowBrickUnis,true,0,SDL_GetTicks()/25);
                         for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
@@ -2327,24 +2209,24 @@ int main(int argc, char *argv[])
         context.clear(ohWow.env->skyColor.r,ohWow.env->skyColor.g,ohWow.env->skyColor.b);
         context.select();
 
-            basicProgram.use();
-                ohWow.settings->render(basic);
-                ohWow.playerCamera->render(basic); //change
-                ohWow.env->passUniforms(basic);
-                renderLights(basic,ohWow.lights);
+            oldModelUnis->use();
+                ohWow.settings->render(oldModelUnis);
+                ohWow.playerCamera->render(oldModelUnis); //change
+                ohWow.env->passUniforms(oldModelUnis);
+                renderLights(oldModelUnis,ohWow.lights);
 
                 glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
                 glBindTexture(GL_TEXTURE_CUBE_MAP,IBL);
 
-                ohWow.env->drawSky(basic);
+                ohWow.env->drawSky(oldModelUnis);
 
                 if(ohWow.settings->waterQuality != waterStatic && waterRefraction)
                 {
-                    waterProgram.use();
+                    waterUnis->use();
                         ohWow.settings->render(waterUnis);
-                        glUniform1f(waterUnis.deltaT,((float)SDL_GetTicks()) / 1000.0);     //why both of these...?
-                        glUniform1f(waterUnis.waterDelta,((float)SDL_GetTicks())*0.0001);
-                        glUniform1f(waterUnis.target->getUniformLocation("waterLevel"),ohWow.waterLevel); //TODO: Don't string match this every frame
+                        glUniform1f(waterUnis->deltaT,((float)SDL_GetTicks()) / 1000.0);     //why both of these...?
+                        glUniform1f(waterUnis->waterDelta,((float)SDL_GetTicks())*0.0001);
+                        glUniform1f(waterUnis->target->getUniformLocation("waterLevel"),ohWow.waterLevel); //TODO: Don't string match this every frame
                         ohWow.env->passUniforms(waterUnis,true);
                         ohWow.playerCamera->render(waterUnis);
 
@@ -2355,15 +2237,15 @@ int main(int argc, char *argv[])
 
                         water.render(waterUnis);
 
-                        basicProgram.use();
+                        oldModelUnis->use();
                 }
 
                 //Render faces for players, pretty much:
                 for(unsigned int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                    ohWow.newDynamicTypes[a]->renderNonInstanced(&basic);
+                    ohWow.newDynamicTypes[a]->renderNonInstanced(oldModelUnis);
 
                 //Start rendering item icons...
-                basic.setModelMatrix(glm::mat4(1.0));
+                oldModelUnis->setModelMatrix(glm::mat4(1.0));
 
                 for(unsigned int a = 0; a<ohWow.items.size(); a++)
                 {
@@ -2456,27 +2338,27 @@ int main(int argc, char *argv[])
                         type->icon->globalTransform = tot;
                         type->icon->calculateMeshTransforms(0);
                         type->icon->bufferSubData();
-                        /*glUniform1i(basic.target->getUniformLocation("skipCamera"),1);
-                        ((animatedModel*)type->type->oldModelType)->render(&basic,0,tot);
-                        glUniform1i(basic.target->getUniformLocation("skipCamera"),0);*/
+                        /*glUniform1i(oldModelUnis->target->getUniformLocation("skipCamera"),1);
+                        ((animatedModel*)type->type->oldModelType)->render(&oldModelUnis,0,tot);
+                        glUniform1i(oldModelUnis->target->getUniformLocation("skipCamera"),0);*/
                     }
                 }
 
                 //Preview texture:
                 if(showPreview)
                 {
-                    glUniform1i(basic.previewTexture,true);
+                    glUniform1i(oldModelUnis->previewTexture,true);
                     ohWow.env->godRayPass->colorResult->bind(normal);
                     glBindVertexArray(quadVAO);
                     glDrawArrays(GL_TRIANGLES,0,6);
                     glBindVertexArray(0);
-                    glUniform1i(basic.previewTexture,false);
+                    glUniform1i(oldModelUnis->previewTexture,false);
                 }
                 //end preview texture
 
-                //drawDebugLocations(basic,cubeVAO,ohWow.debugLocations,ohWow.debugColors);
+                //drawDebugLocations(oldModelUnis,cubeVAO,ohWow.debugLocations,ohWow.debugColors);
 
-/*            tessProgram.use();
+/*            tessUnis->use();
                 ohWow.settings->render(tess);
                 ohWow.playerCamera->render(tess); //change
                 ohWow.env->passUniforms(tess);*/
@@ -2484,22 +2366,22 @@ int main(int argc, char *argv[])
 //                grass.use(tess);
  //               theMap.render(tess);
 
-                newModelProgram.use();
-                    ohWow.settings->render(newModelUnis);
-                    ohWow.playerCamera->render(newModelUnis);
-                    ohWow.env->passUniforms(newModelUnis);
-                    renderLights(newModelUnis,ohWow.lights);
+                modelUnis->use();
+                    ohWow.settings->render(modelUnis);
+                    ohWow.playerCamera->render(modelUnis);
+                    ohWow.env->passUniforms(modelUnis);
+                    renderLights(modelUnis,ohWow.lights);
                     for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                        ohWow.newDynamicTypes[a]->renderInstanced(&newModelUnis);
+                        ohWow.newDynamicTypes[a]->renderInstanced(modelUnis);
 
-                ohWow.newWheelModel->renderInstanced(&newModelUnis);
+                ohWow.newWheelModel->renderInstanced(modelUnis);
 
-            brickProgram.use();
+            brickUnis->use();
                 ohWow.playerCamera->render(brickUnis);
                 ohWow.env->passUniforms(brickUnis);
                 ohWow.settings->render(brickUnis);
                 renderLights(brickUnis,ohWow.lights);
-                glUniform1i(brickUnis.target->getUniformLocation("debugMode"),debugMode);
+                glUniform1i(brickUnis->target->getUniformLocation("debugMode"),debugMode);
 
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2512,7 +2394,7 @@ int main(int argc, char *argv[])
 
                 glEnable(GL_BLEND);
                 glDisable(GL_CULL_FACE);
-                emitterProgram.use();
+                emitterUnis->use();
                     ohWow.playerCamera->render(emitterUnis);
                     ohWow.env->passUniforms(emitterUnis);
                     ohWow.settings->render(emitterUnis);
@@ -2523,24 +2405,24 @@ int main(int argc, char *argv[])
 
             ohWow.bulletTrails->purge();
             glDisable(GL_CULL_FACE);
-            bulletProgram.use();
+            bulletUnis->use();
                 ohWow.playerCamera->render(bulletUnis);
-                ohWow.bulletTrails->render(&bulletUnis);
+                ohWow.bulletTrails->render(bulletUnis);
             glEnable(GL_CULL_FACE);
 
 
                 glLineWidth(3.0);
-                boxEdgesProgram.use();
-                    glUniform1i(boxEdgesProgram.getUniformLocation("drawingRopes"),true);
+                boxEdgesUnis->use();
+                    glUniform1i(boxEdgesUnis->target->getUniformLocation("drawingRopes"),true);
                     ohWow.playerCamera->render(boxEdgesUnis);
                     for(unsigned int a = 0; a<ohWow.ropes.size(); a++)
                         ohWow.ropes[a]->render();
-                    glUniform1i(boxEdgesProgram.getUniformLocation("drawingRopes"),false);
+                    glUniform1i(boxEdgesUnis->target->getUniformLocation("drawingRopes"),false);
 
             glDisable(GL_DEPTH_TEST);
             glEnable(GL_BLEND);
             glDisable(GL_CULL_FACE);
-            fontProgram.use();
+            fontUnis->use();
                     ohWow.playerCamera->render(fontUnis);
                     for(unsigned int a = 0; a<ohWow.newDynamics.size(); a++)
                     {
@@ -2565,10 +2447,10 @@ int main(int argc, char *argv[])
             glEnable(GL_DEPTH_TEST);
 
             //Remember, 'god rays' actually includes the underwater texture too
-            screenOverlaysProgram.use();
-                glUniform1f(screenOverlaysProgram.getUniformLocation("waterLevel"),ohWow.waterLevel); //TODO: Don't string match this every frame
-                glUniform1f(screenOverlaysProgram.getUniformLocation("vignetteStrength"),ohWow.vignetteStrength);
-                glUniform3f(screenOverlaysProgram.getUniformLocation("vignetteColor"),ohWow.vignetteColor.r,ohWow.vignetteColor.g,ohWow.vignetteColor.b);
+            screenOverlaysUnis->use();
+                glUniform1f(screenOverlaysUnis->target->getUniformLocation("waterLevel"),ohWow.waterLevel); //TODO: Don't string match this every frame
+                glUniform1f(screenOverlaysUnis->target->getUniformLocation("vignetteStrength"),ohWow.vignetteStrength);
+                glUniform3f(screenOverlaysUnis->target->getUniformLocation("vignetteColor"),ohWow.vignetteColor.r,ohWow.vignetteColor.g,ohWow.vignetteColor.b);
                 if(ohWow.vignetteStrength >= 0)
                     ohWow.vignetteStrength -= deltaT * 0.001;
                 if(ohWow.vignetteStrength < 0)
@@ -2579,7 +2461,7 @@ int main(int argc, char *argv[])
                 ohWow.env->passUniforms(screenOverlaysUnis);
                 ohWow.env->renderGodRays(screenOverlaysUnis);
 
-            /*spriteProgram.use();
+            /*spriteUnis->use();
                 glEnable(GL_CLIP_DISTANCE0);
                 glUniform1f(spriteUnis.clipHeight,waterLevel); //TODO: Only cull plants underwater if camera above water
                 ohWow.playerCamera->render(spriteUnis); //change
@@ -2600,7 +2482,7 @@ int main(int argc, char *argv[])
 
             glEnable(GL_BLEND);
 
-            boxEdgesProgram.use();
+            boxEdgesUnis->use();
                 ohWow.playerCamera->render(boxEdgesUnis);
                 box->render(boxEdgesUnis);
 
@@ -2611,7 +2493,7 @@ int main(int argc, char *argv[])
             {
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-                waterProgram.use();
+                waterUnis->use();
                     ohWow.settings->render(waterUnis);
                     ohWow.env->passUniforms(waterUnis,true);
                     ohWow.playerCamera->render(waterUnis);

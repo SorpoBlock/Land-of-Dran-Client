@@ -318,7 +318,7 @@ namespace syj
         updateAABB(forwardPull,world);
     }
 
-    void selectionBox::render(uniformsHolder &unis)
+    void selectionBox::render(uniformsHolder *unis)
     {
         if(!(currentPhase == selecting || currentPhase == stretching))
             return;
@@ -331,44 +331,44 @@ namespace syj
         glm::vec4 idleNubColor = glm::vec4(0.2,0.2,1.0,1.0);
 
         btVector3 pos = leftPull->getWorldTransform().getOrigin();
-        glUniform3vec(unis.target->getUniformLocation("start"),BtToGlm(pos - half));
-        glUniform3vec(unis.target->getUniformLocation("end"),BtToGlm(pos + half));
-        glUniform4vec(unis.target->getUniformLocation("boxColor"),draggedBox == left ? selectedNubColor : idleNubColor);
+        glUniform3vec(unis->target->getUniformLocation("start"),BtToGlm(pos - half));
+        glUniform3vec(unis->target->getUniformLocation("end"),BtToGlm(pos + half));
+        glUniform4vec(unis->target->getUniformLocation("boxColor"),draggedBox == left ? selectedNubColor : idleNubColor);
         glDrawArrays(GL_TRIANGLES,0,36);
 
         pos = rightPull->getWorldTransform().getOrigin();
-        glUniform3vec(unis.target->getUniformLocation("start"),BtToGlm(pos - half));
-        glUniform3vec(unis.target->getUniformLocation("end"),BtToGlm(pos + half));
-        glUniform4vec(unis.target->getUniformLocation("boxColor"),draggedBox == right ? selectedNubColor : idleNubColor);
+        glUniform3vec(unis->target->getUniformLocation("start"),BtToGlm(pos - half));
+        glUniform3vec(unis->target->getUniformLocation("end"),BtToGlm(pos + half));
+        glUniform4vec(unis->target->getUniformLocation("boxColor"),draggedBox == right ? selectedNubColor : idleNubColor);
         glDrawArrays(GL_TRIANGLES,0,36);
 
         pos = downPull->getWorldTransform().getOrigin();
-        glUniform3vec(unis.target->getUniformLocation("start"),BtToGlm(pos - half));
-        glUniform3vec(unis.target->getUniformLocation("end"),BtToGlm(pos + half));
-        glUniform4vec(unis.target->getUniformLocation("boxColor"),draggedBox == down ? selectedNubColor : idleNubColor);
+        glUniform3vec(unis->target->getUniformLocation("start"),BtToGlm(pos - half));
+        glUniform3vec(unis->target->getUniformLocation("end"),BtToGlm(pos + half));
+        glUniform4vec(unis->target->getUniformLocation("boxColor"),draggedBox == down ? selectedNubColor : idleNubColor);
         glDrawArrays(GL_TRIANGLES,0,36);
 
         pos = upPull->getWorldTransform().getOrigin();
-        glUniform3vec(unis.target->getUniformLocation("start"),BtToGlm(pos - half));
-        glUniform3vec(unis.target->getUniformLocation("end"),BtToGlm(pos + half));
-        glUniform4vec(unis.target->getUniformLocation("boxColor"),draggedBox == up ? selectedNubColor : idleNubColor);
+        glUniform3vec(unis->target->getUniformLocation("start"),BtToGlm(pos - half));
+        glUniform3vec(unis->target->getUniformLocation("end"),BtToGlm(pos + half));
+        glUniform4vec(unis->target->getUniformLocation("boxColor"),draggedBox == up ? selectedNubColor : idleNubColor);
         glDrawArrays(GL_TRIANGLES,0,36);
 
         pos = forwardPull->getWorldTransform().getOrigin();
-        glUniform3vec(unis.target->getUniformLocation("start"),BtToGlm(pos - half));
-        glUniform3vec(unis.target->getUniformLocation("end"),BtToGlm(pos + half));
-        glUniform4vec(unis.target->getUniformLocation("boxColor"),draggedBox == forward ? selectedNubColor : idleNubColor);
+        glUniform3vec(unis->target->getUniformLocation("start"),BtToGlm(pos - half));
+        glUniform3vec(unis->target->getUniformLocation("end"),BtToGlm(pos + half));
+        glUniform4vec(unis->target->getUniformLocation("boxColor"),draggedBox == forward ? selectedNubColor : idleNubColor);
         glDrawArrays(GL_TRIANGLES,0,36);
 
         pos = backwardPull->getWorldTransform().getOrigin();
-        glUniform3vec(unis.target->getUniformLocation("start"),BtToGlm(pos - half));
-        glUniform3vec(unis.target->getUniformLocation("end"),BtToGlm(pos + half));
-        glUniform4vec(unis.target->getUniformLocation("boxColor"),draggedBox == backward ? selectedNubColor : idleNubColor);
+        glUniform3vec(unis->target->getUniformLocation("start"),BtToGlm(pos - half));
+        glUniform3vec(unis->target->getUniformLocation("end"),BtToGlm(pos + half));
+        glUniform4vec(unis->target->getUniformLocation("boxColor"),draggedBox == backward ? selectedNubColor : idleNubColor);
         glDrawArrays(GL_TRIANGLES,0,36);
 
-        glUniform3vec(unis.target->getUniformLocation("start"),BtToGlm(minExtents));
-        glUniform3vec(unis.target->getUniformLocation("end"),BtToGlm(maxExtents));
-        glUniform4vec(unis.target->getUniformLocation("boxColor"),glm::vec4(1,0.3,0.3,0.5));
+        glUniform3vec(unis->target->getUniformLocation("start"),BtToGlm(minExtents));
+        glUniform3vec(unis->target->getUniformLocation("end"),BtToGlm(maxExtents));
+        glUniform4vec(unis->target->getUniformLocation("boxColor"),glm::vec4(1,0.3,0.3,0.5));
         glDrawArrays(GL_TRIANGLES,0,36);
 
         glBindVertexArray(0);

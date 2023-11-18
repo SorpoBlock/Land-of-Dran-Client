@@ -26,7 +26,7 @@ namespace syj
         texture *heightMapTex = 0;
         GLuint vao;
         GLuint vertexBuffer;
-        void render(uniformsHolder &tess,bool bindsOnly = false);
+        void render(uniformsHolder *tess,bool bindsOnly = false);
         tessellation(float _yOffset);
         tessellation(std::string heightMapFilePath);
         ~tessellation();

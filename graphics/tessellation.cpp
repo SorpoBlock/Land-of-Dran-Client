@@ -59,10 +59,10 @@ namespace syj
         init();
     }
 
-    void tessellation::render(uniformsHolder &tess,bool bindsOnly)
+    void tessellation::render(uniformsHolder *tess,bool bindsOnly)
     {
         glm::vec3 scale = glm::vec3(prefs.numPatchesX * prefs.patchSizeX,prefs.heightMapYScale,prefs.numPatchesZ * prefs.patchSizeZ);
-        glUniform3vec(tess.tessellationScale,scale);
+        glUniform3vec(tess->tessellationScale,scale);
         if(heightMapTex)
             heightMapTex->bind(heightMap);
 

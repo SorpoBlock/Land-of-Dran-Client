@@ -9,8 +9,8 @@ namespace syj
         program bdrfProgram;
         shader bdrfVertex("shaders/bdrf.vert.glsl",GL_VERTEX_SHADER);
         shader bdrfFragment("shaders/bdrf.frag.glsl",GL_FRAGMENT_SHADER);
-        bdrfProgram.bindShader(bdrfVertex);
-        bdrfProgram.bindShader(bdrfFragment);
+        bdrfProgram.bindShader(&bdrfVertex);
+        bdrfProgram.bindShader(&bdrfFragment);
         bdrfProgram.compile();
         if(!bdrfProgram.isCompiled())
             return 0;

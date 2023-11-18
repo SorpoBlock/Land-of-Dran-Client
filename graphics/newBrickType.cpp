@@ -334,7 +334,7 @@ namespace syj
         return body;
     }
 
-    void newBrickRenderer::renderTransparent(uniformsHolder &unis,bool skipMats,float deltaT)
+    void newBrickRenderer::renderTransparent(uniformsHolder *unis,bool skipMats,float deltaT)
     {
         glEnable(GL_BLEND);
 
@@ -350,7 +350,7 @@ namespace syj
             glDrawArraysInstanced(GL_TRIANGLE_FAN,0,4,transparentPerTextureInstances[a]);
         }
 
-        glUniform1i(unis.target->getUniformLocation("isPrint"),true);
+        glUniform1i(unis->target->getUniformLocation("isPrint"),true);
 
         for(int a = 4; a<transparentPerTextureVAO.size(); a++)
         {
@@ -365,16 +365,16 @@ namespace syj
             glDrawArraysInstanced(GL_TRIANGLE_FAN,0,4,transparentPerTextureInstances[a]);
         }
 
-        glUniform1i(unis.target->getUniformLocation("isPrint"),false);
+        glUniform1i(unis->target->getUniformLocation("isPrint"),false);
 
-        glUniform1i(unis.target->getUniformLocation("specialBricks"),true);
+        glUniform1i(unis->target->getUniformLocation("specialBricks"),true);
 
         if(!skipMats)
         {
-            theTextures[BRICKTEX_STUDS]->useManuelOffset(unis,doNotUseBrickTexture,topNormal,topMohr);
-            theTextures[BRICKTEX_SIDES]->useManuelOffset(unis,doNotUseBrickTexture,sideNormal,sideMohr);
-            theTextures[BRICKTEX_BOTTOM]->useManuelOffset(unis,doNotUseBrickTexture,bottomNormal,bottomMohr);
-            theTextures[BRICKTEX_RAMP]->useManuelOffset(unis,doNotUseBrickTexture,rampNormal,rampMohr);
+            theTextures[BRICKTEX_STUDS]->useManuelOffset(doNotUseBrickTexture,topNormal,topMohr);
+            theTextures[BRICKTEX_SIDES]->useManuelOffset(doNotUseBrickTexture,sideNormal,sideMohr);
+            theTextures[BRICKTEX_BOTTOM]->useManuelOffset(doNotUseBrickTexture,bottomNormal,bottomMohr);
+            theTextures[BRICKTEX_RAMP]->useManuelOffset(doNotUseBrickTexture,rampNormal,rampMohr);
         }
 
 
@@ -392,16 +392,16 @@ namespace syj
             glDrawArraysInstanced(GL_TRIANGLES,0,blocklandTypes->specialBrickTypes[a]->vertexCount,transparentSpecialBrickTypes[a]->numCompiledInstances);
         }
 
-        glUniform1i(unis.target->getUniformLocation("specialBricks"),false);
+        glUniform1i(unis->target->getUniformLocation("specialBricks"),false);
 
         glDisable(GL_BLEND);
     }
 
-    void newBrickRenderer::renderEverything(uniformsHolder &unis,bool skipMats,material *specialPrintBrickMaterial,float deltaT)
+    void newBrickRenderer::renderEverything(uniformsHolder *unis,bool skipMats,material *specialPrintBrickMaterial,float deltaT)
     {
         glEnable(GL_CULL_FACE);
 
-        glUniform1f(unis.target->getUniformLocation("deltaT"),deltaT);
+        glUniform1f(unis->target->getUniformLocation("deltaT"),deltaT);
 
         for(int a = 0; a<4; a++)
         {
@@ -416,7 +416,7 @@ namespace syj
             glDrawArraysInstanced(GL_TRIANGLE_FAN,0,4,perTextureInstances[a]);
         }
 
-        glUniform1i(unis.target->getUniformLocation("isPrint"),true);
+        glUniform1i(unis->target->getUniformLocation("isPrint"),true);
 
         for(int a = 4; a<perTextureVAO.size(); a++)
         {
@@ -430,23 +430,23 @@ namespace syj
             glDrawArraysInstanced(GL_TRIANGLE_FAN,0,4,perTextureInstances[a]);
         }
 
-        glUniform1i(unis.target->getUniformLocation("isPrint"),false);
+        glUniform1i(unis->target->getUniformLocation("isPrint"),false);
 
-        glUniform1i(unis.target->getUniformLocation("specialBricks"),true);
+        glUniform1i(unis->target->getUniformLocation("specialBricks"),true);
 
         if(!skipMats)
         {
-            theTextures[BRICKTEX_STUDS]->useManuelOffset(unis,doNotUseBrickTexture,topNormal,topMohr);
-            theTextures[BRICKTEX_SIDES]->useManuelOffset(unis,doNotUseBrickTexture,sideNormal,sideMohr);
-            theTextures[BRICKTEX_BOTTOM]->useManuelOffset(unis,doNotUseBrickTexture,bottomNormal,bottomMohr);
-            theTextures[BRICKTEX_RAMP]->useManuelOffset(unis,doNotUseBrickTexture,rampNormal,rampMohr);
+            theTextures[BRICKTEX_STUDS]->useManuelOffset(doNotUseBrickTexture,topNormal,topMohr);
+            theTextures[BRICKTEX_SIDES]->useManuelOffset(doNotUseBrickTexture,sideNormal,sideMohr);
+            theTextures[BRICKTEX_BOTTOM]->useManuelOffset(doNotUseBrickTexture,bottomNormal,bottomMohr);
+            theTextures[BRICKTEX_RAMP]->useManuelOffset(doNotUseBrickTexture,rampNormal,rampMohr);
         }
 
         //std::cout<<"BL Types: "<<blocklandTypes->specialBrickTypes.size()<<"\n";
         //std::cout<<"Our types: "<<specialBrickTypes.size()<<"\n";
 
         if(specialPrintBrickMaterial)
-            specialPrintBrickMaterial->useManuelOffset(unis,doNotUseBrickTexture,printTextureSpecialBrickNormal,printTexture);
+            specialPrintBrickMaterial->useManuelOffset(doNotUseBrickTexture,printTextureSpecialBrickNormal,printTexture);
 
         for(int a = 0; a<blocklandTypes->specialBrickTypes.size(); a++)
         {
@@ -454,16 +454,16 @@ namespace syj
                 continue;
 
             if(specialPrintBrickMaterial)
-                glUniform1i(unis.target->getUniformLocation("isPrint"),specialBrickTypes[a]->type->hasPrint);
+                glUniform1i(unis->target->getUniformLocation("isPrint"),specialBrickTypes[a]->type->hasPrint);
 
             glBindVertexArray(specialBrickTypes[a]->vao);
             glDrawArraysInstanced(GL_TRIANGLES,0,blocklandTypes->specialBrickTypes[a]->vertexCount,specialBrickTypes[a]->numCompiledInstances);
         }
 
         if(specialPrintBrickMaterial)
-            glUniform1i(unis.target->getUniformLocation("isPrint"),0);
+            glUniform1i(unis->target->getUniformLocation("isPrint"),0);
 
-        glUniform1i(unis.target->getUniformLocation("specialBricks"),false);
+        glUniform1i(unis->target->getUniformLocation("specialBricks"),false);
 
         renderTransparent(unis,skipMats,deltaT);
 

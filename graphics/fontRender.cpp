@@ -52,14 +52,14 @@ namespace syj
         glBindVertexArray(0);
     }
 
-    void fontRenderer::naiveRender(uniformsHolder &unis,std::string text,glm::vec3 offset,float scale,glm::vec3 color)
+    void fontRenderer::naiveRender(uniformsHolder *unis,std::string text,glm::vec3 offset,float scale,glm::vec3 color)
     {
         const char *t = text.c_str();
         if(!t)
             return;
 
-        glUniform3f(unis.target->getUniformLocation("textColor"),color.r,color.g,color.b);
-        glUniform3f(unis.target->getUniformLocation("textOffset"),offset.x,offset.y,offset.z);
+        glUniform3f(unis->target->getUniformLocation("textColor"),color.r,color.g,color.b);
+        glUniform3f(unis->target->getUniformLocation("textOffset"),offset.x,offset.y,offset.z);
         glActiveTexture(GL_TEXTURE0);
         glBindVertexArray(squareVAO);
 

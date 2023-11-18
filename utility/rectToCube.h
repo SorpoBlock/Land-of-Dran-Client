@@ -6,7 +6,7 @@
 
 namespace syj
 {
-    GLuint processEquirectangularMap(program &rectToCube,GLuint cubeVAO,std::string fileName,bool mipMaps = false);
+    GLuint processEquirectangularMap(program *rectToCube,GLuint cubeVAO,std::string fileName,bool mipMaps = false);
 }
 
 #endif // RECTTOCUBE_H_INCLUDED

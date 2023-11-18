@@ -2,50 +2,50 @@
 
 namespace syj
 {
-    void options::render(uniformsHolder &unis)
+    void options::render(uniformsHolder *unis)
     {
         switch(shadowSoftness)
         {
             default:
             case shadowsHard:
-                glUniform1i(unis.target->getUniformLocation("shadowSoftness"),0);
+                glUniform1i(unis->target->getUniformLocation("shadowSoftness"),0);
                 break;
             case shadows2PCF:
-                glUniform1i(unis.target->getUniformLocation("shadowSoftness"),1);
+                glUniform1i(unis->target->getUniformLocation("shadowSoftness"),1);
                 break;
             case shadows3PCF:
-                glUniform1i(unis.target->getUniformLocation("shadowSoftness"),2);
+                glUniform1i(unis->target->getUniformLocation("shadowSoftness"),2);
                 break;
             case shadows5PCF:
-                glUniform1i(unis.target->getUniformLocation("shadowSoftness"),3);
+                glUniform1i(unis->target->getUniformLocation("shadowSoftness"),3);
                 break;
         }
 
-        glUniform1i(unis.target->getUniformLocation("niceWater"),waterQuality != waterStatic);
+        glUniform1i(unis->target->getUniformLocation("niceWater"),waterQuality != waterStatic);
 
         switch(godRayQuality)
         {
             case godRaysOff:
-                glUniform1i(unis.target->getUniformLocation("godRaySamples"),0);
+                glUniform1i(unis->target->getUniformLocation("godRaySamples"),0);
                 break;
             case godRays32Samples:
-                glUniform1i(unis.target->getUniformLocation("godRaySamples"),32);
+                glUniform1i(unis->target->getUniformLocation("godRaySamples"),32);
                 break;
             case godRays64Samples:
-                glUniform1i(unis.target->getUniformLocation("godRaySamples"),64);
+                glUniform1i(unis->target->getUniformLocation("godRaySamples"),64);
                 break;
             case godRays96Samples:
-                glUniform1i(unis.target->getUniformLocation("godRaySamples"),96);
+                glUniform1i(unis->target->getUniformLocation("godRaySamples"),96);
                 break;
             case godRays128Samples:
-                glUniform1i(unis.target->getUniformLocation("godRaySamples"),128);
+                glUniform1i(unis->target->getUniformLocation("godRaySamples"),128);
                 break;
         }
 
-        glUniform1i(unis.target->getUniformLocation("useShadows"),shadowResolution != shadowsOff);
-        if(unis.target->getUniformLocation("useColoredShadows") != -1)
-            glUniform1i(unis.target->getUniformLocation("useColoredShadows"),coloredShadows);
-        glUniform1f(unis.target->getUniformLocation("materialCutoff"),materialCutoff);
+        glUniform1i(unis->target->getUniformLocation("useShadows"),shadowResolution != shadowsOff);
+        if(unis->target->getUniformLocation("useColoredShadows") != -1)
+            glUniform1i(unis->target->getUniformLocation("useColoredShadows"),coloredShadows);
+        glUniform1f(unis->target->getUniformLocation("materialCutoff"),materialCutoff);
     }
 
     void setOptions(options *toSet)
