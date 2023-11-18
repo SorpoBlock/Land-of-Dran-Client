@@ -48,8 +48,10 @@ std::string GetHexRepresentation(const unsigned char *Bytes, size_t Length) {
     return os.str();
 }
 
-void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
+void processCommand(clientStuff *clientEnvironment,std::string commandType,packet *data)
 {
+    serverStuff *serverData = clientEnvironment->serverData;
+
     if(commandType == "clearAllBricks")
     {
         //TODO: CHECKS FOR BOUND LIGHTS AND MUSIC???
@@ -57,9 +59,9 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         basicBrickRenderData *basicTempBrick = 0;
         specialBrickRenderData *specialTempBrick = 0;
 
-        for(unsigned int a = 0; a<ohWow->staticBricks.opaqueBasicBricks.size(); a++)
+        for(unsigned int a = 0; a<serverData->staticBricks.opaqueBasicBricks.size(); a++)
         {
-            basicBrickRenderData *theBrick = ohWow->staticBricks.opaqueBasicBricks[a];
+            basicBrickRenderData *theBrick = serverData->staticBricks.opaqueBasicBricks[a];
             if(!theBrick)
                 continue;
 
@@ -69,18 +71,18 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
                 continue;
             }
 
-            if(theBrick->body && ohWow->world)
+            if(theBrick->body && serverData->world)
             {
-                ohWow->world->removeRigidBody(theBrick->body);
+                serverData->world->removeRigidBody(theBrick->body);
                 delete theBrick->body;
                 theBrick->body = 0;
             }
 
             delete theBrick;
         }
-        for(unsigned int a = 0; a<ohWow->staticBricks.transparentBasicBricks.size(); a++)
+        for(unsigned int a = 0; a<serverData->staticBricks.transparentBasicBricks.size(); a++)
         {
-            basicBrickRenderData *theBrick = ohWow->staticBricks.transparentBasicBricks[a];
+            basicBrickRenderData *theBrick = serverData->staticBricks.transparentBasicBricks[a];
             if(!theBrick)
                 continue;
 
@@ -90,18 +92,18 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
                 continue;
             }
 
-            if(theBrick->body && ohWow->world)
+            if(theBrick->body && serverData->world)
             {
-                ohWow->world->removeRigidBody(theBrick->body);
+                serverData->world->removeRigidBody(theBrick->body);
                 delete theBrick->body;
                 theBrick->body = 0;
             }
 
             delete theBrick;
         }
-        for(unsigned int a = 0; a<ohWow->staticBricks.opaqueSpecialBricks.size(); a++)
+        for(unsigned int a = 0; a<serverData->staticBricks.opaqueSpecialBricks.size(); a++)
         {
-            specialBrickRenderData *theBrick = ohWow->staticBricks.opaqueSpecialBricks[a];
+            specialBrickRenderData *theBrick = serverData->staticBricks.opaqueSpecialBricks[a];
             if(!theBrick)
                 continue;
 
@@ -111,18 +113,18 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
                 continue;
             }
 
-            if(theBrick->body && ohWow->world)
+            if(theBrick->body && serverData->world)
             {
-                ohWow->world->removeRigidBody(theBrick->body);
+                serverData->world->removeRigidBody(theBrick->body);
                 delete theBrick->body;
                 theBrick->body = 0;
             }
 
             delete theBrick;
         }
-        for(unsigned int a = 0; a<ohWow->staticBricks.transparentSpecialBricks.size(); a++)
+        for(unsigned int a = 0; a<serverData->staticBricks.transparentSpecialBricks.size(); a++)
         {
-            specialBrickRenderData *theBrick = ohWow->staticBricks.transparentSpecialBricks[a];
+            specialBrickRenderData *theBrick = serverData->staticBricks.transparentSpecialBricks[a];
             if(!theBrick)
                 continue;
 
@@ -132,9 +134,9 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
                 continue;
             }
 
-            if(theBrick->body && ohWow->world)
+            if(theBrick->body && serverData->world)
             {
-                ohWow->world->removeRigidBody(theBrick->body);
+                serverData->world->removeRigidBody(theBrick->body);
                 delete theBrick->body;
                 theBrick->body = 0;
             }
@@ -142,31 +144,31 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
             delete theBrick;
         }
 
-        ohWow->staticBricks.opaqueBasicBricks.clear();
-        ohWow->staticBricks.transparentBasicBricks.clear();
-        ohWow->staticBricks.opaqueSpecialBricks.clear();
-        ohWow->staticBricks.transparentSpecialBricks.clear();
+        serverData->staticBricks.opaqueBasicBricks.clear();
+        serverData->staticBricks.transparentBasicBricks.clear();
+        serverData->staticBricks.opaqueSpecialBricks.clear();
+        serverData->staticBricks.transparentSpecialBricks.clear();
 
         if(basicTempBrick)
-            ohWow->staticBricks.transparentBasicBricks.push_back(basicTempBrick);
+            serverData->staticBricks.transparentBasicBricks.push_back(basicTempBrick);
         if(specialTempBrick)
-            ohWow->staticBricks.transparentSpecialBricks.push_back(specialTempBrick);
+            serverData->staticBricks.transparentSpecialBricks.push_back(specialTempBrick);
 
-        ohWow->staticBricks.recompileEverything();
+        serverData->staticBricks.recompileEverything();
 
         return;
     }
     else if(commandType == "skipBricksCompile")
     {
-        ohWow->skippingCompileNextBricks = data->readUInt(24);
+        serverData->skippingCompileNextBricks = data->readUInt(24);
     }
     else if(commandType == "setWaterLevel")
     {
-        ohWow->waterLevel = data->readFloat();
-        if(ohWow->waterLevel < -10000)
-            ohWow->waterLevel = 10000;
-        if(ohWow->waterLevel > 10000)
-            ohWow->waterLevel = 10000;
+        serverData->waterLevel = data->readFloat();
+        if(serverData->waterLevel < -10000)
+            serverData->waterLevel = 10000;
+        if(serverData->waterLevel > 10000)
+            serverData->waterLevel = 10000;
         return;
     }
     else if(commandType == "sendDecals")
@@ -175,29 +177,29 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         for(int a = 0; a<howMany; a++)
         {
             std::string fileName = data->readString();
-            ohWow->picker->addDecalToPicker(fileName);
+            serverData->picker->addDecalToPicker(fileName);
         }
     }
     else if(commandType == "stopLoop")
     {
         int loopId = data->readUInt(24);
-        ohWow->speaker->removeLoop(loopId);
+        clientEnvironment->speaker->removeLoop(loopId);
     }
     else if(commandType == "audioEffect")
     {
         std::string effect = data->readString();
-        ohWow->speaker->setEffect(effect);
+        clientEnvironment->speaker->setEffect(effect);
     }
     else if(commandType == "setItemFireAnim")
     {
         int itemId = data->readUInt(dynamicObjectIDBits);
 
         item *foundItem = 0;
-        for(int a = 0; a<ohWow->items.size(); a++)
+        for(int a = 0; a<serverData->items.size(); a++)
         {
-            if(ohWow->items[a]->serverID == itemId)
+            if(serverData->items[a]->serverID == itemId)
             {
-                foundItem = ohWow->items[a];
+                foundItem = serverData->items[a];
                 break;
             }
         }
@@ -216,7 +218,7 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
             }
 
             tmp.deletionTime = SDL_GetTicks() + 10000;
-            ohWow->heldItemPackets.push_back(tmp);
+            serverData->heldItemPackets.push_back(tmp);
             return;
         }
 
@@ -233,11 +235,11 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         int itemId = data->readUInt(dynamicObjectIDBits);
 
         item *foundItem = 0;
-        for(int a = 0; a<ohWow->items.size(); a++)
+        for(int a = 0; a<serverData->items.size(); a++)
         {
-            if(ohWow->items[a]->serverID == itemId)
+            if(serverData->items[a]->serverID == itemId)
             {
-                foundItem = ohWow->items[a];
+                foundItem = serverData->items[a];
                 break;
             }
         }
@@ -257,7 +259,7 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
             }
 
             tmp.deletionTime = SDL_GetTicks() + 10000;
-            ohWow->heldItemPackets.push_back(tmp);
+            serverData->heldItemPackets.push_back(tmp);
             return;
         }
 
@@ -275,11 +277,11 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         int itemId = data->readUInt(dynamicObjectIDBits);
 
         item *foundItem = 0;
-        for(int a = 0; a<ohWow->items.size(); a++)
+        for(int a = 0; a<serverData->items.size(); a++)
         {
-            if(ohWow->items[a]->serverID == itemId)
+            if(serverData->items[a]->serverID == itemId)
             {
-                foundItem = ohWow->items[a];
+                foundItem = serverData->items[a];
                 break;
             }
         }
@@ -298,7 +300,7 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
             }
 
             tmp.deletionTime = SDL_GetTicks() + 10000;
-            ohWow->heldItemPackets.push_back(tmp);
+            serverData->heldItemPackets.push_back(tmp);
             return;
         }
 
@@ -315,11 +317,11 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         int itemId = data->readUInt(dynamicObjectIDBits);
 
         item *foundItem = 0;
-        for(int a = 0; a<ohWow->items.size(); a++)
+        for(int a = 0; a<serverData->items.size(); a++)
         {
-            if(ohWow->items[a]->serverID == itemId)
+            if(serverData->items[a]->serverID == itemId)
             {
-                foundItem = ohWow->items[a];
+                foundItem = serverData->items[a];
                 break;
             }
         }
@@ -333,7 +335,7 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
             tmp.cooldown = data->readUInt(16);
 
             tmp.deletionTime = SDL_GetTicks() + 10000;
-            ohWow->heldItemPackets.push_back(tmp);
+            serverData->heldItemPackets.push_back(tmp);
             return;
         }
 
@@ -344,11 +346,11 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         int itemId = data->readUInt(dynamicObjectIDBits);
 
         item *foundItem = 0;
-        for(int a = 0; a<ohWow->items.size(); a++)
+        for(int a = 0; a<serverData->items.size(); a++)
         {
-            if(ohWow->items[a]->serverID == itemId)
+            if(serverData->items[a]->serverID == itemId)
             {
-                foundItem = ohWow->items[a];
+                foundItem = serverData->items[a];
                 break;
             }
         }
@@ -366,11 +368,11 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         int itemId = data->readUInt(dynamicObjectIDBits);
 
         item *foundItem = 0;
-        for(int a = 0; a<ohWow->items.size(); a++)
+        for(int a = 0; a<serverData->items.size(); a++)
         {
-            if(ohWow->items[a]->serverID == itemId)
+            if(serverData->items[a]->serverID == itemId)
             {
-                foundItem = ohWow->items[a];
+                foundItem = serverData->items[a];
                 break;
             }
         }
@@ -383,22 +385,22 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         if(foundItem->nextFireSound != -1)
         {
             location *soundLoc = new location(foundItem);
-            ohWow->speaker->playSound3D(foundItem->nextFireSound,soundLoc,foundItem->nextFireSoundPitch,foundItem->nextFireSoundGain);
+            clientEnvironment->speaker->playSound3D(foundItem->nextFireSound,soundLoc,foundItem->nextFireSoundPitch,foundItem->nextFireSoundGain);
         }
 
         if(foundItem->nextFireEmitter != -1)
         {
-            for(int a = 0; a<ohWow->emitterTypes.size(); a++)
+            for(int a = 0; a<serverData->emitterTypes.size(); a++)
             {
-                if(ohWow->emitterTypes[a]->serverID == foundItem->nextFireEmitter)
+                if(serverData->emitterTypes[a]->serverID == foundItem->nextFireEmitter)
                 {
                     emitter *e = new emitter;
                     e->creationTime = SDL_GetTicks();
-                    e->type = ohWow->emitterTypes[a];
+                    e->type = serverData->emitterTypes[a];
                     e->attachedToItem = foundItem;
                     e->justAttached = true;
                     e->meshName = foundItem->nextFireEmitterMesh;
-                    ohWow->emitters.push_back(e);
+                    serverData->emitters.push_back(e);
                     break;
                 }
             }
@@ -418,17 +420,17 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
             trail.creationTime = SDL_GetTicks();
             trail.deletionTime = SDL_GetTicks() + glm::length(trail.end-trail.start) * 15 * foundItem->bulletTrailSpeed;
 
-            ohWow->bulletTrails->bulletTrails.push_back(trail);
+            serverData->bulletTrails->bulletTrails.push_back(trail);
         }
     }
     else if(commandType == "vignette")
     {
-        ohWow->vignetteStrength = data->readFloat();
+        clientEnvironment->vignetteStrength = data->readFloat();
         if(data->readBit())
         {
-            ohWow->vignetteColor.r = data->readFloat();
-            ohWow->vignetteColor.g = data->readFloat();
-            ohWow->vignetteColor.b = data->readFloat();
+            clientEnvironment->vignetteColor.r = data->readFloat();
+            clientEnvironment->vignetteColor.g = data->readFloat();
+            clientEnvironment->vignetteColor.b = data->readFloat();
         }
     }
     else if(commandType == "bulletTrail")
@@ -445,18 +447,18 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
         trail.end.z = data->readFloat();
         trail.creationTime = SDL_GetTicks();
         trail.deletionTime = glm::length(trail.end-trail.start) * 10 * data->readFloat();
-        ohWow->bulletTrails->bulletTrails.push_back(trail);
+        serverData->bulletTrails->bulletTrails.push_back(trail);
     }
     else if(commandType == "setItemBulletTrail")
     {
         int itemId = data->readUInt(dynamicObjectIDBits);
 
         item *foundItem = 0;
-        for(int a = 0; a<ohWow->items.size(); a++)
+        for(int a = 0; a<serverData->items.size(); a++)
         {
-            if(ohWow->items[a]->serverID == itemId)
+            if(serverData->items[a]->serverID == itemId)
             {
-                foundItem = ohWow->items[a];
+                foundItem = serverData->items[a];
                 break;
             }
         }
@@ -477,69 +479,71 @@ void processCommand(serverStuff *ohWow,std::string commandType,packet *data)
 
 namespace syj
 {
-    void serverStuff::fatalNotify(std::string windowName,std::string windowText,std::string buttonText)
+    void clientStuff::fatalNotify(std::string windowName,std::string windowText,std::string buttonText)
     {
         notify(windowName,windowText,buttonText);
         fatalNotifyStarted = true;
     }
 
-    void finishLoadingTypesCheck(serverStuff *ohWow)
+    void finishLoadingTypesCheck(clientStuff *clientEnvironment)
     {
-        if(!ohWow->waitingForServerResponse)
+        serverStuff *serverData = clientEnvironment->serverData;
+
+        if(!serverData->waitingForServerResponse)
             return;
 
-        std::cout<<ohWow->newDynamicTypes.size()<<"-"<<ohWow->dynamicTypesToLoad<<" , "<<ohWow->staticBricks.blocklandTypes->specialBrickTypes.size()<<"-"<<ohWow->brickTypesToLoad<<" , "<<ohWow->itemTypes.size()<<"-"<<ohWow->itemTypesToLoad<<"\n";
+        std::cout<<serverData->newDynamicTypes.size()<<"-"<<serverData->dynamicTypesToLoad<<" , "<<serverData->staticBricks.blocklandTypes->specialBrickTypes.size()<<"-"<<serverData->brickTypesToLoad<<" , "<<serverData->itemTypes.size()<<"-"<<serverData->itemTypesToLoad<<"\n";
 
-        if(ohWow->newDynamicTypes.size() >= ohWow->dynamicTypesToLoad)
+        if(serverData->newDynamicTypes.size() >= serverData->dynamicTypesToLoad)
         {
-            if(ohWow->staticBricks.blocklandTypes->specialBrickTypes.size() >= ohWow->brickTypesToLoad)
+            if(serverData->staticBricks.blocklandTypes->specialBrickTypes.size() >= serverData->brickTypesToLoad)
             {
-                if(ohWow->itemTypes.size() >= ohWow->itemTypesToLoad)
+                if(serverData->itemTypes.size() >= serverData->itemTypesToLoad)
                 {
                     info("Finished loading types from server!");
-                    ohWow->waitingForServerResponse = false;
+                    serverData->waitingForServerResponse = false;
 
-                    ohWow->staticBricks.addBlocklandCompatibility(ohWow->staticBricks.blocklandTypes);
+                    serverData->staticBricks.addBlocklandCompatibility(serverData->staticBricks.blocklandTypes);
 
                     packet data;
                     data.writeUInt(clientPacketType_startLoadingStageTwo,4);
-                    ohWow->connection->send(&data,true);
+                    serverData->connection->send(&data,true);
 
-                    if(ohWow->newDynamicTypes.size() > 0)
+                    if(serverData->newDynamicTypes.size() > 0)
                     {
                         //TODO: Update avatar picker code
-                        //if(!ohWow->picker->playerModel)
-                            //ohWow->picker->playerModel = (model*)ohWow->newDynamicTypes[0]->oldModelType;
-                        ohWow->picker->pickingPlayer = new newDynamic(ohWow->newDynamicTypes[0]);
-                        ohWow->picker->pickingPlayer->useGlobalTransform = true;
-                        ohWow->picker->pickingPlayer->hidden = true;
-                        ohWow->picker->pickingPlayer->calculateMeshTransforms(0);
-                        ohWow->picker->pickingPlayer->bufferSubData();
+                        //if(!serverData->picker->playerModel)
+                            //serverData->picker->playerModel = (model*)serverData->newDynamicTypes[0]->oldModelType;
+                        serverData->picker->pickingPlayer = new newDynamic(serverData->newDynamicTypes[0]);
+                        serverData->picker->pickingPlayer->useGlobalTransform = true;
+                        serverData->picker->pickingPlayer->hidden = true;
+                        serverData->picker->pickingPlayer->calculateMeshTransforms(0);
+                        serverData->picker->pickingPlayer->bufferSubData();
 
-                        ohWow->picker->loadFromPrefs(ohWow->prefs);
-                        ohWow->picker->sendAvatarPrefs(ohWow->connection,0);
+                        serverData->picker->loadFromPrefs(clientEnvironment->prefs);
+                        serverData->picker->sendAvatarPrefs(serverData->connection,0);
                     }
                 }
             }
         }
     }
 
-    void checkForCameraToBind(serverStuff *ohWow)
+    void checkForCameraToBind(serverStuff *serverData)
     {
-        if(!ohWow->cameraTarget && ohWow->boundToObject)
+        if(!serverData->cameraTarget && serverData->boundToObject)
         {
             //std::cout<<"Checking for camera bind...\n";
-            if(ohWow->cameraTargetServerID == -1)
+            if(serverData->cameraTargetServerID == -1)
                 error("Camera bound to object but there's no object!");
             else
             {
-                for(int a = 0; a<ohWow->newDynamics.size(); a++)
+                for(int a = 0; a<serverData->newDynamics.size(); a++)
                 {
-                    if(ohWow->newDynamics[a]->serverID == ohWow->cameraTargetServerID)
+                    if(serverData->newDynamics[a]->serverID == serverData->cameraTargetServerID)
                     {
-                        //std::cout<<"Camera bound to "<<ohWow->cameraTargetServerID<<"\n";
-                        ohWow->cameraTarget = ohWow->newDynamics[a];
-                        //std::cout<<"Found the object "<<ohWow->cameraTarget->serverID<<"\n";
+                        //std::cout<<"Camera bound to "<<serverData->cameraTargetServerID<<"\n";
+                        serverData->cameraTarget = serverData->newDynamics[a];
+                        //std::cout<<"Found the object "<<serverData->cameraTarget->serverID<<"\n";
                         return;
                     }
                 }
@@ -721,12 +725,13 @@ namespace syj
     void recvHandle(client *theClient,packet *data,void *userData)
     {
         serverToClientPacketType packetType = (serverToClientPacketType)data->readUInt(5);
-        serverStuff *ohWow = (serverStuff*)userData;
+        clientStuff *clientEnvironment = (clientStuff*)userData;
+        serverStuff *serverData = clientEnvironment->serverData;
 
         //if(packetType != 7)
             //std::cout<<"Got "<<(data->critical?"critical":"normal")<<" packet type: "<<packetType<<" streampos: "<<data->getStreamPos()<<" allocated bytes: "<<data->allocatedChunks<<"\n";
-        if(packetType >= 0 && packetType <= 31)
-            ++ohWow->numGottenPackets[packetType];
+        //if(packetType >= 0 && packetType <= 31)
+            //++serverData->numGottenPackets[packetType];
 
         switch(packetType)
         {
@@ -749,33 +754,33 @@ namespace syj
                     tmp.initPos.setX(data->readFloat());
                     tmp.initPos.setY(data->readFloat());
                     tmp.initPos.setZ(data->readFloat());
-                    ohWow->canJet = data->readBit();
+                    serverData->canJet = data->readBit();
 
-                    for(int a = 0; a<ohWow->clientPhysicsPackets.size(); a++)
+                    for(int a = 0; a<serverData->clientPhysicsPackets.size(); a++)
                     {
-                        if(ohWow->clientPhysicsPackets[a].dynamicID == tmp.dynamicID)
+                        if(serverData->clientPhysicsPackets[a].dynamicID == tmp.dynamicID)
                         {
-                            ohWow->clientPhysicsPackets.erase(ohWow->clientPhysicsPackets.begin() + a);
+                            serverData->clientPhysicsPackets.erase(serverData->clientPhysicsPackets.begin() + a);
                             break;
                         }
                     }
 
-                    ohWow->clientPhysicsPackets.push_back(tmp);
+                    serverData->clientPhysicsPackets.push_back(tmp);
                 }
                 else if(subtype == 1) //pause using client physics for dynamic
                 {
-                    ohWow->giveUpControlOfCurrentPlayer = true;
+                    serverData->giveUpControlOfCurrentPlayer = true;
                 }
                 else if(subtype == 2) //delete client physics for dynamic
                 {
                     unsigned int netID = data->readUInt(dynamicObjectIDBits);
-                    if(ohWow->currentPlayer && ohWow->currentPlayer->body && ohWow->currentPlayer->serverID == netID)
+                    if(serverData->currentPlayer && serverData->currentPlayer->body && serverData->currentPlayer->serverID == netID)
                     {
-                        ohWow->currentPlayer->world->removeRigidBody(ohWow->currentPlayer->body);
-                        delete ohWow->currentPlayer->defaultMotionState;
-                        delete ohWow->currentPlayer->shape;
-                        ohWow->currentPlayer->body = 0;
-                        ohWow->currentPlayer = 0;
+                        serverData->currentPlayer->world->removeRigidBody(serverData->currentPlayer->body);
+                        delete serverData->currentPlayer->defaultMotionState;
+                        delete serverData->currentPlayer->shape;
+                        serverData->currentPlayer->body = 0;
+                        serverData->currentPlayer = 0;
                     }
                 }
                 else if(subtype == 3) //force update transform for dynamic with client physics
@@ -790,19 +795,19 @@ namespace syj
                     float velX = data->readFloat();
                     float velY = data->readFloat();
                     float velZ = data->readFloat();
-                    ohWow->canJet = data->readBit();
+                    serverData->canJet = data->readBit();
 
                     //std::cout<<"\nPhysics subtype 3 "<<posX<<","<<posY<<","<<posZ<<"\n";
 
-                    if(ohWow->currentPlayer && ohWow->currentPlayer->body)
+                    if(serverData->currentPlayer && serverData->currentPlayer->body)
                     {
                         btTransform t;
                         t.setIdentity();
                         t.setOrigin(btVector3(posX,posY,posZ));
                         t.setRotation(btQuaternion(rotX,rotY,rotZ,rotW));
-                        ohWow->currentPlayer->body->setWorldTransform(t);
-                        ohWow->currentPlayer->body->setLinearVelocity(btVector3(velX,velY,velZ));
-                        ohWow->currentPlayer->flingPreventionStartTime = SDL_GetTicks();
+                        serverData->currentPlayer->body->setWorldTransform(t);
+                        serverData->currentPlayer->body->setLinearVelocity(btVector3(velX,velY,velZ));
+                        serverData->currentPlayer->flingPreventionStartTime = SDL_GetTicks();
                     }
                 }
 
@@ -818,12 +823,12 @@ namespace syj
                 {
                     light *tmp = 0;
                     bool needNewLight = true;
-                    for(int a = 0; a<ohWow->lights.size(); a++)
+                    for(int a = 0; a<serverData->lights.size(); a++)
                     {
-                        if(ohWow->lights[a]->serverID == id)
+                        if(serverData->lights[a]->serverID == id)
                         {
                             needNewLight = false;
-                            tmp = ohWow->lights[a];
+                            tmp = serverData->lights[a];
                             break;
                         }
                     }
@@ -837,7 +842,7 @@ namespace syj
                     {
                         int brickID = data->readUInt(20);
                         bool isSpecial;
-                        tmp->attachedBrick = ohWow->staticBricks.getBrick(brickID,isSpecial);
+                        tmp->attachedBrick = serverData->staticBricks.getBrick(brickID,isSpecial);
                         if(!tmp->attachedBrick)
                         {
                             delete tmp;
@@ -854,11 +859,11 @@ namespace syj
                     else if(tmp->mode == dynamicNode)
                     {
                         int dynamicID = data->readUInt(dynamicObjectIDBits);
-                        for(int a = 0; a<ohWow->newDynamics.size(); a++)
+                        for(int a = 0; a<serverData->newDynamics.size(); a++)
                         {
-                            if(ohWow->newDynamics[a]->serverID == dynamicID)
+                            if(serverData->newDynamics[a]->serverID == dynamicID)
                             {
-                                tmp->attachedDynamic = ohWow->newDynamics[a];
+                                tmp->attachedDynamic = serverData->newDynamics[a];
                                 break;
                             }
                         }
@@ -874,11 +879,11 @@ namespace syj
                     else if(tmp->mode == itemNode)
                     {
                         int dynamicID = data->readUInt(dynamicObjectIDBits);
-                        for(int a = 0; a<ohWow->items.size(); a++)
+                        for(int a = 0; a<serverData->items.size(); a++)
                         {
-                            if(ohWow->items[a]->serverID == dynamicID)
+                            if(serverData->items[a]->serverID == dynamicID)
                             {
-                                tmp->attachedItem = ohWow->items[a];
+                                tmp->attachedItem = serverData->items[a];
                                 break;
                             }
                         }
@@ -894,11 +899,11 @@ namespace syj
                     else if(tmp->mode == carBrick)
                     {
                         int carID = data->readUInt(10);
-                        for(int a = 0; a<ohWow->livingBricks.size(); a++)
+                        for(int a = 0; a<serverData->livingBricks.size(); a++)
                         {
-                            if(ohWow->livingBricks[a]->serverID == carID)
+                            if(serverData->livingBricks[a]->serverID == carID)
                             {
-                                tmp->attachedCar = ohWow->livingBricks[a];
+                                tmp->attachedCar = serverData->livingBricks[a];
                                 break;
                             }
                         }
@@ -935,7 +940,7 @@ namespace syj
                                 tmp->direction.w = cos(data->readFloat());
                             }
 
-                            ohWow->heldLightPackets.push_back(heldTmp);
+                            serverData->heldLightPackets.push_back(heldTmp);
 
                             return;
                         }
@@ -969,17 +974,17 @@ namespace syj
                     }
 
                     if(needNewLight)
-                        ohWow->lights.push_back(tmp);
+                        serverData->lights.push_back(tmp);
                 }
                 else
                 {
-                    for(int a = 0; a<ohWow->lights.size(); a++)
+                    for(int a = 0; a<serverData->lights.size(); a++)
                     {
-                        if(ohWow->lights[a]->serverID == id)
+                        if(serverData->lights[a]->serverID == id)
                         {
-                            delete ohWow->lights[a];
-                            ohWow->lights[a] = 0;
-                            ohWow->lights.erase(ohWow->lights.begin() + a);
+                            delete serverData->lights[a];
+                            serverData->lights[a] = 0;
+                            serverData->lights.erase(serverData->lights.begin() + a);
                             break;
                         }
                     }
@@ -996,19 +1001,19 @@ namespace syj
                     int nodes = data->readUInt(8);
 
                     rope *tmp = new rope(id,nodes);
-                    ohWow->ropes.push_back(tmp);
+                    serverData->ropes.push_back(tmp);
                 }
                 else
                 {
                     int id = data->readUInt(12);
 
-                    for(int a = 0; a<ohWow->ropes.size(); a++)
+                    for(int a = 0; a<serverData->ropes.size(); a++)
                     {
-                        if(ohWow->ropes[a]->serverID == id)
+                        if(serverData->ropes[a]->serverID == id)
                         {
-                            delete ohWow->ropes[a];
-                            ohWow->ropes[a] = 0;
-                            ohWow->ropes.erase(ohWow->ropes.begin() + a);
+                            delete serverData->ropes[a];
+                            serverData->ropes[a] = 0;
+                            serverData->ropes.erase(serverData->ropes.begin() + a);
                             return;
                         }
                     }
@@ -1032,12 +1037,12 @@ namespace syj
                     int vecPos = -1;
 
                     emitter *tmp = 0;
-                    for(unsigned int a = 0; a<ohWow->emitters.size(); a++)
+                    for(unsigned int a = 0; a<serverData->emitters.size(); a++)
                     {
-                        if(ohWow->emitters[a]->serverID == serverID)
+                        if(serverData->emitters[a]->serverID == serverID)
                         {
                             vecPos = a;
-                            tmp = ohWow->emitters[a];
+                            tmp = serverData->emitters[a];
                             break;
                         }
                     }
@@ -1056,11 +1061,11 @@ namespace syj
                     int typeID = data->readUInt(10);
 
                     bool found = false;
-                    for(unsigned int a = 0; a<ohWow->emitterTypes.size(); a++)
+                    for(unsigned int a = 0; a<serverData->emitterTypes.size(); a++)
                     {
-                        if(ohWow->emitterTypes[a]->serverID == typeID)
+                        if(serverData->emitterTypes[a]->serverID == typeID)
                         {
-                            tmp->type = ohWow->emitterTypes[a];
+                            tmp->type = serverData->emitterTypes[a];
                             found = true;
                             break;
                         }
@@ -1069,7 +1074,7 @@ namespace syj
                     {
                         std::cout<<"Got request to create emitter with serverID "<<serverID<<" and type " <<typeID<<" "<<(newEmitter?"new":"found")<<"\n";
                         if(vecPos != -1)
-                            ohWow->emitters.erase(ohWow->emitters.begin() + vecPos);
+                            serverData->emitters.erase(serverData->emitters.begin() + vecPos);
                         delete tmp;
                         error("Could not find emitter type " + std::to_string(typeID));
                         return;
@@ -1085,11 +1090,11 @@ namespace syj
                     {
                         int brickID = data->readUInt(20);
                         bool isSpecial;
-                        brickRenderData *brick = ohWow->staticBricks.getBrick(brickID,isSpecial);
+                        brickRenderData *brick = serverData->staticBricks.getBrick(brickID,isSpecial);
                         if(!brick)
                         {
                             if(vecPos != -1)
-                                ohWow->emitters.erase(ohWow->emitters.begin() + vecPos);
+                                serverData->emitters.erase(serverData->emitters.begin() + vecPos);
                             delete tmp;
                             error("Could not find brick to attach emitter to!");
                             return;
@@ -1104,18 +1109,18 @@ namespace syj
                     {
                         int dynamicID = data->readUInt(dynamicObjectIDBits);
                         newDynamic *attached = 0;
-                        for(unsigned int a = 0; a<ohWow->newDynamics.size(); a++)
+                        for(unsigned int a = 0; a<serverData->newDynamics.size(); a++)
                         {
-                            if(dynamicID == ohWow->newDynamics[a]->serverID)
+                            if(dynamicID == serverData->newDynamics[a]->serverID)
                             {
-                                attached = ohWow->newDynamics[a];
+                                attached = serverData->newDynamics[a];
                                 break;
                             }
                         }
                         if(!attached)
                         {
                             if(vecPos != -1)
-                                ohWow->emitters.erase(ohWow->emitters.begin() + vecPos);
+                                serverData->emitters.erase(serverData->emitters.begin() + vecPos);
                             delete tmp;
                             error("Could not find dynamic to attach emitter to!");
                             return;
@@ -1134,24 +1139,24 @@ namespace syj
                     else
                     {
                         if(vecPos != -1)
-                            ohWow->emitters.erase(ohWow->emitters.begin() + vecPos);
+                            serverData->emitters.erase(serverData->emitters.begin() + vecPos);
                         delete tmp;
                         error("Bad attachment type for emitter.");
                         return;
                     }
                     if(vecPos == -1)
-                        ohWow->emitters.push_back(tmp);
+                        serverData->emitters.push_back(tmp);
                 }
                 else
                 {
                     int serverID = data->readUInt(20);
-                    for(unsigned int a = 0; a<ohWow->emitters.size(); a++)
+                    for(unsigned int a = 0; a<serverData->emitters.size(); a++)
                     {
-                        if(ohWow->emitters[a]->serverID == serverID)
+                        if(serverData->emitters[a]->serverID == serverID)
                         {
-                            delete ohWow->emitters[a];
-                            ohWow->emitters[a] = 0;
-                            ohWow->emitters.erase(ohWow->emitters.begin() + a);
+                            delete serverData->emitters[a];
+                            serverData->emitters[a] = 0;
+                            serverData->emitters.erase(serverData->emitters.begin() + a);
                             return;
                         }
                     }
@@ -1169,11 +1174,11 @@ namespace syj
                     bool foundEmitterType = false;
                     emitterType *tmp = 0;
 
-                    for(unsigned int a = 0; a<ohWow->emitterTypes.size(); a++)
+                    for(unsigned int a = 0; a<serverData->emitterTypes.size(); a++)
                     {
-                        if(ohWow->emitterTypes[a]->serverID == serverID)
+                        if(serverData->emitterTypes[a]->serverID == serverID)
                         {
-                            tmp = ohWow->emitterTypes[a];
+                            tmp = serverData->emitterTypes[a];
                             foundEmitterType = true;
                             break;
                         }
@@ -1190,11 +1195,11 @@ namespace syj
                     {
                         particleType *found = 0;
                         int particleID = data->readUInt(10);
-                        for(unsigned int b = 0; b<ohWow->particleTypes.size(); b++)
+                        for(unsigned int b = 0; b<serverData->particleTypes.size(); b++)
                         {
-                            if(particleID == ohWow->particleTypes[b]->serverID)
+                            if(particleID == serverData->particleTypes[b]->serverID)
                             {
-                                found = ohWow->particleTypes[b];
+                                found = serverData->particleTypes[b];
                                 break;
                             }
                         }
@@ -1220,11 +1225,11 @@ namespace syj
                         tmp->uiName = data->readString();
                         if(tmp->uiName == "Wrench Oil")
                         {
-                            ohWow->wheelDirtEmitter = tmp;
+                            serverData->wheelDirtEmitter = tmp;
 
-                            for(unsigned int b = 0; b<ohWow->livingBricks.size(); b++)
+                            for(unsigned int b = 0; b<serverData->livingBricks.size(); b++)
                             {
-                                livingBrick *found = ohWow->livingBricks[b];
+                                livingBrick *found = serverData->livingBricks[b];
 
                                 for(unsigned int a = 0; a<found->wheelBrickData.size(); a++)
                                 {
@@ -1233,19 +1238,19 @@ namespace syj
 
                                     emitter *dirtEmitter = new emitter;
                                     dirtEmitter->creationTime = SDL_GetTicks();
-                                    dirtEmitter->type = ohWow->wheelDirtEmitter;
+                                    dirtEmitter->type = serverData->wheelDirtEmitter;
                                     dirtEmitter->whichWheel = a;
                                     dirtEmitter->attachedToCar = found;
                                     dirtEmitter->serverID = -1;
                                     found->wheelBrickData[a].dirtEmitter = dirtEmitter;
-                                    ohWow->emitters.push_back(dirtEmitter);
+                                    serverData->emitters.push_back(dirtEmitter);
                                 }
                             }
                         }
                     }
 
                     if(!foundEmitterType)
-                        ohWow->emitterTypes.push_back(tmp);
+                        serverData->emitterTypes.push_back(tmp);
                 }
                 else //Particle:
                 {
@@ -1254,11 +1259,11 @@ namespace syj
                     particleType *tmp = 0;
                     bool foundParticleType = false;
 
-                    for(unsigned int a = 0; a<ohWow->particleTypes.size(); a++)
+                    for(unsigned int a = 0; a<serverData->particleTypes.size(); a++)
                     {
-                        if(ohWow->particleTypes[a]->serverID == serverID)
+                        if(serverData->particleTypes[a]->serverID == serverID)
                         {
-                            tmp = ohWow->particleTypes[a];
+                            tmp = serverData->particleTypes[a];
                             foundParticleType = true;
                             break;
                         }
@@ -1296,7 +1301,7 @@ namespace syj
                     tmp->needSorting = data->readBit();
 
                     if(!foundParticleType)
-                        ohWow->particleTypes.push_back(tmp);
+                        serverData->particleTypes.push_back(tmp);
                 }
                 return;
             }
@@ -1309,11 +1314,11 @@ namespace syj
 
                 newDynamic *tmp = 0;
 
-                for(unsigned int a = 0; a<ohWow->newDynamics.size(); a++)
+                for(unsigned int a = 0; a<serverData->newDynamics.size(); a++)
                 {
-                    if(ohWow->newDynamics[a]->serverID == dynamicID)
+                    if(serverData->newDynamics[a]->serverID == dynamicID)
                     {
-                        tmp = ohWow->newDynamics[a];
+                        tmp = serverData->newDynamics[a];
                         break;
                     }
                 }
@@ -1321,31 +1326,31 @@ namespace syj
                 heldDynamicPacket *placeHolder = 0;
                 if(!tmp)
                 {
-                    for(int a = 0; a<ohWow->heldAppearancePackets.size(); a++)
+                    for(int a = 0; a<serverData->heldAppearancePackets.size(); a++)
                     {
-                        if(ohWow->heldAppearancePackets[a].dynamicID == dynamicID)
+                        if(serverData->heldAppearancePackets[a].dynamicID == dynamicID)
                         {
-                            placeHolder = &ohWow->heldAppearancePackets[a];
+                            placeHolder = &serverData->heldAppearancePackets[a];
                             break;
                         }
                     }
 
                     if(!placeHolder)
                     {
-                        ohWow->heldAppearancePackets.push_back(heldDynamicPacket());
-                        placeHolder = &ohWow->heldAppearancePackets[ohWow->heldAppearancePackets.size()-1];
+                        serverData->heldAppearancePackets.push_back(heldDynamicPacket());
+                        placeHolder = &serverData->heldAppearancePackets[serverData->heldAppearancePackets.size()-1];
                     }
                 }
 
                 if(placeHolder)
                     placeHolder->deletionTime = SDL_GetTicks() + 1000;
 
-                if(decal >= 0 && decal < ohWow->picker->faceDecals.size())
+                if(decal >= 0 && decal < serverData->picker->faceDecals.size())
                 {
                     if(tmp)
-                        tmp->decal = ohWow->picker->faceDecals[decal];
+                        tmp->decal = serverData->picker->faceDecals[decal];
                     else if(placeHolder)
-                        placeHolder->decal = ohWow->picker->faceDecals[decal];
+                        placeHolder->decal = serverData->picker->faceDecals[decal];
                 }
 
                 unsigned int howManyUpdates = data->readUInt(7);
@@ -1384,34 +1389,34 @@ namespace syj
                 {
                     std::string text = data->readString();
                     int timeoutMS = data->readUInt(16);
-                    ohWow->bottomPrint.setText(text,timeoutMS);
+                    clientEnvironment->bottomPrint.setText(text,timeoutMS);
                     return;
                 }
 
                 if(messageLocation == 2)
                 {
                     std::string text = data->readString();
-                    textBoxAdd(ohWow->evalWindow->getChild("Code/Listbox"),text);
+                    textBoxAdd(clientEnvironment->evalWindow->getChild("Code/Listbox"),text);
                     return;
                 }
 
                 std::string message = data->readString();
                 std::string category = data->readString();
 
-                float chatScroll = ohWow->chat->getVertScrollbar()->getScrollPosition();
-                float maxScroll = ohWow->chat->getVertScrollbar()->getDocumentSize() - ohWow->chat->getVertScrollbar()->getPageSize();
+                float chatScroll = clientEnvironment->chat->getVertScrollbar()->getScrollPosition();
+                float maxScroll = clientEnvironment->chat->getVertScrollbar()->getDocumentSize() - clientEnvironment->chat->getVertScrollbar()->getPageSize();
 
-                textBoxAdd(ohWow->chat,message,0,false);
+                textBoxAdd(clientEnvironment->chat,message,0,false);
 
-                if(ohWow->chat->getItemCount() > 100)
+                if(clientEnvironment->chat->getItemCount() > 100)
                 {
-                    CEGUI::ListboxItem *line = ohWow->chat->getListboxItemFromIndex(0);
+                    CEGUI::ListboxItem *line = clientEnvironment->chat->getListboxItemFromIndex(0);
                     if(line)
-                        ohWow->chat->removeItem(line);
+                        clientEnvironment->chat->removeItem(line);
                 }
 
                 if(chatScroll >= maxScroll)
-                    ohWow->chat->getVertScrollbar()->setScrollPosition(ohWow->chat->getVertScrollbar()->getDocumentSize() - ohWow->chat->getVertScrollbar()->getPageSize());
+                    clientEnvironment->chat->getVertScrollbar()->setScrollPosition(clientEnvironment->chat->getVertScrollbar()->getDocumentSize() - clientEnvironment->chat->getVertScrollbar()->getPageSize());
 
                 //std::cout<<"Chat message added: "<<message<<"| |"<<category<<"\n";
 
@@ -1421,8 +1426,8 @@ namespace syj
             {
                 std::cout<<"Debug locations...\n";
 
-                ohWow->debugColors.clear();
-                ohWow->debugLocations.clear();
+                serverData->debugColors.clear();
+                serverData->debugLocations.clear();
 
                 int howMany = data->readUInt(6);
                 for(int a = 0; a<howMany; a++)
@@ -1434,8 +1439,8 @@ namespace syj
                     float y = data->readFloat();
                     float z = data->readFloat();
 
-                    ohWow->debugColors.push_back(glm::vec3(r,g,b));
-                    ohWow->debugLocations.push_back(glm::vec3(x,y,z));
+                    serverData->debugColors.push_back(glm::vec3(r,g,b));
+                    serverData->debugLocations.push_back(glm::vec3(x,y,z));
                 }
 
                 return;
@@ -1482,95 +1487,95 @@ namespace syj
                     printName = data->readString();
                 }
 
-                for(int b = 0; b<ohWow->staticBricks.opaqueBasicBricks.size(); b++)
+                for(int b = 0; b<serverData->staticBricks.opaqueBasicBricks.size(); b++)
                 {
-                    if(!ohWow->staticBricks.opaqueBasicBricks[b])
+                    if(!serverData->staticBricks.opaqueBasicBricks[b])
                         continue;
-                    if(ohWow->staticBricks.opaqueBasicBricks[b]->serverID == id)
+                    if(serverData->staticBricks.opaqueBasicBricks[b]->serverID == id)
                     {
-                        float oldTrans = ohWow->staticBricks.opaqueBasicBricks[b]->color.a;
+                        float oldTrans = serverData->staticBricks.opaqueBasicBricks[b]->color.a;
                         bool changedTrans = (oldTrans < 0.99 && al > 0.99) || (oldTrans > 0.99 && al < 0.99);
-                        ohWow->staticBricks.opaqueBasicBricks[b]->color = glm::vec4(r,g,blu,al);
-                        ohWow->staticBricks.opaqueBasicBricks[b]->position = glm::vec3(x,y,z);
-                        ohWow->staticBricks.opaqueBasicBricks[b]->rotation = ohWow->staticBricks.rotations[angleID];
-                        ohWow->staticBricks.opaqueBasicBricks[b]->material = material;
-                        ohWow->staticBricks.opaqueBasicBricks[b]->shouldCollide = colliding;
+                        serverData->staticBricks.opaqueBasicBricks[b]->color = glm::vec4(r,g,blu,al);
+                        serverData->staticBricks.opaqueBasicBricks[b]->position = glm::vec3(x,y,z);
+                        serverData->staticBricks.opaqueBasicBricks[b]->rotation = serverData->staticBricks.rotations[angleID];
+                        serverData->staticBricks.opaqueBasicBricks[b]->material = material;
+                        serverData->staticBricks.opaqueBasicBricks[b]->shouldCollide = colliding;
 
                         if(hasPrint)
                         {
-                            ohWow->staticBricks.opaqueBasicBricks[b]->printID = ohWow->prints->getPrintID(printName);
-                            if(ohWow->staticBricks.opaqueBasicBricks[b]->printID != 0)
+                            serverData->staticBricks.opaqueBasicBricks[b]->printID = clientEnvironment->prints->getPrintID(printName);
+                            if(serverData->staticBricks.opaqueBasicBricks[b]->printID != 0)
                             {
-                                ohWow->staticBricks.opaqueBasicBricks[b]->hasPrint = true;
-                                ohWow->staticBricks.opaqueBasicBricks[b]->printMask = printMask;
-                                ohWow->staticBricks.opaqueBasicBricks[b]->dimensions.w = printMask;
+                                serverData->staticBricks.opaqueBasicBricks[b]->hasPrint = true;
+                                serverData->staticBricks.opaqueBasicBricks[b]->printMask = printMask;
+                                serverData->staticBricks.opaqueBasicBricks[b]->dimensions.w = printMask;
                             }
                         }
                         else
-                            ohWow->staticBricks.opaqueBasicBricks[b]->dimensions.w = 0;
+                            serverData->staticBricks.opaqueBasicBricks[b]->dimensions.w = 0;
 
-                        ohWow->staticBricks.updateBasicBrick(ohWow->staticBricks.opaqueBasicBricks[b],ohWow->world,changedTrans);
+                        serverData->staticBricks.updateBasicBrick(serverData->staticBricks.opaqueBasicBricks[b],serverData->world,changedTrans);
                         return;
                     }
                 }
 
-                for(int b = 0; b<ohWow->staticBricks.transparentBasicBricks.size(); b++)
+                for(int b = 0; b<serverData->staticBricks.transparentBasicBricks.size(); b++)
                 {
-                    if(!ohWow->staticBricks.transparentBasicBricks[b])
+                    if(!serverData->staticBricks.transparentBasicBricks[b])
                         continue;
-                    if(ohWow->staticBricks.transparentBasicBricks[b]->serverID == id)
+                    if(serverData->staticBricks.transparentBasicBricks[b]->serverID == id)
                     {
-                        float oldTrans = ohWow->staticBricks.opaqueBasicBricks[b]->color.a;
+                        float oldTrans = serverData->staticBricks.opaqueBasicBricks[b]->color.a;
                         bool changedTrans = (oldTrans < 0.99 && al > 0.99) || (oldTrans > 0.99 && al < 0.99);
-                        ohWow->staticBricks.transparentBasicBricks[b]->color = glm::vec4(r,g,blu,al);
-                        ohWow->staticBricks.transparentBasicBricks[b]->position = glm::vec3(x,y,z);
-                        ohWow->staticBricks.transparentBasicBricks[b]->rotation = ohWow->staticBricks.rotations[angleID];
-                        ohWow->staticBricks.transparentBasicBricks[b]->material = material;
-                        ohWow->staticBricks.transparentBasicBricks[b]->shouldCollide = colliding;
+                        serverData->staticBricks.transparentBasicBricks[b]->color = glm::vec4(r,g,blu,al);
+                        serverData->staticBricks.transparentBasicBricks[b]->position = glm::vec3(x,y,z);
+                        serverData->staticBricks.transparentBasicBricks[b]->rotation = serverData->staticBricks.rotations[angleID];
+                        serverData->staticBricks.transparentBasicBricks[b]->material = material;
+                        serverData->staticBricks.transparentBasicBricks[b]->shouldCollide = colliding;
 
                         if(hasPrint)
                         {
-                            ohWow->staticBricks.transparentBasicBricks[b]->printID = ohWow->prints->getPrintID(printName);
-                            if(ohWow->staticBricks.transparentBasicBricks[b]->printID != 0)
+                            serverData->staticBricks.transparentBasicBricks[b]->printID = clientEnvironment->prints->getPrintID(printName);
+                            if(serverData->staticBricks.transparentBasicBricks[b]->printID != 0)
                             {
-                                ohWow->staticBricks.transparentBasicBricks[b]->hasPrint = true;
-                                ohWow->staticBricks.transparentBasicBricks[b]->printMask = printMask;
+                                serverData->staticBricks.transparentBasicBricks[b]->hasPrint = true;
+                                serverData->staticBricks.transparentBasicBricks[b]->printMask = printMask;
                             }
                         }
 
-                        ohWow->staticBricks.updateBasicBrick(ohWow->staticBricks.transparentBasicBricks[b],ohWow->world,changedTrans);
+                        serverData->staticBricks.updateBasicBrick(serverData->staticBricks.transparentBasicBricks[b],serverData->world,changedTrans);
                         return;
                     }
                 }
 
-                for(int b = 0; b<ohWow->staticBricks.opaqueSpecialBricks.size(); b++)
+                for(int b = 0; b<serverData->staticBricks.opaqueSpecialBricks.size(); b++)
                 {
-                    if(!ohWow->staticBricks.opaqueSpecialBricks[b])
+                    if(!serverData->staticBricks.opaqueSpecialBricks[b])
                         continue;
-                    if(ohWow->staticBricks.opaqueSpecialBricks[b]->serverID == id)
+                    if(serverData->staticBricks.opaqueSpecialBricks[b]->serverID == id)
                     {
-                        ohWow->staticBricks.opaqueSpecialBricks[b]->color = glm::vec4(r,g,blu,al);
-                        ohWow->staticBricks.opaqueSpecialBricks[b]->position = glm::vec3(x,y,z);
-                        ohWow->staticBricks.opaqueSpecialBricks[b]->rotation = ohWow->staticBricks.rotations[angleID];
-                        ohWow->staticBricks.opaqueSpecialBricks[b]->material = material;
-                        ohWow->staticBricks.opaqueSpecialBricks[b]->shouldCollide = colliding;
-                        ohWow->staticBricks.updateSpecialBrick(ohWow->staticBricks.opaqueSpecialBricks[b],ohWow->world,angleID);
+                        serverData->staticBricks.opaqueSpecialBricks[b]->color = glm::vec4(r,g,blu,al);
+                        serverData->staticBricks.opaqueSpecialBricks[b]->position = glm::vec3(x,y,z);
+                        serverData->staticBricks.opaqueSpecialBricks[b]->rotation = serverData->staticBricks.rotations[angleID];
+                        serverData->staticBricks.opaqueSpecialBricks[b]->material = material;
+                        serverData->staticBricks.opaqueSpecialBricks[b]->shouldCollide = colliding;
+                        serverData->staticBricks.updateSpecialBrick(serverData->staticBricks.opaqueSpecialBricks[b],serverData->world,angleID);
                         return;
                     }
                 }
 
-                for(int b = 0; b<ohWow->staticBricks.transparentSpecialBricks.size(); b++)
+                for(int b = 0; b<serverData->staticBricks.transparentSpecialBricks.size(); b++)
                 {
-                    if(!ohWow->staticBricks.transparentSpecialBricks[b])
+                    if(!serverData->staticBricks.transparentSpecialBricks[b])
                         continue;
-                    if(ohWow->staticBricks.transparentSpecialBricks[b]->serverID == id)
+                    if(serverData->staticBricks.transparentSpecialBricks[b]->serverID == id)
                     {
-                        ohWow->staticBricks.transparentSpecialBricks[b]->color = glm::vec4(r,g,blu,al);
-                        ohWow->staticBricks.transparentSpecialBricks[b]->position = glm::vec3(x,y,z);
-                        ohWow->staticBricks.transparentSpecialBricks[b]->rotation = ohWow->staticBricks.rotations[angleID];
-                        ohWow->staticBricks.transparentSpecialBricks[b]->material = material;
-                        ohWow->staticBricks.transparentSpecialBricks[b]->shouldCollide = colliding;
-                        ohWow->staticBricks.updateSpecialBrick(ohWow->staticBricks.transparentSpecialBricks[b],ohWow->world,angleID);
+                        serverData->staticBricks.transparentSpecialBricks[b]->color = glm::vec4(r,g,blu,al);
+                        serverData->staticBricks.transparentSpecialBricks[b]->position = glm::vec3(x,y,z);
+                        serverData->staticBricks.transparentSpecialBricks[b]->rotation = serverData->staticBricks.rotations[angleID];
+                        serverData->staticBricks.transparentSpecialBricks[b]->material = material;
+                        serverData->staticBricks.transparentSpecialBricks[b]->shouldCollide = colliding;
+                        serverData->staticBricks.updateSpecialBrick(serverData->staticBricks.transparentSpecialBricks[b],serverData->world,angleID);
                         return;
                     }
                 }
@@ -1592,7 +1597,7 @@ namespace syj
 
                 if(forPlayersList)
                 {
-                    CEGUI::MultiColumnList *playerList = (CEGUI::MultiColumnList*)ohWow->playerList->getChild("List");
+                    CEGUI::MultiColumnList *playerList = (CEGUI::MultiColumnList*)clientEnvironment->playerList->getChild("List");
 
                     if(!playerList)
                     {
@@ -1631,27 +1636,27 @@ namespace syj
                 }
                 else
                 {
-                    for(unsigned int a = 0; a<ohWow->typingPlayersNames.size(); a++)
+                    for(unsigned int a = 0; a<serverData->typingPlayersNames.size(); a++)
                     {
-                        if(ohWow->typingPlayersNames[a] == name)
+                        if(serverData->typingPlayersNames[a] == name)
                         {
                             if(!addOrRemove)
                             {
-                                ohWow->typingPlayersNames.erase(ohWow->typingPlayersNames.begin() + a);
-                                ohWow->typingPlayerNameString = "";
-                                for(unsigned int b = 0; b<ohWow->typingPlayersNames.size(); b++)
-                                    ohWow->typingPlayerNameString = ohWow->typingPlayerNameString + ohWow->typingPlayersNames[b] + " ";
-                                ohWow->whosTyping->setText(ohWow->typingPlayerNameString);
+                                serverData->typingPlayersNames.erase(serverData->typingPlayersNames.begin() + a);
+                                serverData->typingPlayerNameString = "";
+                                for(unsigned int b = 0; b<serverData->typingPlayersNames.size(); b++)
+                                    serverData->typingPlayerNameString = serverData->typingPlayerNameString + serverData->typingPlayersNames[b] + " ";
+                                clientEnvironment->whosTyping->setText(serverData->typingPlayerNameString);
                             }
                             return;
                         }
                     }
 
-                    ohWow->typingPlayersNames.push_back(name);
-                    ohWow->typingPlayerNameString = "";
-                    for(unsigned int b = 0; b<ohWow->typingPlayersNames.size(); b++)
-                        ohWow->typingPlayerNameString = ohWow->typingPlayerNameString + ohWow->typingPlayersNames[b] + " ";
-                    ohWow->whosTyping->setText(ohWow->typingPlayerNameString);
+                    serverData->typingPlayersNames.push_back(name);
+                    serverData->typingPlayerNameString = "";
+                    for(unsigned int b = 0; b<serverData->typingPlayersNames.size(); b++)
+                        serverData->typingPlayerNameString = serverData->typingPlayerNameString + serverData->typingPlayersNames[b] + " ";
+                    clientEnvironment->whosTyping->setText(serverData->typingPlayerNameString);
                 }
 
                 return;
@@ -1669,20 +1674,20 @@ namespace syj
                 bool hasItem = data->readBit();
                 if(!hasItem)
                 {
-                    ohWow->inventoryBox->getChild("ItemName" + std::to_string(slot+1))->setText("");
-                    ohWow->inventory[slot] = 0;
+                    clientEnvironment->inventoryBox->getChild("ItemName" + std::to_string(slot+1))->setText("");
+                    serverData->inventory[slot] = 0;
                     return;
                 }
                 else
                 {
                     int itemType = data->readUInt(10);
 
-                    for(unsigned int a = 0; a<ohWow->itemTypes.size(); a++)
+                    for(unsigned int a = 0; a<serverData->itemTypes.size(); a++)
                     {
-                        if(ohWow->itemTypes[a]->serverID == itemType)
+                        if(serverData->itemTypes[a]->serverID == itemType)
                         {
-                            ohWow->inventoryBox->getChild("ItemName" + std::to_string(slot+1))->setText(ohWow->itemTypes[a]->uiName);
-                            ohWow->inventory[slot] = ohWow->itemTypes[a];
+                            clientEnvironment->inventoryBox->getChild("ItemName" + std::to_string(slot+1))->setText(serverData->itemTypes[a]->uiName);
+                            serverData->inventory[slot] = serverData->itemTypes[a];
                             return;
                         }
                     }
@@ -1698,21 +1703,21 @@ namespace syj
                 bool isWheel = data->readBit();
                 if(isWheel)
                 {
-                    ohWow->context->setMouseLock(false);
-                    ohWow->wheelWrench->moveToFront();
-                    ohWow->wheelWrench->setVisible(true);
+                    clientEnvironment->context->setMouseLock(false);
+                    clientEnvironment->wheelWrench->moveToFront();
+                    clientEnvironment->wheelWrench->setVisible(true);
 
-                    if(!((CEGUI::ToggleButton*)ohWow->wheelWrench->getChild("Copy"))->isSelected())
+                    if(!((CEGUI::ToggleButton*)clientEnvironment->wheelWrench->getChild("Copy"))->isSelected())
                     {
-                        ohWow->wheelWrench->getChild("BreakForce")->setText(std::to_string(data->readFloat()));
-                        ohWow->wheelWrench->getChild("SteeringForce")->setText(std::to_string(data->readFloat()));
-                        ohWow->wheelWrench->getChild("EngineForce")->setText(std::to_string(data->readFloat()));
-                        ohWow->wheelWrench->getChild("SuspensionLength")->setText(std::to_string(data->readFloat()));
-                        ohWow->wheelWrench->getChild("SuspensionStiffness")->setText(std::to_string(data->readFloat()));
-                        ohWow->wheelWrench->getChild("Friction")->setText(std::to_string(data->readFloat()));
-                        ohWow->wheelWrench->getChild("RollInfluence")->setText(std::to_string(data->readFloat()));
-                        ohWow->wheelWrench->getChild("DampingCompression")->setText(std::to_string(data->readFloat()));
-                        ohWow->wheelWrench->getChild("DampingRelaxation")->setText(std::to_string(data->readFloat()));
+                        clientEnvironment->wheelWrench->getChild("BreakForce")->setText(std::to_string(data->readFloat()));
+                        clientEnvironment->wheelWrench->getChild("SteeringForce")->setText(std::to_string(data->readFloat()));
+                        clientEnvironment->wheelWrench->getChild("EngineForce")->setText(std::to_string(data->readFloat()));
+                        clientEnvironment->wheelWrench->getChild("SuspensionLength")->setText(std::to_string(data->readFloat()));
+                        clientEnvironment->wheelWrench->getChild("SuspensionStiffness")->setText(std::to_string(data->readFloat()));
+                        clientEnvironment->wheelWrench->getChild("Friction")->setText(std::to_string(data->readFloat()));
+                        clientEnvironment->wheelWrench->getChild("RollInfluence")->setText(std::to_string(data->readFloat()));
+                        clientEnvironment->wheelWrench->getChild("DampingCompression")->setText(std::to_string(data->readFloat()));
+                        clientEnvironment->wheelWrench->getChild("DampingRelaxation")->setText(std::to_string(data->readFloat()));
                     }
 
                     return;
@@ -1721,13 +1726,13 @@ namespace syj
                 bool isSteering = data->readBit();
                 if(isSteering)
                 {
-                    ohWow->context->setMouseLock(false);
-                    ohWow->steeringWrench->moveToFront();
-                    ohWow->steeringWrench->setVisible(true);
+                    clientEnvironment->context->setMouseLock(false);
+                    clientEnvironment->steeringWrench->moveToFront();
+                    clientEnvironment->steeringWrench->setVisible(true);
 
-                    ohWow->steeringWrench->getChild("Mass")->setText(std::to_string(data->readFloat()));
-                    ohWow->steeringWrench->getChild("Damping")->setText(std::to_string(data->readFloat()));
-                    ((CEGUI::ToggleButton*)ohWow->steeringWrench->getChild("CenterMass"))->setSelected(data->readBit());
+                    clientEnvironment->steeringWrench->getChild("Mass")->setText(std::to_string(data->readFloat()));
+                    clientEnvironment->steeringWrench->getChild("Damping")->setText(std::to_string(data->readFloat()));
+                    ((CEGUI::ToggleButton*)clientEnvironment->steeringWrench->getChild("CenterMass"))->setSelected(data->readBit());
 
                     return;
                 }
@@ -1746,66 +1751,66 @@ namespace syj
                 std::string name = data->readString();
 
 
-                ohWow->context->setMouseLock(false);
-                ohWow->wrench->setVisible(true);
-                ohWow->wrench->moveToFront();
-                ((CEGUI::ToggleButton*)ohWow->wrench->getChild("Colliding"))->setSelected(colliding);
-                ((CEGUI::ToggleButton*)ohWow->wrench->getChild("RenderDown"))->setSelected(renderDown);
-                ((CEGUI::ToggleButton*)ohWow->wrench->getChild("RenderUp"))->setSelected(renderUp);
-                ((CEGUI::ToggleButton*)ohWow->wrench->getChild("RenderNorth"))->setSelected(renderNorth);
-                ((CEGUI::ToggleButton*)ohWow->wrench->getChild("RenderSouth"))->setSelected(renderSouth);
-                ((CEGUI::ToggleButton*)ohWow->wrench->getChild("RenderEast"))->setSelected(renderEast);
-                ((CEGUI::ToggleButton*)ohWow->wrench->getChild("RenderWest"))->setSelected(renderWest);
-                //((CEGUI::Combobox*)ohWow->wrench->getChild("MusicDropdown"))->setItemSelectState(musicId,true);
-                CEGUI::Combobox *musicDropdown = ((CEGUI::Combobox*)ohWow->wrench->getChild("MusicDropdown"));
-                CEGUI::Slider *pitchSlider = ((CEGUI::Slider*)ohWow->wrench->getChild("PitchSlider"));
+                clientEnvironment->context->setMouseLock(false);
+                clientEnvironment->wrench->setVisible(true);
+                clientEnvironment->wrench->moveToFront();
+                ((CEGUI::ToggleButton*)clientEnvironment->wrench->getChild("Colliding"))->setSelected(colliding);
+                ((CEGUI::ToggleButton*)clientEnvironment->wrench->getChild("RenderDown"))->setSelected(renderDown);
+                ((CEGUI::ToggleButton*)clientEnvironment->wrench->getChild("RenderUp"))->setSelected(renderUp);
+                ((CEGUI::ToggleButton*)clientEnvironment->wrench->getChild("RenderNorth"))->setSelected(renderNorth);
+                ((CEGUI::ToggleButton*)clientEnvironment->wrench->getChild("RenderSouth"))->setSelected(renderSouth);
+                ((CEGUI::ToggleButton*)clientEnvironment->wrench->getChild("RenderEast"))->setSelected(renderEast);
+                ((CEGUI::ToggleButton*)clientEnvironment->wrench->getChild("RenderWest"))->setSelected(renderWest);
+                //((CEGUI::Combobox*)clientEnvironment->wrench->getChild("MusicDropdown"))->setItemSelectState(musicId,true);
+                CEGUI::Combobox *musicDropdown = ((CEGUI::Combobox*)clientEnvironment->wrench->getChild("MusicDropdown"));
+                CEGUI::Slider *pitchSlider = ((CEGUI::Slider*)clientEnvironment->wrench->getChild("PitchSlider"));
                 pitchSlider->setCurrentValue(pitch*100);
-                ohWow->wrench->getChild("BrickName")->setText(name);
+                clientEnvironment->wrench->getChild("BrickName")->setText(name);
 
                 bool hasLight = data->readBit();
                 if(hasLight)
                 {
-                    ((CEGUI::ToggleButton*)ohWow->wrench->getChild("UseLight"))->setSelected(true);
+                    ((CEGUI::ToggleButton*)clientEnvironment->wrench->getChild("UseLight"))->setSelected(true);
 
                     float red = data->readFloat();
                     float green = data->readFloat();
                     float blue = data->readFloat();
 
-                    ohWow->wrench->getChild("Red")->setText(std::to_string(red));
-                    ohWow->wrench->getChild("Green")->setText(std::to_string(green));
-                    ohWow->wrench->getChild("Blue")->setText(std::to_string(blue));
+                    clientEnvironment->wrench->getChild("Red")->setText(std::to_string(red));
+                    clientEnvironment->wrench->getChild("Green")->setText(std::to_string(green));
+                    clientEnvironment->wrench->getChild("Blue")->setText(std::to_string(blue));
 
                     bool isSpotlight = data->readBit();
                     if(isSpotlight)
                     {
-                        ((CEGUI::ToggleButton*)ohWow->wrench->getChild("IsSpotlight"))->setSelected(true);
+                        ((CEGUI::ToggleButton*)clientEnvironment->wrench->getChild("IsSpotlight"))->setSelected(true);
                         float phi = data->readFloat();
                         float yaw = data->readFloat();
                         float lightPitch = data->readFloat();
 
-                        CEGUI::Slider *phiSlider = ((CEGUI::Slider*)ohWow->wrench->getChild("PhiSlider"));
+                        CEGUI::Slider *phiSlider = ((CEGUI::Slider*)clientEnvironment->wrench->getChild("PhiSlider"));
                         phiSlider->setCurrentValue(phi);
-                        CEGUI::Slider *yawSlider = ((CEGUI::Slider*)ohWow->wrench->getChild("YawSlider"));
+                        CEGUI::Slider *yawSlider = ((CEGUI::Slider*)clientEnvironment->wrench->getChild("YawSlider"));
                         yawSlider->setCurrentValue(yaw);
-                        CEGUI::Slider *lightPitchSlider = ((CEGUI::Slider*)ohWow->wrench->getChild("LightPitchSlider"));
+                        CEGUI::Slider *lightPitchSlider = ((CEGUI::Slider*)clientEnvironment->wrench->getChild("LightPitchSlider"));
                         lightPitchSlider->setCurrentValue(lightPitch);
                     }
                     else
-                        ((CEGUI::ToggleButton*)ohWow->wrench->getChild("IsSpotlight"))->setSelected(false);
+                        ((CEGUI::ToggleButton*)clientEnvironment->wrench->getChild("IsSpotlight"))->setSelected(false);
                 }
                 else
-                    ((CEGUI::ToggleButton*)ohWow->wrench->getChild("UseLight"))->setSelected(false);
+                    ((CEGUI::ToggleButton*)clientEnvironment->wrench->getChild("UseLight"))->setSelected(false);
 
                 musicDropdown->clearAllSelections();
 
                 std::string text = "";
-                for(unsigned int a = 0; a<ohWow->speaker->sounds.size(); a++)
+                for(unsigned int a = 0; a<clientEnvironment->speaker->sounds.size(); a++)
                 {
-                    if(ohWow->speaker->sounds[a]->serverID == musicId)
+                    if(clientEnvironment->speaker->sounds[a]->serverID == musicId)
                     {
-                        CEGUI::ListboxItem *item = musicDropdown->findItemWithText(ohWow->speaker->sounds[a]->scriptName,NULL);
+                        CEGUI::ListboxItem *item = musicDropdown->findItemWithText(clientEnvironment->speaker->sounds[a]->scriptName,NULL);
                         if(!item)
-                            error("Error selecting music " + ohWow->speaker->sounds[a]->scriptName);
+                            error("Error selecting music " + clientEnvironment->speaker->sounds[a]->scriptName);
                         else
                             musicDropdown->setItemSelectState(item,true);
                         return;
@@ -1825,7 +1830,7 @@ namespace syj
                 if(name.length() == 0)
                     return;
 
-                ohWow->speaker->loadSound(id,file,name,isMusic);
+                clientEnvironment->speaker->loadSound(id,file,name,isMusic);
                 return;
             }
             case packetType_playSound:
@@ -1842,11 +1847,11 @@ namespace syj
                     {
                         int carId = data->readUInt(10);
                         livingBrick *car = 0;
-                        for(unsigned int a = 0; a<ohWow->livingBricks.size(); a++)
+                        for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
                         {
-                            if(ohWow->livingBricks[a]->serverID == carId)
+                            if(serverData->livingBricks[a]->serverID == carId)
                             {
-                                car = ohWow->livingBricks[a];
+                                car = serverData->livingBricks[a];
                                 break;
                             }
                         }
@@ -1855,9 +1860,9 @@ namespace syj
                             error("Could not find car " + std::to_string(carId) + " to attach music!");
                             return;
                         }
-                        //ohWow->speaker->loopSound(id,loopId,car,pitch);
+                        //clientEnvironment->speaker->loopSound(id,loopId,car,pitch);
                         location *soundLocation = new location(car);
-                        ohWow->speaker->playSound3D(id,soundLocation,pitch,1.0,loopId);
+                        clientEnvironment->speaker->playSound3D(id,soundLocation,pitch,1.0,loopId);
                     }
                     else
                     {
@@ -1865,8 +1870,8 @@ namespace syj
                         float y = data->readFloat();
                         float z = data->readFloat();
                         location *soundLocation = new location(glm::vec3(x,y,z));
-                        ohWow->speaker->playSound3D(id,soundLocation,pitch,1.0,loopId);
-                        //ohWow->speaker->loopSound(id,loopId,x,y,z,pitch);
+                        clientEnvironment->speaker->playSound3D(id,soundLocation,pitch,1.0,loopId);
+                        //clientEnvironment->speaker->loopSound(id,loopId,x,y,z,pitch);
                     }
                     return;
                 }
@@ -1876,8 +1881,8 @@ namespace syj
                 {
                     float pitch = data->readFloat();
                     float vol = data->readFloat();
-                    //ohWow->speaker->playSound(id,loop,pitch,vol);
-                    ohWow->speaker->playSound2D(id,pitch,vol);
+                    //clientEnvironment->speaker->playSound(id,loop,pitch,vol);
+                    clientEnvironment->speaker->playSound2D(id,pitch,vol);
                     return;
                 }
 
@@ -1893,9 +1898,9 @@ namespace syj
                     float z = data->readFloat();
                     float pitch = data->readFloat();
                     float vol = data->readFloat();
-                    //ohWow->speaker->playSound(id,loop,x,y,z,pitch,vol);
+                    //clientEnvironment->speaker->playSound(id,loop,x,y,z,pitch,vol);
                     location *soundLocation = new location(glm::vec3(x,y,z));
-                    ohWow->speaker->playSound3D(id,soundLocation,pitch,vol);
+                    clientEnvironment->speaker->playSound3D(id,soundLocation,pitch,vol);
                 }
                 return;
             }
@@ -1909,11 +1914,11 @@ namespace syj
                     int itemId = data->readUInt(dynamicObjectIDBits);
 
                     heldItemType *type = 0;
-                    for(unsigned int a = 0; a<ohWow->itemTypes.size(); a++)
+                    for(unsigned int a = 0; a<serverData->itemTypes.size(); a++)
                     {
-                        if(ohWow->itemTypes[a]->serverID == typeId)
+                        if(serverData->itemTypes[a]->serverID == typeId)
                         {
-                            type = ohWow->itemTypes[a];
+                            type = serverData->itemTypes[a];
                             break;
                         }
                     }
@@ -1924,44 +1929,44 @@ namespace syj
                         return;
                     }
 
-                    item *tmp = new item(ohWow->world,type->type,type->type->networkScale);
+                    item *tmp = new item(serverData->world,type->type,type->type->networkScale);
                     tmp->serverID = itemId;
                     tmp->itemType = type;
-                    ohWow->items.push_back(tmp);
+                    serverData->items.push_back(tmp);
                 }
                 else
                 {
                     int itemId = data->readUInt(dynamicObjectIDBits);
 
-                    for(unsigned int a = 0; a<ohWow->items.size(); a++)
+                    for(unsigned int a = 0; a<serverData->items.size(); a++)
                     {
-                        if(ohWow->items[a]->serverID == itemId)
+                        if(serverData->items[a]->serverID == itemId)
                         {
                             for(int l = 0; l<location::locations.size(); l++)
                             {
-                                if(location::locations[l]->dynamic == ohWow->items[a])
+                                if(location::locations[l]->dynamic == serverData->items[a])
                                     location::locations[l]->dynamic = 0;
                             }
 
-                            for(int e = 0; e<ohWow->emitters.size(); e++)
+                            for(int e = 0; e<serverData->emitters.size(); e++)
                             {
-                                if(ohWow->emitters[e]->attachedToItem == ohWow->items[a])
+                                if(serverData->emitters[e]->attachedToItem == serverData->items[a])
                                 {
-                                    delete ohWow->emitters[e];
-                                    ohWow->emitters[e] = 0;
-                                    ohWow->emitters.erase(ohWow->emitters.begin() + e);
+                                    delete serverData->emitters[e];
+                                    serverData->emitters[e] = 0;
+                                    serverData->emitters.erase(serverData->emitters.begin() + e);
                                 }
-                                if(ohWow->emitters[e]->attachedToModel == ohWow->items[a])
+                                if(serverData->emitters[e]->attachedToModel == serverData->items[a])
                                 {
-                                    delete ohWow->emitters[e];
-                                    ohWow->emitters[e] = 0;
-                                    ohWow->emitters.erase(ohWow->emitters.begin() + e);
+                                    delete serverData->emitters[e];
+                                    serverData->emitters[e] = 0;
+                                    serverData->emitters.erase(serverData->emitters.begin() + e);
                                 }
                             }
 
-                            delete ohWow->items[a];
-                            ohWow->items[a] = 0;
-                            ohWow->items.erase(ohWow->items.begin() + a);
+                            delete serverData->items[a];
+                            serverData->items[a] = 0;
+                            serverData->items.erase(serverData->items.begin() + a);
                             return;
                         }
                     }
@@ -2006,54 +2011,54 @@ namespace syj
                 if(!CEGUI::System::getSingleton().getRenderer()->isTextureDefined(uiName) && !CEGUI::ImageManager::getSingleton().isImageTypeAvailable(uiName) && !CEGUI::ImageManager::getSingleton().isDefined(uiName))
                     CEGUI::ImageManager::getSingleton().addFromImageFile(uiName, iconPath,"/");
 
-                for(unsigned int a = 0; a<ohWow->newDynamicTypes.size(); a++)
+                for(unsigned int a = 0; a<serverData->newDynamicTypes.size(); a++)
                 {
-                    if(ohWow->newDynamicTypes[a]->serverID == modelId)
+                    if(serverData->newDynamicTypes[a]->serverID == modelId)
                     {
                         heldItemType *tmp = new heldItemType;
                         tmp->useDefaultSwing = defaultSwing;
                         tmp->serverID = itemId;
-                        tmp->type = ohWow->newDynamicTypes[a];
+                        tmp->type = serverData->newDynamicTypes[a];
                         tmp->handOffset = glm::vec3(x,y,z);
                         tmp->uiName = uiName;
                         tmp->handRot = glm::quat(rotW,rotX,rotY,rotZ);
                         tmp->waitingForModel = false;
-                        for(unsigned int b = 0; b<ohWow->newDynamicTypes[a]->animations.size(); b++)
+                        for(unsigned int b = 0; b<serverData->newDynamicTypes[a]->animations.size(); b++)
                         {
-                            if(ohWow->newDynamicTypes[a]->animations[b].serverID == swingAnim)
+                            if(serverData->newDynamicTypes[a]->animations[b].serverID == swingAnim)
                             {
-                                tmp->fireAnim = &ohWow->newDynamicTypes[a]->animations[b];
+                                tmp->fireAnim = &serverData->newDynamicTypes[a]->animations[b];
                             }
-                            if(ohWow->newDynamicTypes[a]->animations[b].serverID == switchAnim)
+                            if(serverData->newDynamicTypes[a]->animations[b].serverID == switchAnim)
                             {
-                                tmp->switchAnim = &ohWow->newDynamicTypes[a]->animations[b];
+                                tmp->switchAnim = &serverData->newDynamicTypes[a]->animations[b];
                             }
                         }
-                        ohWow->itemTypes.push_back(tmp);
+                        serverData->itemTypes.push_back(tmp);
 
                         if(uiName == std::string("Paint Can"))
                         {
-                            ohWow->paintCan = tmp;
-                            ohWow->fixedPaintCanItem = new item(ohWow->world,tmp->type,glm::vec3(0.02,0.02,0.02));
-                            ohWow->fixedPaintCanItem->itemType = tmp;
-                            ohWow->items.push_back(ohWow->fixedPaintCanItem);
+                            serverData->paintCan = tmp;
+                            serverData->fixedPaintCanItem = new item(serverData->world,tmp->type,glm::vec3(0.02,0.02,0.02));
+                            serverData->fixedPaintCanItem->itemType = tmp;
+                            serverData->items.push_back(serverData->fixedPaintCanItem);
 
-                            /*newDynamic *itemIcon = new newDynamic(ohWow->newDynamicTypes[a]);
+                            /*newDynamic *itemIcon = new newDynamic(serverData->newDynamicTypes[a]);
                             itemIcon->hidden = true;
                             tmp->icon = itemIcon;
                             itemIcon->setAllFlag(meshFlag_skipCameraMatrix);
-                            ohWow->itemIcons.push_back(itemIcon);
+                            serverData->itemIcons.push_back(itemIcon);
                             itemIcon->useGlobalTransform = true;
                             itemIcon->calculateMeshTransforms(0);
                             itemIcon->bufferSubData();*/
                         }
                         /*else
                         {
-                            ohWow->itemIcons.push_back(0);
+                            serverData->itemIcons.push_back(0);
                             tmp->icon = 0;
                         }*/
 
-                        finishLoadingTypesCheck(ohWow);
+                        finishLoadingTypesCheck(clientEnvironment);
                         return;
                     }
                 }
@@ -2068,20 +2073,20 @@ namespace syj
                 tmp->waitingForSwingAnim = swingAnim;
                 tmp->waitingForSwitchAnim = switchAnim;
                 tmp->waitingModel = modelId;
-                ohWow->itemTypes.push_back(tmp);
-                //ohWow->itemIcons.push_back(0);
+                serverData->itemTypes.push_back(tmp);
+                //serverData->itemIcons.push_back(0);
 
                 if(uiName == "Paint Can")
                 {
-                    ohWow->paintCan = tmp;
-                    ohWow->fixedPaintCanItem = new item(ohWow->world,tmp->type,tmp->type->networkScale);
-                    ohWow->fixedPaintCanItem->itemType = tmp;
-                    ohWow->items.push_back(ohWow->fixedPaintCanItem);
+                    serverData->paintCan = tmp;
+                    serverData->fixedPaintCanItem = new item(serverData->world,tmp->type,tmp->type->networkScale);
+                    serverData->fixedPaintCanItem->itemType = tmp;
+                    serverData->items.push_back(serverData->fixedPaintCanItem);
                 }
 
                 error("Could not add item with model ID: " + std::to_string(modelId));
 
-                finishLoadingTypesCheck(ohWow);
+                finishLoadingTypesCheck(clientEnvironment);
 
                 return;
             }
@@ -2093,13 +2098,13 @@ namespace syj
                 float g = data->readFloat();
                 float b = data->readFloat();
 
-                for(int a = 0; a<ohWow->newDynamics.size(); a++)
+                for(int a = 0; a<serverData->newDynamics.size(); a++)
                 {
-                    if(ohWow->newDynamics[a]->serverID == id)
+                    if(serverData->newDynamics[a]->serverID == id)
                     {
-                        ohWow->newDynamics[a]->shapeName = shapeName;
-                        ohWow->newDynamics[a]->shapeNameColor = glm::vec3(r,g,b);
-                        //ohWow->newDynamics[a]->colorTint = glm::vec3(r,g,b);
+                        serverData->newDynamics[a]->shapeName = shapeName;
+                        serverData->newDynamics[a]->shapeNameColor = glm::vec3(r,g,b);
+                        //serverData->newDynamics[a]->colorTint = glm::vec3(r,g,b);
                         return;
                     }
                 }
@@ -2110,42 +2115,42 @@ namespace syj
             case packetType_removeBrickVehicle:
             {
                 int id = data->readUInt(10);
-                for(int a = 0; a<ohWow->livingBricks.size(); a++)
+                for(int a = 0; a<serverData->livingBricks.size(); a++)
                 {
-                    if(ohWow->livingBricks[a]->serverID == id)
+                    if(serverData->livingBricks[a]->serverID == id)
                     {
                         /*for(unsigned int b = 0; b<32; b++)
                         {
-                            if(ohWow->speaker->carToTrack[b] == ohWow->livingBricks[a])
+                            if(clientEnvironment->speaker->carToTrack[b] == serverData->livingBricks[a])
                             {
-                                alSourceStop(ohWow->speaker->sources[b]);
-                                ohWow->speaker->carToTrack[b] = 0;
+                                alSourceStop(clientEnvironment->speaker->sources[b]);
+                                clientEnvironment->speaker->carToTrack[b] = 0;
                             }
                         }*/
 
-                        auto lightIter = ohWow->lights.begin();
-                        while(lightIter != ohWow->lights.end())
+                        auto lightIter = serverData->lights.begin();
+                        while(lightIter != serverData->lights.end())
                         {
                             light *l = *lightIter;
-                            if(l->attachedCar == ohWow->livingBricks[a])
+                            if(l->attachedCar == serverData->livingBricks[a])
                             {
                                 delete l;
                                 l = 0;
-                                lightIter = ohWow->lights.erase(lightIter);
+                                lightIter = serverData->lights.erase(lightIter);
                                 continue;
                             }
                             ++lightIter;
                         }
 
-                        auto emitterIter = ohWow->emitters.begin();
-                        while(emitterIter != ohWow->emitters.end())
+                        auto emitterIter = serverData->emitters.begin();
+                        while(emitterIter != serverData->emitters.end())
                         {
                             emitter *e = *emitterIter;
-                            if(e->attachedToCar == ohWow->livingBricks[a])
+                            if(e->attachedToCar == serverData->livingBricks[a])
                             {
                                 delete e;
                                 e = 0;
-                                emitterIter = ohWow->emitters.erase(emitterIter);
+                                emitterIter = serverData->emitters.erase(emitterIter);
                                 continue;
                             }
                             ++emitterIter;
@@ -2153,16 +2158,16 @@ namespace syj
 
                         for(int l = 0; l<location::locations.size(); l++)
                         {
-                            if(location::locations[l]->car == ohWow->livingBricks[a])
+                            if(location::locations[l]->car == serverData->livingBricks[a])
                                 location::locations[l]->car = 0;
                         }
 
-                        for(int b = 0; b<ohWow->livingBricks[a]->newWheels.size(); b++)
-                            delete ohWow->livingBricks[a]->newWheels[b];
-                        ohWow->livingBricks[a]->newWheels.clear();
+                        for(int b = 0; b<serverData->livingBricks[a]->newWheels.size(); b++)
+                            delete serverData->livingBricks[a]->newWheels[b];
+                        serverData->livingBricks[a]->newWheels.clear();
 
-                        delete ohWow->livingBricks[a];
-                        ohWow->livingBricks.erase(ohWow->livingBricks.begin() + a);
+                        delete serverData->livingBricks[a];
+                        serverData->livingBricks.erase(serverData->livingBricks.begin() + a);
                         return;
                     }
                 }
@@ -2184,7 +2189,7 @@ namespace syj
                     al /= 255;
                     if(paletteIdx >= 40)
                         continue;
-                    ohWow->palette->setColor(paletteIdx,glm::vec4(r,g,b,al));
+                    clientEnvironment->palette->setColor(paletteIdx,glm::vec4(r,g,b,al));
                 }
                 return;
             }
@@ -2236,13 +2241,13 @@ namespace syj
                 }
 
                 livingBrick *found = 0;
-                for(int a = 0; a<ohWow->livingBricks.size(); a++)
+                for(int a = 0; a<serverData->livingBricks.size(); a++)
                 {
-                    if(ohWow->livingBricks[a])
+                    if(serverData->livingBricks[a])
                     {
-                        if(ohWow->livingBricks[a]->serverID == id)
+                        if(serverData->livingBricks[a]->serverID == id)
                         {
-                            found = ohWow->livingBricks[a];
+                            found = serverData->livingBricks[a];
                             break;
                         }
                     }
@@ -2256,13 +2261,13 @@ namespace syj
                     found = new livingBrick;
 
                     found->serverID = id;
-                    ohWow->livingBricks.push_back(found);
+                    serverData->livingBricks.push_back(found);
                     found->allocateVertBuffer();
-                    found->allocatePerTexture(ohWow->brickMat);
-                    found->allocatePerTexture(ohWow->brickMatSide,true,true);
-                    found->allocatePerTexture(ohWow->brickMatBottom,true);
-                    found->allocatePerTexture(ohWow->brickMatRamp);
-                    found->addBlocklandCompatibility(ohWow->staticBricks.blocklandTypes);
+                    found->allocatePerTexture(clientEnvironment->brickMat);
+                    found->allocatePerTexture(clientEnvironment->brickMatSide,true,true);
+                    found->allocatePerTexture(clientEnvironment->brickMatBottom,true);
+                    found->allocatePerTexture(clientEnvironment->brickMatRamp);
+                    found->addBlocklandCompatibility(serverData->staticBricks.blocklandTypes);
                     //for(int a = 0; a<prints.names.size(); a++)
                         //found->allocatePerTexture(prints.textures[a],false,false,true);
                 }
@@ -2273,7 +2278,7 @@ namespace syj
                     //while(found->wheels.size() < wheels)
                         //found->wheels.push_back(new interpolator);
                     while(found->newWheels.size() < wheels)
-                        found->newWheels.push_back(new newDynamic(ohWow->newWheelModel));
+                        found->newWheels.push_back(new newDynamic(clientEnvironment->newWheelModel));
                     for(unsigned int a = 0; a<wheels; a++)
                     {
                         found->newWheels[a]->scale = glm::vec3(radii[a]/1.6,radii[a]/1.6,radii[a]/1.6);
@@ -2281,16 +2286,16 @@ namespace syj
                         found->newWheels[a]->scale.y *= 0.06;
                         found->newWheels[a]->scale.z *= 0.06;
 
-                        if(ohWow->wheelDirtEmitter)
+                        if(serverData->wheelDirtEmitter)
                         {
                             emitter *dirtEmitter = new emitter;
                             dirtEmitter->creationTime = SDL_GetTicks();
-                            dirtEmitter->type = ohWow->wheelDirtEmitter;
+                            dirtEmitter->type = serverData->wheelDirtEmitter;
                             dirtEmitter->whichWheel = a;
                             dirtEmitter->attachedToCar = found;
                             dirtEmitter->serverID = -1;
                             wheelBrickData[a].dirtEmitter = dirtEmitter;
-                            ohWow->emitters.push_back(dirtEmitter);
+                            serverData->emitters.push_back(dirtEmitter);
                         }
 
                         found->wheelBrickData.push_back(wheelBrickData[a]);
@@ -2344,7 +2349,7 @@ namespace syj
                         tmp->serverID = serverID;
                         tmp->color = glm::vec4(r,g,b,al);
                         tmp->position = glm::vec3(x,y,z);
-                        tmp->rotation = ohWow->staticBricks.rotations[angleID];
+                        tmp->rotation = serverData->staticBricks.rotations[angleID];
                         tmp->material = material;
                         int width = data->readUInt(8);
                         int height = data->readUInt(8);
@@ -2352,15 +2357,15 @@ namespace syj
                         //std::cout<<"Dims: "<<width<<","<<height<<","<<length<<"\n";
                         tmp->dimensions = glm::ivec4(width,height,length,0);
                         bool doNotCompile = false;
-                        found->addBasicBrick(tmp,angleID,0,ohWow->world,doNotCompile);
+                        found->addBasicBrick(tmp,angleID,0,serverData->world,doNotCompile);
                     }
                     else
                     {
                         int typeID = data->readUInt(10);
                         bool foundSpecial = false;
-                        for(int i = 0; i<ohWow->staticBricks.blocklandTypes->specialBrickTypes.size(); i++)
+                        for(int i = 0; i<serverData->staticBricks.blocklandTypes->specialBrickTypes.size(); i++)
                         {
-                            if(ohWow->staticBricks.blocklandTypes->specialBrickTypes[i]->serverID == typeID)
+                            if(serverData->staticBricks.blocklandTypes->specialBrickTypes[i]->serverID == typeID)
                             {
                                 foundSpecial = true;
                                 specialBrickRenderData *tmp = new specialBrickRenderData;
@@ -2369,10 +2374,10 @@ namespace syj
                                 tmp->serverID = serverID;
                                 tmp->color = glm::vec4(r,g,b,al);
                                 tmp->position = glm::vec3(x,y,z);
-                                tmp->rotation = ohWow->staticBricks.rotations[angleID];
+                                tmp->rotation = serverData->staticBricks.rotations[angleID];
                                 tmp->material = material;
                                 bool doNotCompile = false;
-                                found->addSpecialBrick(tmp,ohWow->world,i,angleID,doNotCompile);
+                                found->addSpecialBrick(tmp,serverData->world,i,angleID,doNotCompile);
                                 //std::cout<<tmp->type->type->uiName<<" special type\n";
                                 break;
                             }
@@ -2405,107 +2410,107 @@ namespace syj
 
                     int id = data->readUInt(20);
 
-                    for(int b = 0; b<ohWow->staticBricks.opaqueBasicBricks.size(); b++)
+                    for(int b = 0; b<serverData->staticBricks.opaqueBasicBricks.size(); b++)
                     {
-                        if(!ohWow->staticBricks.opaqueBasicBricks[b])
+                        if(!serverData->staticBricks.opaqueBasicBricks[b])
                             continue;
-                        if(ohWow->staticBricks.opaqueBasicBricks[b]->serverID == id)
+                        if(serverData->staticBricks.opaqueBasicBricks[b]->serverID == id)
                         {
-                            if(ohWow->staticBricks.opaqueBasicBricks[b]->markedForDeath)
+                            if(serverData->staticBricks.opaqueBasicBricks[b]->markedForDeath)
                                 continue;
                             if(howMany < 12)
                             {
-                                if(ohWow->staticBricks.opaqueBasicBricks[b]->body)
+                                if(serverData->staticBricks.opaqueBasicBricks[b]->body)
                                 {
-                                    ohWow->world->removeRigidBody(ohWow->staticBricks.opaqueBasicBricks[b]->body);
-                                    delete ohWow->staticBricks.opaqueBasicBricks[b]->body;
-                                    ohWow->staticBricks.opaqueBasicBricks[b]->body = 0;
+                                    serverData->world->removeRigidBody(serverData->staticBricks.opaqueBasicBricks[b]->body);
+                                    delete serverData->staticBricks.opaqueBasicBricks[b]->body;
+                                    serverData->staticBricks.opaqueBasicBricks[b]->body = 0;
                                 }
 
-                                tmp.basic = ohWow->staticBricks.opaqueBasicBricks[b];
-                                ohWow->staticBricks.opaqueBasicBricks[b]->markedForDeath = true;
-                                ohWow->fakeKills.push_back(tmp);
+                                tmp.basic = serverData->staticBricks.opaqueBasicBricks[b];
+                                serverData->staticBricks.opaqueBasicBricks[b]->markedForDeath = true;
+                                serverData->fakeKills.push_back(tmp);
                             }
                             else
-                                ohWow->staticBricks.removeBasicBrick(ohWow->staticBricks.opaqueBasicBricks[b],ohWow->world);
+                                serverData->staticBricks.removeBasicBrick(serverData->staticBricks.opaqueBasicBricks[b],serverData->world);
                             continue;
                         }
                     }
-                    for(int b = 0; b<ohWow->staticBricks.transparentBasicBricks.size(); b++)
+                    for(int b = 0; b<serverData->staticBricks.transparentBasicBricks.size(); b++)
                     {
-                        if(!ohWow->staticBricks.transparentBasicBricks[b])
+                        if(!serverData->staticBricks.transparentBasicBricks[b])
                             continue;
-                        if(ohWow->staticBricks.transparentBasicBricks[b]->serverID == id)
+                        if(serverData->staticBricks.transparentBasicBricks[b]->serverID == id)
                         {
-                            if(ohWow->staticBricks.transparentBasicBricks[b]->markedForDeath)
+                            if(serverData->staticBricks.transparentBasicBricks[b]->markedForDeath)
                                 continue;
                             if(howMany < 12)
                             {
-                                if(ohWow->staticBricks.transparentBasicBricks[b]->body)
+                                if(serverData->staticBricks.transparentBasicBricks[b]->body)
                                 {
-                                    ohWow->world->removeRigidBody(ohWow->staticBricks.transparentBasicBricks[b]->body);
-                                    delete ohWow->staticBricks.transparentBasicBricks[b]->body;
-                                    ohWow->staticBricks.transparentBasicBricks[b]->body = 0;
+                                    serverData->world->removeRigidBody(serverData->staticBricks.transparentBasicBricks[b]->body);
+                                    delete serverData->staticBricks.transparentBasicBricks[b]->body;
+                                    serverData->staticBricks.transparentBasicBricks[b]->body = 0;
                                 }
 
-                                tmp.basic = ohWow->staticBricks.transparentBasicBricks[b];
-                                ohWow->staticBricks.transparentBasicBricks[b]->markedForDeath = true;
-                                ohWow->fakeKills.push_back(tmp);
+                                tmp.basic = serverData->staticBricks.transparentBasicBricks[b];
+                                serverData->staticBricks.transparentBasicBricks[b]->markedForDeath = true;
+                                serverData->fakeKills.push_back(tmp);
                             }
                             else
-                                ohWow->staticBricks.removeBasicBrick(ohWow->staticBricks.transparentBasicBricks[b],ohWow->world);
+                                serverData->staticBricks.removeBasicBrick(serverData->staticBricks.transparentBasicBricks[b],serverData->world);
                             continue;
                         }
                     }
-                    for(int b = 0; b<ohWow->staticBricks.opaqueSpecialBricks.size(); b++)
+                    for(int b = 0; b<serverData->staticBricks.opaqueSpecialBricks.size(); b++)
                     {
-                        if(!ohWow->staticBricks.opaqueSpecialBricks[b])
+                        if(!serverData->staticBricks.opaqueSpecialBricks[b])
                             continue;
-                        if(ohWow->staticBricks.opaqueSpecialBricks[b]->serverID == id)
+                        if(serverData->staticBricks.opaqueSpecialBricks[b]->serverID == id)
                         {
-                            if(ohWow->staticBricks.opaqueSpecialBricks[b]->markedForDeath)
+                            if(serverData->staticBricks.opaqueSpecialBricks[b]->markedForDeath)
                                 continue;
                             if(howMany < 12)
                             {
-                                if(ohWow->staticBricks.opaqueSpecialBricks[b]->body)
+                                if(serverData->staticBricks.opaqueSpecialBricks[b]->body)
                                 {
-                                    ohWow->world->removeRigidBody(ohWow->staticBricks.opaqueSpecialBricks[b]->body);
-                                    delete ohWow->staticBricks.opaqueSpecialBricks[b]->body;
-                                    ohWow->staticBricks.opaqueSpecialBricks[b]->body = 0;
+                                    serverData->world->removeRigidBody(serverData->staticBricks.opaqueSpecialBricks[b]->body);
+                                    delete serverData->staticBricks.opaqueSpecialBricks[b]->body;
+                                    serverData->staticBricks.opaqueSpecialBricks[b]->body = 0;
                                 }
 
-                                tmp.special = ohWow->staticBricks.opaqueSpecialBricks[b];
-                                ohWow->staticBricks.opaqueSpecialBricks[b]->markedForDeath = true;
-                                ohWow->fakeKills.push_back(tmp);
+                                tmp.special = serverData->staticBricks.opaqueSpecialBricks[b];
+                                serverData->staticBricks.opaqueSpecialBricks[b]->markedForDeath = true;
+                                serverData->fakeKills.push_back(tmp);
                             }
                             else
-                                ohWow->staticBricks.removeSpecialBrick(ohWow->staticBricks.opaqueSpecialBricks[b],ohWow->world);
+                                serverData->staticBricks.removeSpecialBrick(serverData->staticBricks.opaqueSpecialBricks[b],serverData->world);
                             continue;
                         }
                     }
-                    for(int b = 0; b<ohWow->staticBricks.transparentSpecialBricks.size(); b++)
+                    for(int b = 0; b<serverData->staticBricks.transparentSpecialBricks.size(); b++)
                     {
-                        if(!ohWow->staticBricks.transparentSpecialBricks[b])
+                        if(!serverData->staticBricks.transparentSpecialBricks[b])
                             continue;
-                        if(ohWow->staticBricks.transparentSpecialBricks[b]->serverID == id)
+                        if(serverData->staticBricks.transparentSpecialBricks[b]->serverID == id)
                         {
-                            if(ohWow->staticBricks.transparentSpecialBricks[b]->markedForDeath)
+                            if(serverData->staticBricks.transparentSpecialBricks[b]->markedForDeath)
                                 continue;
                             if(howMany < 12)
                             {
-                                if(ohWow->staticBricks.transparentSpecialBricks[b]->body)
+                                if(serverData->staticBricks.transparentSpecialBricks[b]->body)
                                 {
-                                    ohWow->world->removeRigidBody(ohWow->staticBricks.transparentSpecialBricks[b]->body);
-                                    delete ohWow->staticBricks.transparentSpecialBricks[b]->body;
-                                    ohWow->staticBricks.transparentSpecialBricks[b]->body = 0;
+                                    serverData->world->removeRigidBody(serverData->staticBricks.transparentSpecialBricks[b]->body);
+                                    delete serverData->staticBricks.transparentSpecialBricks[b]->body;
+                                    serverData->staticBricks.transparentSpecialBricks[b]->body = 0;
                                 }
 
-                                tmp.special = ohWow->staticBricks.transparentSpecialBricks[b];
-                                ohWow->staticBricks.transparentSpecialBricks[b]->markedForDeath = true;
-                                ohWow->fakeKills.push_back(tmp);
+                                tmp.special = serverData->staticBricks.transparentSpecialBricks[b];
+                                serverData->staticBricks.transparentSpecialBricks[b]->markedForDeath = true;
+                                serverData->fakeKills.push_back(tmp);
                             }
                             else
-                                ohWow->staticBricks.removeSpecialBrick(ohWow->staticBricks.transparentSpecialBricks[b],ohWow->world);
+                                serverData->staticBricks.removeSpecialBrick(serverData->staticBricks.transparentSpecialBricks[b],serverData->world);
                             continue;
                         }
                     }
@@ -2564,24 +2569,24 @@ namespace syj
 
                         if(!skip)
                         {
-                            for(int i = 0; i<ohWow->newDynamics.size(); i++)
+                            for(int i = 0; i<serverData->newDynamics.size(); i++)
                             {
-                                if(ohWow->newDynamics[i]->serverID == id)
+                                if(serverData->newDynamics[i]->serverID == id)
                                 {
                                     //std::cout<<id<<" has pos: "<<x<<","<<y<<","<<z<<"\n";
-                                    ohWow->newDynamics[i]->modelInterpolator.addTransform(packetTime,glm::vec3(x,y,z),glm::quat(rotW,rotX,rotY,rotZ));//,glm::vec3(velX,velY,velZ));
+                                    serverData->newDynamics[i]->modelInterpolator.addTransform(packetTime,glm::vec3(x,y,z),glm::quat(rotW,rotX,rotY,rotZ));//,glm::vec3(velX,velY,velZ));
                                     if(isPlayer)
                                     {
                                         glm::mat4 final = glm::translate(glm::vec3(0,176.897,0)) * glm::rotate(glm::mat4(1.0),-pitch,glm::vec3(1.0,0.0,0.0)) * glm::translate(glm::vec3(0,-176.897,0));
-                                        /*ohWow->newDynamics[i]->setExtraTransform("Head",final);
-                                        ohWow->newDynamics[i]->setExtraTransform("Face1",final);*/
-                                        ohWow->newDynamics[i]->setFixedRotation("Head",final);
-                                        ohWow->newDynamics[i]->setFixedRotation("Face1",final);
+                                        /*serverData->newDynamics[i]->setExtraTransform("Head",final);
+                                        serverData->newDynamics[i]->setExtraTransform("Face1",final);*/
+                                        serverData->newDynamics[i]->setFixedRotation("Head",final);
+                                        serverData->newDynamics[i]->setFixedRotation("Face1",final);
 
                                         if(walking)
-                                            ohWow->newDynamics[i]->play("walk",false,1.0,true);
+                                            serverData->newDynamics[i]->play("walk",false,1.0,true);
                                         else
-                                            ohWow->newDynamics[i]->stop("walk");
+                                            serverData->newDynamics[i]->stop("walk");
                                     }
 
                                     break;
@@ -2594,11 +2599,11 @@ namespace syj
                     else
                     {
                         item *tmp = 0;
-                        for(unsigned int a = 0; a<ohWow->items.size(); a++)
+                        for(unsigned int a = 0; a<serverData->items.size(); a++)
                         {
-                            if(ohWow->items[a]->serverID == id)
+                            if(serverData->items[a]->serverID == id)
                             {
-                                tmp = ohWow->items[a];
+                                tmp = serverData->items[a];
                                 break;
                             }
                         }
@@ -2630,11 +2635,11 @@ namespace syj
                             tmp->hidden = data->readBit();
                             tmp->swinging = data->readBit();
                             newDynamic *holder = 0;
-                            for(unsigned int a = 0; a<ohWow->newDynamics.size(); a++)
+                            for(unsigned int a = 0; a<serverData->newDynamics.size(); a++)
                             {
-                                if(ohWow->newDynamics[a]->serverID == heldBy)
+                                if(serverData->newDynamics[a]->serverID == heldBy)
                                 {
-                                    holder = ohWow->newDynamics[a];
+                                    holder = serverData->newDynamics[a];
                                     break;
                                 }
                             }
@@ -2699,17 +2704,17 @@ namespace syj
                         emitterOn[i] = data->readBit();
                     }
 
-                    for(int i = 0; i<ohWow->livingBricks.size(); i++)
+                    for(int i = 0; i<serverData->livingBricks.size(); i++)
                     {
-                        if(ohWow->livingBricks[i]->serverID == id)
+                        if(serverData->livingBricks[i]->serverID == id)
                         {
-                            ohWow->livingBricks[i]->carTransform.addTransform(packetTime,glm::vec3(x,y,z),glm::quat(rotW,rotX,rotY,rotZ));
+                            serverData->livingBricks[i]->carTransform.addTransform(packetTime,glm::vec3(x,y,z),glm::quat(rotW,rotX,rotY,rotZ));
                             for(int wheel = 0; wheel<numWheels; wheel++)
                             {
-                                ohWow->livingBricks[i]->newWheels[wheel]->modelInterpolator.addTransform(packetTime,glm::vec3(wheelX[wheel],wheelY[wheel],wheelZ[wheel]),glm::quat(wheelRotW[wheel],wheelRotX[wheel],wheelRotY[wheel],wheelRotZ[wheel]));
-                                //std::cout<<"emitterOn["<<wheel<<"] is "<<(emitterOn[i]?"true":"false")<<" for car ID "<<ohWow->livingBricks[i]->serverID<<"\n";
-                                if(ohWow->livingBricks[i]->wheelBrickData[wheel].dirtEmitter)
-                                    ((emitter*)ohWow->livingBricks[i]->wheelBrickData[wheel].dirtEmitter)->enabled = emitterOn[i];
+                                serverData->livingBricks[i]->newWheels[wheel]->modelInterpolator.addTransform(packetTime,glm::vec3(wheelX[wheel],wheelY[wheel],wheelZ[wheel]),glm::quat(wheelRotW[wheel],wheelRotX[wheel],wheelRotY[wheel],wheelRotZ[wheel]));
+                                //std::cout<<"emitterOn["<<wheel<<"] is "<<(emitterOn[i]?"true":"false")<<" for car ID "<<serverData->livingBricks[i]->serverID<<"\n";
+                                if(serverData->livingBricks[i]->wheelBrickData[wheel].dirtEmitter)
+                                    ((emitter*)serverData->livingBricks[i]->wheelBrickData[wheel].dirtEmitter)->enabled = emitterOn[i];
                                 //else
                                     //std::cout<<"Could not find emitter for car "<<id<<" wheel "<<wheel<<"...\n";
                             }
@@ -2726,11 +2731,11 @@ namespace syj
                     int nodes = data->readUInt(8);
 
                     rope *toUpdate = 0;
-                    for(int b = 0; b<ohWow->ropes.size(); b++)
+                    for(int b = 0; b<serverData->ropes.size(); b++)
                     {
-                        if(ohWow->ropes[b]->serverID == id)
+                        if(serverData->ropes[b]->serverID == id)
                         {
-                            toUpdate = ohWow->ropes[b];
+                            toUpdate = serverData->ropes[b];
                             break;
                         }
                     }
@@ -2767,7 +2772,7 @@ namespace syj
             {
                 std::string commandType = data->readString();
 
-                processCommand(ohWow,commandType,data);
+                processCommand(clientEnvironment,commandType,data);
 
                 return;
             }
@@ -2812,7 +2817,7 @@ namespace syj
                         tmp->serverID = serverID;
                         tmp->color = glm::vec4(r,g,b,al);
                         tmp->position = glm::vec3(x,y,z);
-                        tmp->rotation = ohWow->staticBricks.rotations[angleID];
+                        tmp->rotation = serverData->staticBricks.rotations[angleID];
                         tmp->material = material;
                         int width = data->readUInt(8);
                         int height = data->readUInt(8);
@@ -2828,7 +2833,7 @@ namespace syj
                             std::string printName = data->readString();
 
                             //TODO: Replace with server sending printID?
-                            tmp->printID = ohWow->prints->getPrintID(printName);
+                            tmp->printID = clientEnvironment->prints->getPrintID(printName);
                             if(tmp->printID != 0)
                             {
                                 tmp->hasPrint = true;
@@ -2838,18 +2843,18 @@ namespace syj
 
                         tmp->dimensions = glm::ivec4(width,height,length,0);
                         bool doNotCompile = false;
-                        if(ohWow->skippingCompileNextBricks > 0)
+                        if(serverData->skippingCompileNextBricks > 0)
                         {
-                            if(ohWow->staticBricks.getBrickCount() < ohWow->skippingCompileNextBricks)
+                            if(serverData->staticBricks.getBrickCount() < serverData->skippingCompileNextBricks)
                                 doNotCompile = true;
                             else
                             {
-                                ohWow->skippingCompileNextBricks = 0;
-                                ohWow->staticBricks.recompileEverything();
+                                serverData->skippingCompileNextBricks = 0;
+                                serverData->staticBricks.recompileEverything();
                             }
 
                         }
-                        ohWow->staticBricks.addBasicBrick(tmp,angleID,0,ohWow->world,doNotCompile);
+                        serverData->staticBricks.addBasicBrick(tmp,angleID,0,serverData->world,doNotCompile);
                     }
                     else
                     {
@@ -2867,9 +2872,9 @@ namespace syj
                         }
 
                         bool foundSpecial = false;
-                        for(int i = 0; i<ohWow->staticBricks.blocklandTypes->specialBrickTypes.size(); i++)
+                        for(int i = 0; i<serverData->staticBricks.blocklandTypes->specialBrickTypes.size(); i++)
                         {
-                            if(ohWow->staticBricks.blocklandTypes->specialBrickTypes[i]->serverID == typeID)
+                            if(serverData->staticBricks.blocklandTypes->specialBrickTypes[i]->serverID == typeID)
                             {
                                 foundSpecial = true;
                                 specialBrickRenderData *tmp = new specialBrickRenderData;
@@ -2877,15 +2882,15 @@ namespace syj
                                 tmp->serverID = serverID;
                                 tmp->color = glm::vec4(r,g,b,al);
                                 tmp->position = glm::vec3(x,y,z);
-                                tmp->rotation = ohWow->staticBricks.rotations[angleID];
+                                tmp->rotation = serverData->staticBricks.rotations[angleID];
                                 tmp->material = material;
 
                                 if(isPrint)
                                 {
                                     //TODO: Replace with server sending printID
-                                    for(unsigned int a = 0; a<ohWow->prints->names.size(); a++)
+                                    for(unsigned int a = 0; a<clientEnvironment->prints->names.size(); a++)
                                     {
-                                        if(ohWow->prints->names[a] == printName)
+                                        if(clientEnvironment->prints->names[a] == printName)
                                         {
                                             tmp->printID = a;
                                             break;
@@ -2896,17 +2901,17 @@ namespace syj
                                     tmp->printID = -1;
 
                                 bool doNotCompile = false;
-                                if(ohWow->skippingCompileNextBricks > 0)
+                                if(serverData->skippingCompileNextBricks > 0)
                                 {
-                                    if(ohWow->staticBricks.getBrickCount() < ohWow->skippingCompileNextBricks)
+                                    if(serverData->staticBricks.getBrickCount() < serverData->skippingCompileNextBricks)
                                         doNotCompile = true;
                                     else
                                     {
-                                        ohWow->skippingCompileNextBricks = 0;
-                                        ohWow->staticBricks.recompileEverything();
+                                        serverData->skippingCompileNextBricks = 0;
+                                        serverData->staticBricks.recompileEverything();
                                     }
                                 }
-                                ohWow->staticBricks.addSpecialBrick(tmp,ohWow->world,i,angleID,doNotCompile);
+                                serverData->staticBricks.addSpecialBrick(tmp,serverData->world,i,angleID,doNotCompile);
                                 break;
                             }
                         }
@@ -2929,9 +2934,9 @@ namespace syj
                     float green = data->readFloat();
                     float blue = data->readFloat();
 
-                    for(int a = 0; a<ohWow->newDynamics.size(); a++)
+                    for(int a = 0; a<serverData->newDynamics.size(); a++)
                     {
-                        if(ohWow->newDynamics[a]->serverID == objectID)
+                        if(serverData->newDynamics[a]->serverID == objectID)
                         {
                             error("Dynamic with serverID " + std::to_string(objectID) + " already exists!");
                             return;
@@ -2939,11 +2944,11 @@ namespace syj
                     }
 
                     newModel *type = 0;
-                    for(int a = 0; a<ohWow->newDynamicTypes.size(); a++)
+                    for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
                     {
-                        if(ohWow->newDynamicTypes[a]->serverID == typeID)
+                        if(serverData->newDynamicTypes[a]->serverID == typeID)
                         {
-                            type = ohWow->newDynamicTypes[a];
+                            type = serverData->newDynamicTypes[a];
                             break;
                         }
                     }
@@ -2962,59 +2967,59 @@ namespace syj
                         tmp->serverID = objectID;
                         tmp->shapeNameColor = glm::vec3(red,green,blue);
                         tmp->shapeName = "";
-                        ohWow->newDynamics.push_back(tmp);
+                        serverData->newDynamics.push_back(tmp);
                     }
                     else
                         error("Could not find dynamic type: " + std::to_string(typeID));
                 }
                 else //remove
                 {
-                    for(int a = 0; a<ohWow->newDynamics.size(); a++)
+                    for(int a = 0; a<serverData->newDynamics.size(); a++)
                     {
-                        if(ohWow->newDynamics[a]->serverID == objectID)
+                        if(serverData->newDynamics[a]->serverID == objectID)
                         {
-                            if(ohWow->cameraTarget == ohWow->newDynamics[a])
-                                ohWow->cameraTarget = 0;
-                            if(ohWow->currentPlayer == ohWow->newDynamics[a])
+                            if(serverData->cameraTarget == serverData->newDynamics[a])
+                                serverData->cameraTarget = 0;
+                            if(serverData->currentPlayer == serverData->newDynamics[a])
                             {
-                                if(ohWow->newDynamics[a]->body)
+                                if(serverData->newDynamics[a]->body)
                                 {
-                                    ohWow->newDynamics[a]->world->removeRigidBody(ohWow->newDynamics[a]->body);
-                                    delete ohWow->newDynamics[a]->defaultMotionState;
-                                    ohWow->newDynamics[a]->defaultMotionState = 0;
-                                    delete ohWow->newDynamics[a]->shape;
-                                    ohWow->newDynamics[a]->shape = 0;
-                                    ohWow->newDynamics[a]->body = 0;
+                                    serverData->newDynamics[a]->world->removeRigidBody(serverData->newDynamics[a]->body);
+                                    delete serverData->newDynamics[a]->defaultMotionState;
+                                    serverData->newDynamics[a]->defaultMotionState = 0;
+                                    delete serverData->newDynamics[a]->shape;
+                                    serverData->newDynamics[a]->shape = 0;
+                                    serverData->newDynamics[a]->body = 0;
                                 }
-                                ohWow->currentPlayer = 0;
+                                serverData->currentPlayer = 0;
                             }
 
-                            for(int b = 0; b<ohWow->emitters.size(); b++)
+                            for(int b = 0; b<serverData->emitters.size(); b++)
                             {
-                                if(ohWow->emitters[b]->attachedToModel == ohWow->newDynamics[a])
+                                if(serverData->emitters[b]->attachedToModel == serverData->newDynamics[a])
                                 {
-                                    ohWow->emitters[b]->attachedToModel = 0;
-                                    delete ohWow->emitters[b];
-                                    ohWow->emitters[b] = 0;
-                                    ohWow->emitters.erase(ohWow->emitters.begin() + b);
+                                    serverData->emitters[b]->attachedToModel = 0;
+                                    delete serverData->emitters[b];
+                                    serverData->emitters[b] = 0;
+                                    serverData->emitters.erase(serverData->emitters.begin() + b);
                                 }
-                                if(ohWow->emitters[b]->attachedToItem == ohWow->newDynamics[a])
+                                if(serverData->emitters[b]->attachedToItem == serverData->newDynamics[a])
                                 {
-                                    ohWow->emitters[b]->attachedToItem = 0;
-                                    delete ohWow->emitters[b];
-                                    ohWow->emitters[b] = 0;
-                                    ohWow->emitters.erase(ohWow->emitters.begin() + b);
+                                    serverData->emitters[b]->attachedToItem = 0;
+                                    delete serverData->emitters[b];
+                                    serverData->emitters[b] = 0;
+                                    serverData->emitters.erase(serverData->emitters.begin() + b);
                                 }
                             }
 
                             for(int l = 0; l<location::locations.size(); l++)
                             {
-                                if(location::locations[l]->dynamic == ohWow->newDynamics[a])
+                                if(location::locations[l]->dynamic == serverData->newDynamics[a])
                                     location::locations[l]->dynamic = 0;
                             }
 
-                            delete ohWow->newDynamics[a];
-                            ohWow->newDynamics.erase(ohWow->newDynamics.begin() + a);
+                            delete serverData->newDynamics[a];
+                            serverData->newDynamics.erase(serverData->newDynamics.begin() + a);
                             break;
                         }
                     }
@@ -3024,32 +3029,32 @@ namespace syj
             }
             case packetType_cameraDetails:
             {
-                ohWow->adminCam = data->readBit();
-                ohWow->boundToObject = data->readBit();
-                if(ohWow->boundToObject)
+                serverData->adminCam = data->readBit();
+                serverData->boundToObject = data->readBit();
+                if(serverData->boundToObject)
                 {
-                    ohWow->cameraTargetServerID = data->readUInt(dynamicObjectIDBits);
-                    //std::cout<<"Got a camera details packet, bound to object "<<ohWow->cameraTargetServerID<<"\n";
-                    ohWow->cameraLean = data->readBit();
-                    ohWow->cameraTarget = 0;
-                    checkForCameraToBind(ohWow);
+                    serverData->cameraTargetServerID = data->readUInt(dynamicObjectIDBits);
+                    //std::cout<<"Got a camera details packet, bound to object "<<serverData->cameraTargetServerID<<"\n";
+                    serverData->cameraLean = data->readBit();
+                    serverData->cameraTarget = 0;
+                    checkForCameraToBind(serverData);
                 }
                 else
                 {
                     //std::cout<<"Got a camera details packet, not bound to any object!\n";
-                    ohWow->cameraTarget = 0;
+                    serverData->cameraTarget = 0;
                     float x = data->readFloat();
                     float y = data->readFloat();
                     float z = data->readFloat();
-                    ohWow->cameraLean = false;
-                    ohWow->cameraPos = glm::vec3(x,y,z);
-                    ohWow->freeLook = data->readBit();
-                    if(!ohWow->freeLook)
+                    serverData->cameraLean = false;
+                    serverData->cameraPos = glm::vec3(x,y,z);
+                    serverData->freeLook = data->readBit();
+                    if(!serverData->freeLook)
                     {
                         x = data->readFloat();
                         y = data->readFloat();
                         z = data->readFloat();
-                        ohWow->cameraDir = glm::vec3(x,y,z);
+                        serverData->cameraDir = glm::vec3(x,y,z);
                     }
                 }
 
@@ -3058,12 +3063,12 @@ namespace syj
                 if(data->readBit())
                 {
                     saveLoadWindow->getChild("SaveCar")->setDisabled(false);
-                    ohWow->drivenCarId = data->readUInt(10);
+                    serverData->drivenCarId = data->readUInt(10);
                 }
                 else
                 {
                     saveLoadWindow->getChild("SaveCar")->setDisabled(true);
-                    ohWow->drivenCarId = -1;
+                    serverData->drivenCarId = -1;
                 }
                 return;
             }
@@ -3072,24 +3077,24 @@ namespace syj
                 bool nameOkay = data->readBit();
                 if(!nameOkay)
                 {
-                    ohWow->kicked = true;
-                    ohWow->waitingForServerResponse = false;
+                    serverData->kicked = true;
+                    serverData->waitingForServerResponse = false;
                     error("Your name was not acceptable or the server failed to respond!");
                     return;
                 }
                 interpolator::serverTimePoint = data->readUInt(32) - 50;
                 interpolator::clientTimePoint = getServerTime();
                 std::cout<<"Difference between server and client time: "<<(int)interpolator::serverTimePoint - (int) getServerTime()<<"\n";
-                ohWow->brickTypesToLoad = data->readUInt(10);
-                ohWow->dynamicTypesToLoad = data->readUInt(10);
-                ohWow->itemTypesToLoad = data->readUInt(10);
+                serverData->brickTypesToLoad = data->readUInt(10);
+                serverData->dynamicTypesToLoad = data->readUInt(10);
+                serverData->itemTypesToLoad = data->readUInt(10);
 
                 CEGUI::Window *joinServerWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer");
                 joinServerWindow->getChild("StatusText")->setText("Connected!");
 
-                info("Loading " + std::to_string(ohWow->brickTypesToLoad) + " brick types and " + std::to_string(ohWow->dynamicTypesToLoad) + " dynamic types from server!");
+                info("Loading " + std::to_string(serverData->brickTypesToLoad) + " brick types and " + std::to_string(serverData->dynamicTypesToLoad) + " dynamic types from server!");
 
-                finishLoadingTypesCheck(ohWow);
+                finishLoadingTypesCheck(clientEnvironment);
 
                 return;
             }
@@ -3129,7 +3134,7 @@ namespace syj
                 }
 
                 //TODO: Remove this!
-                if(ohWow->newDynamicTypes.size() == 0)
+                if(serverData->newDynamicTypes.size() == 0)
                 {
                     newAnimation grab;
                     //grab.endFrame = 51;
@@ -3148,34 +3153,34 @@ namespace syj
                     tmp->animations.push_back(walk);
                 }
 
-                ohWow->newDynamicTypes.push_back(tmp);
+                serverData->newDynamicTypes.push_back(tmp);
 
-                for(unsigned int a = 0; a<ohWow->itemTypes.size(); a++)
+                for(unsigned int a = 0; a<serverData->itemTypes.size(); a++)
                 {
-                    if(ohWow->itemTypes[a]->waitingForModel)
+                    if(serverData->itemTypes[a]->waitingForModel)
                     {
-                        if(ohWow->itemTypes[a]->waitingModel == serverID)
+                        if(serverData->itemTypes[a]->waitingModel == serverID)
                         {
-                            info("Added model to " + ohWow->itemTypes[a]->uiName + " after the fact.");
-                            ohWow->itemTypes[a]->waitingForModel = false;
-                            ohWow->itemTypes[a]->type = tmp;
+                            info("Added model to " + serverData->itemTypes[a]->uiName + " after the fact.");
+                            serverData->itemTypes[a]->waitingForModel = false;
+                            serverData->itemTypes[a]->type = tmp;
 
                             for(unsigned int b = 0; b<tmp->animations.size(); b++)
                             {
-                                if(tmp->animations[b].serverID == ohWow->itemTypes[a]->waitingForSwingAnim)
+                                if(tmp->animations[b].serverID == serverData->itemTypes[a]->waitingForSwingAnim)
                                 {
-                                    ohWow->itemTypes[a]->fireAnim = &tmp->animations[b];
+                                    serverData->itemTypes[a]->fireAnim = &tmp->animations[b];
                                 }
-                                if(tmp->animations[b].serverID == ohWow->itemTypes[a]->waitingForSwitchAnim)
+                                if(tmp->animations[b].serverID == serverData->itemTypes[a]->waitingForSwitchAnim)
                                 {
-                                    ohWow->itemTypes[a]->switchAnim = &tmp->animations[b];
+                                    serverData->itemTypes[a]->switchAnim = &tmp->animations[b];
                                 }
                             }
                         }
                     }
                 }
 
-                finishLoadingTypesCheck(ohWow);
+                finishLoadingTypesCheck(clientEnvironment);
 
                 return;
             }
@@ -3190,10 +3195,10 @@ namespace syj
                     std::string filePath = "assets\\brick\\types" + data->readString();
 
                     //std::cout<<"Adding type: "<<typeID<<" "<<filePath<<"\n";
-                    ohWow->staticBricks.blocklandTypes->addSpecialBrickType(filePath,ohWow->brickSelector,typeID);
+                    serverData->staticBricks.blocklandTypes->addSpecialBrickType(filePath,clientEnvironment->brickSelector,typeID);
                 }
 
-                finishLoadingTypesCheck(ohWow);
+                finishLoadingTypesCheck(clientEnvironment);
 
                 return;
             }

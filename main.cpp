@@ -59,37 +59,36 @@ using namespace std::chrono;
 
 void gotKicked(client *theClient,unsigned int reason,void *userData)
 {
-    serverStuff *ohWow = (serverStuff*)userData;
-    ohWow->kicked = true;
-    ohWow->fatalNotify("Disconnected!","Connection with server lost, reason: " + std::to_string(reason) + ".","Exit");
+    clientStuff *clientEnvironment = (clientStuff*)userData;
+    clientEnvironment->serverData->kicked = true;
+    clientEnvironment->fatalNotify("Disconnected!","Connection with server lost, reason: " + std::to_string(reason) + ".","Exit");
 }
 
 bool godRayButton(const CEGUI::EventArgs &e)
 {
     CEGUI::Window *godRayWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("GodRays");
-    serverStuff *ohWow = (serverStuff*)godRayWindow->getUserData();
+    clientStuff *clientEnvironment = (clientStuff*)godRayWindow->getUserData();
 
-    ohWow->env->godRayDecay = atof(godRayWindow->getChild("Decay")->getText().c_str());
-    ohWow->env->godRayDensity = atof(godRayWindow->getChild("Density")->getText().c_str());
-    ohWow->env->godRayExposure = atof(godRayWindow->getChild("Exposure")->getText().c_str());
-    ohWow->env->godRayWeight = atof(godRayWindow->getChild("Weight")->getText().c_str());
+    clientEnvironment->serverData->env->godRayDecay = atof(godRayWindow->getChild("Decay")->getText().c_str());
+    clientEnvironment->serverData->env->godRayDensity = atof(godRayWindow->getChild("Density")->getText().c_str());
+    clientEnvironment->serverData->env->godRayExposure = atof(godRayWindow->getChild("Exposure")->getText().c_str());
+    clientEnvironment->serverData->env->godRayWeight = atof(godRayWindow->getChild("Weight")->getText().c_str());
 }
 
 int main(int argc, char *argv[])
 {
-    serverStuff ohWow;
-    for(int i = 0; i<32; i++)
-        ohWow.numGottenPackets[i] = 0;
+    client *serverConnection = 0;
+    clientStuff clientEnvironment;
 
     preferenceFile prefs;
-    ohWow.prefs = &prefs;
-    ohWow.settings = new options;
+    clientEnvironment.prefs = &prefs;
+    clientEnvironment.settings = new options;
     std::string ip = "127.0.0.1";
 
-    ohWow.settings->prefs = &prefs;
-    ohWow.settings->setDefaults(&prefs);
+    clientEnvironment.settings->prefs = &prefs;
+    clientEnvironment.settings->setDefaults(&prefs);
     prefs.importFromFile("config.txt");
-    ohWow.settings->loadFromFile(&prefs);
+    clientEnvironment.settings->loadFromFile(&prefs);
     prefs.exportToFile("config.txt");
     if(prefs.getPreference("IP"))
         ip = prefs.getPreference("IP")->toString();
@@ -113,8 +112,8 @@ int main(int argc, char *argv[])
     int networkVersion = -1;
     info("Retrieving version info from master server...");
     getVersions(revisionVersion,networkVersion);
-    ohWow.masterRevision = revisionVersion;
-    ohWow.masterNetwork = networkVersion;
+    clientEnvironment.masterRevision = revisionVersion;
+    clientEnvironment.masterNetwork = networkVersion;
     info("Most recent revision available on master server: " + std::to_string(revisionVersion));
     int ourRevisionVersion = -1;
     int ourNetworkVersion = -1;
@@ -126,11 +125,11 @@ int main(int argc, char *argv[])
 
     renderContextOptions renderOptions;
     renderOptions.name = "Rev " + std::to_string(ourRevisionVersion) + " - " + __DATE__;
-    renderOptions.startingResX = ohWow.settings->resolutionX;
-    renderOptions.startingResY = ohWow.settings->resolutionY;
-    renderOptions.useVSync = ohWow.settings->vsync;
-    renderOptions.useFullscreen = ohWow.settings->fullscreen;
-    switch(ohWow.settings->antiAliasing)
+    renderOptions.startingResX = clientEnvironment.settings->resolutionX;
+    renderOptions.startingResY = clientEnvironment.settings->resolutionY;
+    renderOptions.useVSync = clientEnvironment.settings->vsync;
+    renderOptions.useFullscreen = clientEnvironment.settings->fullscreen;
+    switch(clientEnvironment.settings->antiAliasing)
     {
         case aaOff:
             renderOptions.multiSampleSamples = 1;
@@ -150,7 +149,7 @@ int main(int argc, char *argv[])
             break;
     }
     renderContext context(renderOptions);
-    ohWow.context = &context;
+    clientEnvironment.context = &context;
 
     ALCdevice* device = alcOpenDevice(NULL);
     if(!device)
@@ -165,7 +164,7 @@ int main(int argc, char *argv[])
     if(err != ALC_NO_ERROR)
         error("OpenAL error: " + std::to_string(err));
 
-    ohWow.speaker = new audioPlayer;
+    clientEnvironment.speaker = new audioPlayer;
 
     FT_Library ft;
     if (FT_Init_FreeType(&ft))
@@ -187,35 +186,35 @@ int main(int argc, char *argv[])
     //Default resolution is 800x800, this is needed to make the GUI work correctly on other resolutions:
     CEGUI::System::getSingleton().getRenderer()->setDisplaySize(CEGUI::Size<float>(context.getResolution().x,context.getResolution().y));
 
-    CEGUI::Window *optionsWindow = loadOptionsGUI(ohWow.settings,prefs,playerInput);
-    ohWow.brickSelector = loadBrickSelector();
+    CEGUI::Window *optionsWindow = loadOptionsGUI(clientEnvironment.settings,prefs,playerInput);
+    clientEnvironment.brickSelector = loadBrickSelector();
     CEGUI::Window *hud = addGUIFromFile("hud.layout");
     CEGUI::Window *brickHighlighter = hud->getChild("BrickPopup/Selector");
     CEGUI::Window *chat = hud->getChild("Chat");
-    CEGUI::Window *updater = addUpdater(&ohWow);
+    CEGUI::Window *updater = addUpdater(&clientEnvironment);
     chat->moveToBack();
-    ohWow.playerList = hud->getChild("PlayerList");
-    ohWow.chat = (CEGUI::Listbox*)hud->getChild("Chat/Listbox");
-    ohWow.whosTyping = hud->getChild("WhosTyping");
+    clientEnvironment.playerList = hud->getChild("PlayerList");
+    clientEnvironment.chat = (CEGUI::Listbox*)hud->getChild("Chat/Listbox");
+    clientEnvironment.whosTyping = hud->getChild("WhosTyping");
     CEGUI::Window *chatEditbox = hud->getChild("Chat/Editbox");
     CEGUI::Window *chatScrollArrow = hud->getChild("Chat/DidScroll");
-    ohWow.inventoryBox = hud->getChild("Inventory");
-    setUpWrenchDialogs(hud,&ohWow);
-    ohWow.wrench = hud->getChild("Wrench");
-    ohWow.wheelWrench = hud->getChild("WheelWrench");
-    ohWow.steeringWrench = hud->getChild("SteeringWrench");
+    clientEnvironment.inventoryBox = hud->getChild("Inventory");
+    setUpWrenchDialogs(hud,&clientEnvironment);
+    clientEnvironment.wrench = hud->getChild("Wrench");
+    clientEnvironment.wheelWrench = hud->getChild("WheelWrench");
+    clientEnvironment.steeringWrench = hud->getChild("SteeringWrench");
     CEGUI::Window *stats = hud->getChild("Stats");
     CEGUI::Window *crossHair = hud->getChild("Crosshair");
-    CEGUI::Window *evalWindow = configureEvalWindow(hud,&ohWow);
-    CEGUI::Window *joinServer = loadJoinServer(&ohWow);
+    CEGUI::Window *evalWindow = configureEvalWindow(hud,&clientEnvironment);
+    CEGUI::Window *joinServer = loadJoinServer(&clientEnvironment);
     CEGUI::Window *godRayDebug = addGUIFromFile("godRayDebug.layout");
-    godRayDebug->setUserData(&ohWow);
+    godRayDebug->setUserData(&clientEnvironment);
     godRayDebug->getChild("Button")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&godRayButton));
-    ohWow.evalWindow = evalWindow;
-    ohWow.messageBox = initHud(hud);
-    ohWow.palette = new paletteGUI(hud);
-    ohWow.bottomPrint.textBar = hud->getChild("BottomPrint");
-    CEGUI::Window *saveLoadWindow = loadSaveLoadWindow(&ohWow);
+    clientEnvironment.evalWindow = evalWindow;
+    clientEnvironment.messageBox = initHud(hud);
+    clientEnvironment.palette = new paletteGUI(hud);
+    clientEnvironment.bottomPrint.textBar = hud->getChild("BottomPrint");
+    CEGUI::Window *saveLoadWindow = loadSaveLoadWindow(&clientEnvironment);
     CEGUI::Window *brickPopup = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("HUD")->getChild("BrickPopup");
 
     if(ourRevisionVersion == -1 || ourRevisionVersion == 0)
@@ -236,7 +235,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    checkForSessionKey(&ohWow,prefs);
+    checkForSessionKey(&clientEnvironment,prefs);
 
     if(SDLNet_Init())
         error("Could not initalize SDLNet");
@@ -293,46 +292,17 @@ int main(int argc, char *argv[])
         }
     }
 
-    CEGUI::Window *escapeMenu = addEscapeMenu(&ohWow,modelUnis);
-    ohWow.nonInstancedShader = oldModelUnis;
-    ohWow.instancedShader = modelUnis;
-
-    /*std::vector<glm::vec3> shape = defaultSquareShape();
-    std::vector<glm::vec3> norms = calculateNormals(shape);
-    std::vector<glm::vec2> uvsAndDims = defaultSquareUVs();
-    std::vector<glm::vec4> offsets;
-    std::vector<glm::vec4> allOffsets;
-    int spriteDensity = 0;
-    switch(ohWow.settings->spriteDensity)
-    {
-        case spritesOff: spriteDensity = 0; break;
-        case sprites500: spriteDensity = 500; break;
-        case sprites1000: spriteDensity = 1000; break;
-        default: case sprites2000: spriteDensity = 2000; break;
-        case sprites4000: spriteDensity = 4000; break;
-    }
-    for(unsigned int a = 0; a<spriteDensity; a++)
-        offsets.push_back(glm::vec4(drand(0,50),drand(-100,100),drand(0,50),(double)(rand() % 4)));
-    for(int x = 0; x<12; x++)
-        for(int z = 0; z<12; z++)
-            for(int a = 0; a<offsets.size(); a++)
-                allOffsets.push_back(glm::vec4(offsets[a].x+x*50,offsets[a].y,offsets[a].z+z*50,offsets[a].w));
-    sprite bush(shape,uvsAndDims,norms,allOffsets.size());
-
-    bush.updateOffsets(allOffsets);
-    texture plant1;
-    plant1.createFromFile("assets/spritesheet.png");
-    texture plant1n;
-    plant1n.createFromFile("assets/spritesheet_n.png");*/
+    CEGUI::Window *escapeMenu = addEscapeMenu(&clientEnvironment,modelUnis);
+    clientEnvironment.nonInstancedShader = oldModelUnis;
+    clientEnvironment.instancedShader = modelUnis;
 
     //Start connect screen
+    clientEnvironment.brickMat = new material("assets/brick/otherBrickMat.txt");
+    clientEnvironment.brickMatSide = new material("assets/brick/sideBrickMat.txt");
+    clientEnvironment.brickMatRamp = new material("assets/brick/rampBrickMat.txt");
+    clientEnvironment.brickMatBottom = new material("assets/brick/bottomBrickMat.txt");
 
-    ohWow.picker = new avatarPicker(context.getResolution().x,context.getResolution().y);
-
-    ohWow.brickMat = new material("assets/brick/otherBrickMat.txt");
-    ohWow.brickMatSide = new material("assets/brick/sideBrickMat.txt");
-    ohWow.brickMatRamp = new material("assets/brick/rampBrickMat.txt");
-    ohWow.brickMatBottom = new material("assets/brick/bottomBrickMat.txt");
+    clientEnvironment.prints = new printLoader(".\\assets\\brick\\prints");
 
     coolLabel:
 
@@ -351,7 +321,7 @@ int main(int argc, char *argv[])
     float horBounceDir = 1;
     float vertBounceDir = 1;
 
-    while(ohWow.waitingToPickServer)
+    while(clientEnvironment.waitingToPickServer)
     {
         const Uint8 *states = SDL_GetKeyboardState(NULL);
 
@@ -421,7 +391,7 @@ int main(int argc, char *argv[])
         context.swap();
         glEnable(GL_DEPTH_TEST);
 
-        if(ohWow.clickedMainMenuExit)
+        if(clientEnvironment.clickedMainMenuExit)
         {
             info("Shutting down OpenAL");
 
@@ -446,87 +416,91 @@ int main(int argc, char *argv[])
 
     info("Trying to connect to server...");
 
+    clientEnvironment.serverData = new serverStuff;
+    serverStuff *serverData = clientEnvironment.serverData;
+    serverData->picker = new avatarPicker(context.getResolution().x,context.getResolution().y);
+
     bool connected = false;
     networkingPreferences netPrefs;
     netPrefs.timeoutMS = 1000;
-    client serverConnection(netPrefs,ohWow.wantedIP);
-    hud->getChild("Chat/Editbox")->setUserData(&serverConnection);
-    serverConnection.userData = &ohWow;
-    ohWow.connection = &serverConnection;
-    serverConnection.receiveHandle = recvHandle;
-    serverConnection.kickHandle = gotKicked;
-    syjError netErr = serverConnection.getLastError();
+    serverConnection = new client(netPrefs,clientEnvironment.wantedIP);
+    hud->getChild("Chat/Editbox")->setUserData(serverConnection);
+    serverConnection->userData = &clientEnvironment;
+    serverData->connection = serverConnection;
+    serverConnection->receiveHandle = recvHandle;
+    serverConnection->kickHandle = gotKicked;
+    syjError netErr = serverConnection->getLastError();
     if(netErr != syjError::noError)
     {
         error(getErrorString(netErr));
         error("Could not connect to server!");
         joinServer->getChild("StatusText")->setText("Could not connect!");
-        ohWow.waitingToPickServer = true;
+        clientEnvironment.waitingToPickServer = true;
         goto coolLabel;
         return 0;
     }
     else
         connected = true;
 
-    blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",ohWow.brickSelector,true);
+    blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",clientEnvironment.brickSelector,true);
 
-    ohWow.staticBricks.allocateVertBuffer();
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMat);
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatSide,true,true);
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatBottom,true);
-    ohWow.staticBricks.allocatePerTexture(ohWow.brickMatRamp);
-    ohWow.staticBricks.blocklandTypes = &blocklandHolder;
+    serverData->staticBricks.allocateVertBuffer();
+    serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMat);
+    serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatSide,true,true);
+    serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatBottom,true);
+    serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatRamp);
+    serverData->staticBricks.blocklandTypes = &blocklandHolder;
 
     packet requestName;
     requestName.writeUInt(clientPacketType_requestName,4);
     requestName.writeUInt(hardCodedNetworkVersion,32);
 
-    requestName.writeBit(ohWow.loggedIn);
-    if(ohWow.loggedIn)
+    requestName.writeBit(clientEnvironment.loggedIn);
+    if(clientEnvironment.loggedIn)
     {
-        requestName.writeString(ohWow.loggedName);
+        requestName.writeString(clientEnvironment.loggedName);
 
         unsigned char hash[32];
 
         br_sha256_context shaContext;
         br_sha256_init(&shaContext);
-        br_sha256_update(&shaContext,ohWow.sessionToken.c_str(),ohWow.sessionToken.length());
+        br_sha256_update(&shaContext,clientEnvironment.sessionToken.c_str(),clientEnvironment.sessionToken.length());
         br_sha256_out(&shaContext,hash);
 
         std::string hexStr = GetHexRepresentation(hash,32);
 
-        std::cout<<ohWow.loggedName<<"\n";
-        std::cout<<ohWow.sessionToken<<"\n";
+        std::cout<<clientEnvironment.loggedName<<"\n";
+        std::cout<<clientEnvironment.sessionToken<<"\n";
         std::cout<<hexStr<<"\n";
 
         requestName.writeString(hexStr);
     }
     else
-        requestName.writeString(ohWow.wantedName);
+        requestName.writeString(clientEnvironment.wantedName);
 
-    requestName.writeFloat(ohWow.wantedColor.r);
-    requestName.writeFloat(ohWow.wantedColor.g);
-    requestName.writeFloat(ohWow.wantedColor.b);
-    serverConnection.send(&requestName,true);
+    requestName.writeFloat(clientEnvironment.wantedColor.r);
+    requestName.writeFloat(clientEnvironment.wantedColor.g);
+    requestName.writeFloat(clientEnvironment.wantedColor.b);
+    serverConnection->send(&requestName,true);
 
     info("Connection established, requesting types...");
 
-    while(ohWow.waitingForServerResponse)
+    while(serverData->waitingForServerResponse)
     {
-        serverConnection.run();
-        if(ohWow.kicked)
+        serverConnection->run();
+        if(serverData->kicked)
         {
             error("Kicked or server full or outdated client or malformed server response.");
             joinServer->getChild("StatusText")->setText("Kicked by server!");
-            ohWow.waitingToPickServer = true;
-            ohWow.kicked = false;
+            clientEnvironment.waitingToPickServer = true;
+            serverData->kicked = false;
             goto coolLabel;
             return 0;
         }
     }
 
     int shadowRes = 1024;
-    switch(ohWow.settings->shadowResolution)
+    switch(clientEnvironment.settings->shadowResolution)
     {
         default: case shadowsOff: case shadow1k: shadowRes = 1024; break;
         case shadow2k: shadowRes = 2048; break;
@@ -536,23 +510,23 @@ int main(int argc, char *argv[])
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
-    ohWow.env = new environment(shadowRes,shadowRes);
+    serverData->env = new environment(shadowRes,shadowRes);
 
-    godRayDebug->getChild("Decay")->setText(std::to_string(ohWow.env->godRayDecay));
-    godRayDebug->getChild("Density")->setText(std::to_string(ohWow.env->godRayDensity));
-    godRayDebug->getChild("Exposure")->setText(std::to_string(ohWow.env->godRayExposure));
-    godRayDebug->getChild("Weight")->setText(std::to_string(ohWow.env->godRayWeight));
+    godRayDebug->getChild("Decay")->setText(std::to_string(serverData->env->godRayDecay));
+    godRayDebug->getChild("Density")->setText(std::to_string(serverData->env->godRayDensity));
+    godRayDebug->getChild("Exposure")->setText(std::to_string(serverData->env->godRayExposure));
+    godRayDebug->getChild("Weight")->setText(std::to_string(serverData->env->godRayWeight));
 
-    /*ohWow.env->loadDaySkyBox("assets/sky/bluecloud_");
-    ohWow.env->loadNightSkyBox("assets/sky/space_");*/
-    ohWow.env->loadSunModel("assets/sky/sun.txt");
+    /*serverData->env->loadDaySkyBox("assets/sky/bluecloud_");
+    serverData->env->loadNightSkyBox("assets/sky/space_");*/
+    serverData->env->loadSunModel("assets/sky/sun.txt");
 
-    ohWow.playerCamera = new perspectiveCamera;;
-    ohWow.playerCamera->setFieldOfVision(ohWow.settings->fieldOfView);
-    ohWow.playerCamera->name = "Player";
-    ohWow.playerCamera->setDirection(glm::vec3(0.4,0,0.4));
-    ohWow.playerCamera->setPosition(glm::vec3(0,0,0));
-    ohWow.playerCamera->setAspectRatio(((double)context.getWidth())/((double)context.getHeight()));
+    serverData->playerCamera = new perspectiveCamera;;
+    serverData->playerCamera->setFieldOfVision(clientEnvironment.settings->fieldOfView);
+    serverData->playerCamera->name = "Player";
+    serverData->playerCamera->setDirection(glm::vec3(0.4,0,0.4));
+    serverData->playerCamera->setPosition(glm::vec3(0,0,0));
+    serverData->playerCamera->setAspectRatio(((double)context.getWidth())/((double)context.getHeight()));
 
     GLuint quadVAO = createQuadVAO();
     GLuint cubeVAO = createCubeVAO();
@@ -577,14 +551,14 @@ int main(int argc, char *argv[])
     texture *dudvTexture = 0;
     tessellation water(0);
 
-    if(ohWow.settings->waterQuality != waterStatic)
+    if(clientEnvironment.settings->waterQuality != waterStatic)
     {
         perspectiveCamera waterCamera;
-        waterCamera.setFieldOfVision(ohWow.playerCamera->getFieldOfVision());
+        waterCamera.setFieldOfVision(serverData->playerCamera->getFieldOfVision());
         waterCamera.name = "Water";
         renderTarget::renderTargetSettings waterReflectionSettings;
 
-        switch(ohWow.settings->waterQuality)
+        switch(clientEnvironment.settings->waterQuality)
         {
             case waterQuarter:
                 waterReflectionSettings.resX = context.getResolution().x / 4.0;
@@ -629,7 +603,7 @@ int main(int argc, char *argv[])
     btVector3 gravity = btVector3(0,-70,0);
     world->setGravity(gravity);
     world->setForceUpdateAllAabbs(false);
-    ohWow.world = world;
+    serverData->world = world;
 
     btCollisionShape *plane = new btStaticPlaneShape(btVector3(0,1,0),0);
     btDefaultMotionState* planeState = new btDefaultMotionState();
@@ -644,13 +618,11 @@ int main(int argc, char *argv[])
     material grass("assets/ground/grass1/grass.txt");
     //terrain theMap("assets/heightmap2.png",world);
 
-    ohWow.prints = new printLoader(".\\assets\\brick\\prints");
-
-    for(unsigned int a = 0; a<ohWow.prints->names.size(); a++)
-        ohWow.staticBricks.allocatePerTexture(ohWow.prints->textures[a],false,false,true);
+    for(unsigned int a = 0; a<clientEnvironment.prints->names.size(); a++)
+        serverData->staticBricks.allocatePerTexture(clientEnvironment.prints->textures[a],false,false,true);
 
     //model wheelModel("assets/ball/ball.txt");
-    ohWow.newWheelModel = new newModel("assets/ball/ball.txt");
+    clientEnvironment.newWheelModel = new newModel("assets/ball/ball.txt");
 
     unsigned int last10Secs = SDL_GetTicks();
     unsigned int frames = 0;
@@ -659,11 +631,11 @@ int main(int argc, char *argv[])
 
     int waterFrame = 0;
 
-    glm::vec3 lastCamPos = ohWow.playerCamera->getPosition();
+    glm::vec3 lastCamPos = serverData->playerCamera->getPosition();
 
     int camMode = cammode_firstPerson;
-    float desiredFov = ohWow.settings->fieldOfView;
-    float currentZoom = ohWow.settings->fieldOfView;
+    float desiredFov = clientEnvironment.settings->fieldOfView;
+    float currentZoom = clientEnvironment.settings->fieldOfView;
 
     double totalSteps = 0;
 
@@ -673,14 +645,14 @@ int main(int argc, char *argv[])
     float bottomBarLastAct = SDL_GetTicks();
     bool bottomBarShouldBeOpen = false;
 
-    tempBrick myTempBrick(ohWow.staticBricks);
+    tempBrick myTempBrick(serverData->staticBricks);
 
     glm::vec3 lastPlayerDir = glm::vec3(0,0,0);
     int lastPlayerControlMask = 0;
     int transSendInterval = 30;
     int lastSentTransData = 0;
     bool doJump = false;
-    //ohWow.inventoryOpen = hud->getChild("Inventory")->isVisible();
+    //serverData->inventoryOpen = hud->getChild("Inventory")->isVisible();
 
     info("Starting main game loop!");
 
@@ -692,20 +664,20 @@ int main(int argc, char *argv[])
     unsigned int debugMode = 3;
 
     //TODO: remove this, it's for debugging client physics:
-    //ohWow.debugLocations.push_back(glm::vec3(0,0,0));
-    //ohWow.debugColors.push_back(glm::vec3(1,1,1));
+    //serverData->debugLocations.push_back(glm::vec3(0,0,0));
+    //serverData->debugColors.push_back(glm::vec3(1,1,1));
 
-    ohWow.bulletTrails = new bulletTrailsHolder;
+    serverData->bulletTrails = new bulletTrailsHolder;
 
     bool cont = true;
     while(cont)
     {
-        if(ohWow.exitToWindows)
+        if(clientEnvironment.exitToWindows)
             cont = false;
 
-        if(ohWow.fatalNotifyStarted)
+        if(clientEnvironment.fatalNotifyStarted)
         {
-            int *status = (int*)ohWow.messageBox->getUserData();
+            int *status = (int*)clientEnvironment.messageBox->getUserData();
             if(status)
             {
                 if(status[0] == 0)
@@ -718,63 +690,63 @@ int main(int argc, char *argv[])
 
         //Options:
 
-        hud->getChild("Inventory")->setVisible(ohWow.currentlyOpen == inventory);
-        if(ohWow.currentlyOpen != paintCan)
-            ohWow.palette->close();
+        hud->getChild("Inventory")->setVisible(clientEnvironment.currentlyOpen == inventory);
+        if(clientEnvironment.currentlyOpen != paintCan)
+            clientEnvironment.palette->close();
 
-        if(ohWow.settings->guiScalingChanged)
+        if(clientEnvironment.settings->guiScalingChanged)
         {
-            switch(ohWow.settings->guiScaling)
+            switch(clientEnvironment.settings->guiScaling)
             {
                 case biggest:
-                ohWow.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.9), 0.03875, 1, 0.70375*0.9));
+                clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.9), 0.03875, 1, 0.70375*0.9));
                 ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("OpenSans-30");
                 bottomBarClose = 0.165;
                 brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*1.0),0,0.5+((0.8-0.5)*1.0),0.165 * 1.0));
                 break;
 
                 case bigger:
-                ohWow.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.8), 0.03875, 1, 0.70375*0.8));
+                clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.8), 0.03875, 1, 0.70375*0.8));
                 ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("OpenSans-20");
                 bottomBarClose = 0.165 * 0.9;
                 brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.9),0,0.5+((0.8-0.5)*0.9),0.165 * 0.9));
                 break;
 
                 case normalScaling:
-                ohWow.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.7), 0.03875, 1, 0.70375*0.7));
+                clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.7), 0.03875, 1, 0.70375*0.7));
                 ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("DejaVuSans-12");
                 bottomBarClose = 0.165 * 0.8;
                 brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.8),0,0.5+((0.8-0.5)*0.8),0.165 * 0.8));
                 break;
 
                 case smaller:
-                ohWow.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.6), 0.03875, 1, 0.70375*0.6));
+                clientEnvironment.inventoryBox->setArea(makeRelArea(1.0-((1.0-0.855)*0.6), 0.03875, 1, 0.70375*0.6));
                 ((CEGUI::Listbox*)chat->getChild("Listbox"))->setFont("DejaVuSans-10");
                 bottomBarClose = 0.165 * 0.7;
                 brickPopup->setArea(makeRelArea(0.5-((0.5 - 0.18125)*0.6),0,0.5+((0.8-0.5)*0.6),0.165 * 0.6));
                 break;
             }
 
-            ohWow.settings->guiScalingChanged = false;
+            clientEnvironment.settings->guiScalingChanged = false;
         }
 
-        //ohWow.playerCamera->setFieldOfVision(ohWow.settings->fieldOfView);
-        ohWow.brickSelector->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
-        escapeMenu->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
-        evalWindow->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
-        saveLoadWindow->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
-        ohWow.wrench->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
-        ohWow.wheelWrench->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
-        ohWow.steeringWrench->setAlpha(((float)ohWow.settings->hudOpacity) / 100.0);
-        ohWow.playerList->setAlpha(((float)ohWow.settings->hudOpacity)/100.0);
-        godRayDebug->setAlpha(((float)ohWow.settings->hudOpacity)/100.0);
+        //serverData->playerCamera->setFieldOfVision(clientEnvironment.settings->fieldOfView);
+        clientEnvironment.brickSelector->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+        escapeMenu->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+        evalWindow->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+        saveLoadWindow->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+        clientEnvironment.wrench->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+        clientEnvironment.wheelWrench->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+        clientEnvironment.steeringWrench->setAlpha(((float)clientEnvironment.settings->hudOpacity) / 100.0);
+        clientEnvironment.playerList->setAlpha(((float)clientEnvironment.settings->hudOpacity)/100.0);
+        godRayDebug->setAlpha(((float)clientEnvironment.settings->hudOpacity)/100.0);
         //chat->moveToBack();
 
-        float gain = ohWow.settings->masterVolume;
+        float gain = clientEnvironment.settings->masterVolume;
         gain /= 100.0;
-        float musicGain = ohWow.settings->musicVolume;
+        float musicGain = clientEnvironment.settings->musicVolume;
         musicGain /= 100.0;
-        ohWow.speaker->setVolumes(gain,musicGain);
+        clientEnvironment.speaker->setVolumes(gain,musicGain);
 
         //Input:
 
@@ -784,15 +756,15 @@ int main(int argc, char *argv[])
             std::cout<<"Error: "<<error<<"\n";
         }
 
-        lastCamPos = ohWow.playerCamera->getPosition();
+        lastCamPos = serverData->playerCamera->getPosition();
 
         frames++;
         if(last10Secs < SDL_GetTicks())
         {
             double fps = frames;
             totalSteps /= ((double)frames);
-            if(ohWow.cameraTarget)
-                stats->setText("Sent/recv: " + std::to_string(serverConnection.numPacketsSent) + "/" + std::to_string(serverConnection.numPacketsReceived) + " FPS: " + std::to_string(fps)  + " Player Keyframes: " + std::to_string(ohWow.cameraTarget->modelInterpolator.keyFrames.size()));
+            if(serverData->cameraTarget)
+                stats->setText("Sent/recv: " + std::to_string(serverConnection->numPacketsSent) + "/" + std::to_string(serverConnection->numPacketsReceived) + " FPS: " + std::to_string(fps)  + " Player Keyframes: " + std::to_string(serverData->cameraTarget->modelInterpolator.keyFrames.size()));
             last10Secs = SDL_GetTicks() + 1000;
             frames = 0;
             totalSteps = 0;
@@ -803,12 +775,12 @@ int main(int argc, char *argv[])
 
         /*for(unsigned int a = 0; a<32; a++)
         {
-            if(ohWow.speaker->carToTrack[a])
+            if(clientEnvironment.speaker->carToTrack[a])
             {
-                glm::vec3 pos = ohWow.speaker->carToTrack[a]->carTransform.getPosition();
-                glm::vec3 vel = ohWow.speaker->carToTrack[a]->carTransform.guessVelocity() * glm::vec3(0.4);
-                alSource3f(ohWow.speaker->loopSources[a],AL_POSITION,pos.x,pos.y,pos.z);
-                alSource3f(ohWow.speaker->loopSources[a],AL_VELOCITY,vel.x,vel.y,vel.z);
+                glm::vec3 pos = clientEnvironment.speaker->carToTrack[a]->carTransform.getPosition();
+                glm::vec3 vel = clientEnvironment.speaker->carToTrack[a]->carTransform.guessVelocity() * glm::vec3(0.4);
+                alSource3f(clientEnvironment.speaker->loopSources[a],AL_POSITION,pos.x,pos.y,pos.z);
+                alSource3f(clientEnvironment.speaker->loopSources[a],AL_VELOCITY,vel.x,vel.y,vel.z);
             }
         }*/
 
@@ -828,31 +800,31 @@ int main(int argc, char *argv[])
         if(useClientPhysics)
         {
             //Buoyancy and jetting
-            if(ohWow.currentPlayer)
+            if(serverData->currentPlayer)
             {
-                if(rightDown && ohWow.canJet)
+                if(rightDown && serverData->canJet)
                 {
-                    ohWow.currentPlayer->body->setGravity(btVector3(0,20,0));
+                    serverData->currentPlayer->body->setGravity(btVector3(0,20,0));
                 }
                 else
                 {
-                    btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                    btTransform t = serverData->currentPlayer->body->getWorldTransform();
                     btVector3 o = t.getOrigin();
 
-                    if(o.y() < ohWow.waterLevel-2.0)
+                    if(o.y() < serverData->waterLevel-2.0)
                     {
-                        ohWow.currentPlayer->body->setDamping(0.4,0.0);
-                        ohWow.currentPlayer->body->setGravity(btVector3(0,-0.5,0) * world->getGravity());
+                        serverData->currentPlayer->body->setDamping(0.4,0.0);
+                        serverData->currentPlayer->body->setGravity(btVector3(0,-0.5,0) * world->getGravity());
                     }
-                    else if(o.y() < ohWow.waterLevel)
+                    else if(o.y() < serverData->waterLevel)
                     {
-                        ohWow.currentPlayer->body->setDamping(0.4,0.0);
-                        ohWow.currentPlayer->body->setGravity(btVector3(0,0,0));
+                        serverData->currentPlayer->body->setDamping(0.4,0.0);
+                        serverData->currentPlayer->body->setGravity(btVector3(0,0,0));
                     }
                     else
                     {
-                        ohWow.currentPlayer->body->setDamping(0.0,0.0);
-                        ohWow.currentPlayer->body->setGravity(world->getGravity());
+                        serverData->currentPlayer->body->setDamping(0.0,0.0);
+                        serverData->currentPlayer->body->setGravity(world->getGravity());
                     }
                 }
             }
@@ -869,26 +841,26 @@ int main(int argc, char *argv[])
         const Uint8 *states = SDL_GetKeyboardState(NULL);
         playerInput.getKeyStates();
 
-        box->performRaycast(ohWow.playerCamera->getPosition(),ohWow.playerCamera->getDirection(),0);
+        box->performRaycast(serverData->playerCamera->getPosition(),serverData->playerCamera->getDirection(),0);
 
         //Clicking ray cast
-        btVector3 raystart = glmToBt(ohWow.playerCamera->getPosition());
-        btVector3 rayend = glmToBt(ohWow.playerCamera->getPosition() + ohWow.playerCamera->getDirection() * glm::vec3(30.0));
+        btVector3 raystart = glmToBt(serverData->playerCamera->getPosition());
+        btVector3 rayend = glmToBt(serverData->playerCamera->getPosition() + serverData->playerCamera->getDirection() * glm::vec3(30.0));
         btCollisionWorld::AllHitsRayResultCallback res(raystart,rayend);
         world->rayTest(raystart,rayend,res);
 
         int idx = -1;
         float dist = 9999999;
 
-        if(ohWow.cameraTarget)
+        if(serverData->cameraTarget)
         {
             for(int a = 0; a<res.m_collisionObjects.size(); a++)
             {
-                //if(res.m_collisionObjects[a] != ohWow.cameraTarget->body)
+                //if(res.m_collisionObjects[a] != serverData->cameraTarget->body)
                 //{
-                    if(fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-ohWow.playerCamera->getPosition())) < dist)
+                    if(fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition())) < dist)
                     {
-                        dist = fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-ohWow.playerCamera->getPosition()));
+                        dist = fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition()));
                         idx = a;
                     }
                 //}
@@ -897,14 +869,14 @@ int main(int argc, char *argv[])
         else if(camMode == cammode_firstPerson)
             camMode = cammode_thirdPerson;
 
-        if(ohWow.ghostCar)
+        if(serverData->ghostCar)
         {
-            ohWow.ghostCar->carTransform.keyFrames.clear();
-            ohWow.ghostCar->carTransform.highestProcessed = 0;
+            serverData->ghostCar->carTransform.keyFrames.clear();
+            serverData->ghostCar->carTransform.highestProcessed = 0;
             if(idx != -1)
-                ohWow.ghostCar->carTransform.addTransform(0,BtToGlm(res.m_hitPointWorld[idx]) + glm::vec3(0,5,0),glm::quat(1,0,0,0));
+                serverData->ghostCar->carTransform.addTransform(0,BtToGlm(res.m_hitPointWorld[idx]) + glm::vec3(0,5,0),glm::quat(1,0,0,0));
             else
-                ohWow.ghostCar->carTransform.addTransform(0,BtToGlm(rayend) + glm::vec3(0,5,0),glm::quat(1,0,0,0));
+                serverData->ghostCar->carTransform.addTransform(0,BtToGlm(rayend) + glm::vec3(0,5,0),glm::quat(1,0,0,0));
         }
 
         /*if(stageOfSelection == -1)
@@ -920,8 +892,8 @@ int main(int argc, char *argv[])
         }*/
 
         bool supress = evalWindow->isActive() && evalWindow->isVisible();
-        supress |= ohWow.wheelWrench->isActive() && ohWow.wheelWrench->isVisible();
-        supress |= ohWow.wrench->isActive() && ohWow.wrench->isVisible();
+        supress |= clientEnvironment.wheelWrench->isActive() && clientEnvironment.wheelWrench->isVisible();
+        supress |= clientEnvironment.wrench->isActive() && clientEnvironment.wrench->isVisible();
         supress |= saveLoadWindow->getChild("CarFilePath")->isActive();
         supress |= saveLoadWindow->getChild("BuildFilePath")->isActive();
 
@@ -957,16 +929,16 @@ int main(int argc, char *argv[])
 
                 if(event.key.keysym.sym == SDLK_PAGEUP)
                 {
-                    ohWow.chat->getVertScrollbar()->setStepSize(36.3222);
+                    clientEnvironment.chat->getVertScrollbar()->setStepSize(36.3222);
                     //float maxScroll = chat->getVertScrollbar()->getDocumentSize() - chat->getVertScrollbar()->getPageSize();
-                    if(ohWow.chat->getVertScrollbar()->getScrollPosition() >= 36.3222)
-                        ohWow.chat->getVertScrollbar()->setScrollPosition(ohWow.chat->getVertScrollbar()->getScrollPosition() - 36.3222);
+                    if(clientEnvironment.chat->getVertScrollbar()->getScrollPosition() >= 36.3222)
+                        clientEnvironment.chat->getVertScrollbar()->setScrollPosition(clientEnvironment.chat->getVertScrollbar()->getScrollPosition() - 36.3222);
                 }
                 if(event.key.keysym.sym == SDLK_PAGEDOWN)
                 {
-                    ohWow.chat->getVertScrollbar()->setStepSize(36.3222);
+                    clientEnvironment.chat->getVertScrollbar()->setStepSize(36.3222);
                     //float maxScroll = chat->getVertScrollbar()->getDocumentSize() - chat->getVertScrollbar()->getPageSize();
-                    ohWow.chat->getVertScrollbar()->setScrollPosition(ohWow.chat->getVertScrollbar()->getScrollPosition() + 36.3222);
+                    clientEnvironment.chat->getVertScrollbar()->setScrollPosition(clientEnvironment.chat->getVertScrollbar()->getScrollPosition() + 36.3222);
                 }
                 if(event.key.keysym.sym == SDLK_t && !supress)
                 {
@@ -999,19 +971,19 @@ int main(int argc, char *argv[])
                             anyVisible = true;
                         if(optionsWindow->isVisible())
                            anyVisible = true;
-                        if(ohWow.brickSelector->isVisible())
+                        if(clientEnvironment.brickSelector->isVisible())
                            anyVisible = true;
                         if(evalWindow->isVisible())
                            anyVisible = true;
-                        if(ohWow.wrench->isVisible())
+                        if(clientEnvironment.wrench->isVisible())
                            anyVisible = true;
-                        if(ohWow.wheelWrench->isVisible())
+                        if(clientEnvironment.wheelWrench->isVisible())
                            anyVisible = true;
-                        if(ohWow.steeringWrench->isVisible())
+                        if(clientEnvironment.steeringWrench->isVisible())
                            anyVisible = true;
                         if(saveLoadWindow->isVisible())
                             anyVisible = true;
-                        if(ohWow.playerList->isVisible())
+                        if(clientEnvironment.playerList->isVisible())
                             anyVisible = true;
                         if(godRayDebug->isVisible())
                             anyVisible = true;
@@ -1021,14 +993,14 @@ int main(int argc, char *argv[])
                         {
                             context.setMouseLock(true);
                             escapeMenu->setVisible(false);
-                            ohWow.brickSelector->setVisible(false);
+                            clientEnvironment.brickSelector->setVisible(false);
                             optionsWindow->setVisible(false);
                             evalWindow->setVisible(false);
-                            ohWow.wrench->setVisible(false);
-                            ohWow.wheelWrench->setVisible(false);
-                            ohWow.steeringWrench->setVisible(false);
+                            clientEnvironment.wrench->setVisible(false);
+                            clientEnvironment.wheelWrench->setVisible(false);
+                            clientEnvironment.steeringWrench->setVisible(false);
                             saveLoadWindow->setVisible(false);
-                            ohWow.playerList->setVisible(false);
+                            clientEnvironment.playerList->setVisible(false);
                             godRayDebug->setVisible(false);
                         }
                         else
@@ -1050,63 +1022,63 @@ int main(int argc, char *argv[])
                 {
                     packet undoPacket;
                     undoPacket.writeUInt(4,4);
-                    ohWow.connection->send(&undoPacket,true);
+                    serverData->connection->send(&undoPacket,true);
                 }
 
                 if(states[SDL_SCANCODE_LCTRL] && event.key.keysym.sym == SDLK_w)
                 {
                     packet data;
                     data.writeUInt(9,4);
-                    if(ohWow.currentlyOpen == inventory)
-                        data.writeUInt(ohWow.selectedSlot,3);
+                    if(clientEnvironment.currentlyOpen == inventory)
+                        data.writeUInt(serverData->selectedSlot,3);
                     else
                         data.writeUInt(7,3);
-                    ohWow.connection->send(&data,true);
+                    serverData->connection->send(&data,true);
                 }
             }
 
             if(event.type == SDL_MOUSEMOTION)
             {
-                if(context.getMouseLocked() && (ohWow.freeLook || ohWow.boundToObject))
+                if(context.getMouseLocked() && (serverData->freeLook || serverData->boundToObject))
                 {
                     glm::vec2 res = context.getResolution();
                     float x = (((float)event.motion.xrel)/res.x);
                     float y = (((float)event.motion.yrel)/res.y);
-                    x *= ((float)ohWow.settings->mouseSensitivity) / 100.0;
-                    y *= ((float)ohWow.settings->mouseSensitivity) / 100.0;
-                    ohWow.playerCamera->turn(ohWow.settings->invertMouseY ? y : -y,-x);
+                    x *= ((float)clientEnvironment.settings->mouseSensitivity) / 100.0;
+                    y *= ((float)clientEnvironment.settings->mouseSensitivity) / 100.0;
+                    serverData->playerCamera->turn(clientEnvironment.settings->invertMouseY ? y : -y,-x);
 
-                    box->drag(ohWow.playerCamera->getPosition(),ohWow.playerCamera->getDirection());
+                    box->drag(serverData->playerCamera->getPosition(),serverData->playerCamera->getDirection());
                 }
             }
 
             if(event.type == SDL_MOUSEWHEEL)
             {
-                //if(!ohWow.brickSelector->isMouseContainedInArea() && !evalWindow->isMouseContainedInArea())
+                //if(!clientEnvironment.brickSelector->isMouseContainedInArea() && !evalWindow->isMouseContainedInArea())
                 if(context.getMouseLocked())
                 {
-                    if(ohWow.currentlyOpen == inventory)
+                    if(clientEnvironment.currentlyOpen == inventory)
                     {
                         if(event.wheel.y > 0)
                         {
-                            ohWow.selectedSlot--;
-                            if(ohWow.selectedSlot < 0 || ohWow.selectedSlot >= inventorySize)
-                                ohWow.selectedSlot = inventorySize - 1;
+                            serverData->selectedSlot--;
+                            if(serverData->selectedSlot < 0 || serverData->selectedSlot >= inventorySize)
+                                serverData->selectedSlot = inventorySize - 1;
                         }
                         else if(event.wheel.y < 0)
                         {
-                            ohWow.selectedSlot++;
-                            if(ohWow.selectedSlot >= inventorySize)
-                                ohWow.selectedSlot = 0;
+                            serverData->selectedSlot++;
+                            if(serverData->selectedSlot >= inventorySize)
+                                serverData->selectedSlot = 0;
                         }
                     }
-                    else if(ohWow.currentlyOpen == brickBar)
+                    else if(clientEnvironment.currentlyOpen == brickBar)
                     {
-                        myTempBrick.scroll(hud,ohWow.brickSelector,ohWow.staticBricks,event.wheel.y);
+                        myTempBrick.scroll(hud,clientEnvironment.brickSelector,serverData->staticBricks,event.wheel.y);
                     }
                     else
                     {
-                        ohWow.palette->scroll(event.wheel.y);
+                        clientEnvironment.palette->scroll(event.wheel.y);
                         myTempBrick.basicChanged = myTempBrick.basicChanged || myTempBrick.isBasic;
                         myTempBrick.specialChanged = myTempBrick.specialChanged || !myTempBrick.isBasic;
                     }
@@ -1129,28 +1101,28 @@ int main(int argc, char *argv[])
                     packet data;
                     data.writeUInt(clientPacketType_clicked,4);
                     data.writeBit(event.button.button == SDL_BUTTON_LEFT);
-                    data.writeFloat(ohWow.playerCamera->getPosition().x);
-                    data.writeFloat(ohWow.playerCamera->getPosition().y);
-                    data.writeFloat(ohWow.playerCamera->getPosition().z);
-                    data.writeFloat(ohWow.playerCamera->getDirection().x);
-                    data.writeFloat(ohWow.playerCamera->getDirection().y);
-                    data.writeFloat(ohWow.playerCamera->getDirection().z);
-                    if(ohWow.currentlyOpen == inventory)
-                        data.writeUInt(ohWow.selectedSlot,3);
+                    data.writeFloat(serverData->playerCamera->getPosition().x);
+                    data.writeFloat(serverData->playerCamera->getPosition().y);
+                    data.writeFloat(serverData->playerCamera->getPosition().z);
+                    data.writeFloat(serverData->playerCamera->getDirection().x);
+                    data.writeFloat(serverData->playerCamera->getDirection().y);
+                    data.writeFloat(serverData->playerCamera->getDirection().z);
+                    if(clientEnvironment.currentlyOpen == inventory)
+                        data.writeUInt(serverData->selectedSlot,3);
                     else
                         data.writeUInt(7,3);
-                    ohWow.connection->send(&data,true);
+                    serverData->connection->send(&data,true);
 
-                    if(event.button.button == SDL_BUTTON_LEFT && ohWow.currentPlayer)
+                    if(event.button.button == SDL_BUTTON_LEFT && serverData->currentPlayer)
                     {
                         item *currentlyHeldItem = 0;
-                        if(ohWow.currentlyOpen == inventory && ohWow.cameraTarget)
+                        if(clientEnvironment.currentlyOpen == inventory && serverData->cameraTarget)
                         {
-                            for(int a = 0; a<ohWow.items.size(); a++)
+                            for(int a = 0; a<serverData->items.size(); a++)
                             {
-                                if(ohWow.items[a]->heldBy == ohWow.cameraTarget && !ohWow.items[a]->hidden)
+                                if(serverData->items[a]->heldBy == serverData->cameraTarget && !serverData->items[a]->hidden)
                                 {
-                                    currentlyHeldItem = ohWow.items[a];
+                                    currentlyHeldItem = serverData->items[a];
                                     break;
                                 }
                             }
@@ -1164,21 +1136,21 @@ int main(int argc, char *argv[])
                                 if(currentlyHeldItem->nextFireAnim != -1)
                                     currentlyHeldItem->play(currentlyHeldItem->nextFireAnim,true,currentlyHeldItem->nextFireAnimSpeed,false);
                                 if(currentlyHeldItem->nextFireSound != -1)
-                                    ohWow.speaker->playSound2D(currentlyHeldItem->nextFireSound,currentlyHeldItem->nextFireSoundPitch,currentlyHeldItem->nextFireSoundGain);
+                                    clientEnvironment.speaker->playSound2D(currentlyHeldItem->nextFireSound,currentlyHeldItem->nextFireSoundPitch,currentlyHeldItem->nextFireSoundGain);
 
                                 if(currentlyHeldItem->nextFireEmitter != -1)
                                 {
-                                    for(int a = 0; a<ohWow.emitterTypes.size(); a++)
+                                    for(int a = 0; a<serverData->emitterTypes.size(); a++)
                                     {
-                                        if(ohWow.emitterTypes[a]->serverID == currentlyHeldItem->nextFireEmitter)
+                                        if(serverData->emitterTypes[a]->serverID == currentlyHeldItem->nextFireEmitter)
                                         {
                                             emitter *e = new emitter;
                                             e->creationTime = SDL_GetTicks();
-                                            e->type = ohWow.emitterTypes[a];
+                                            e->type = serverData->emitterTypes[a];
                                             e->attachedToItem = currentlyHeldItem;
                                             e->justAttached = true;
                                             e->meshName = currentlyHeldItem->nextFireEmitterMesh;
-                                            ohWow.emitters.push_back(e);
+                                            serverData->emitters.push_back(e);
                                             break;
                                         }
                                     }
@@ -1189,30 +1161,30 @@ int main(int argc, char *argv[])
                                     bulletTrail trail;
                                     trail.color = currentlyHeldItem->bulletTrailColor;
 
-                                    trail.end = ohWow.playerCamera->getPosition() + (ohWow.playerCamera->getDirection() * glm::vec3(1.0));
-                                    trail.start = ohWow.playerCamera->getPosition() + (ohWow.playerCamera->getDirection() * glm::vec3(60.0));
+                                    trail.end = serverData->playerCamera->getPosition() + (serverData->playerCamera->getDirection() * glm::vec3(1.0));
+                                    trail.start = serverData->playerCamera->getPosition() + (serverData->playerCamera->getDirection() * glm::vec3(60.0));
 
                                     trail.creationTime = SDL_GetTicks();
                                     trail.deletionTime = SDL_GetTicks() + glm::length(trail.end-trail.start) * 13 * currentlyHeldItem->bulletTrailSpeed;
 
-                                    ohWow.bulletTrails->bulletTrails.push_back(trail);
+                                    serverData->bulletTrails->bulletTrails.push_back(trail);
                                 }
                             }
                         }
                         else
                         {
-                            ohWow.currentPlayer->stop("grab");
-                            ohWow.currentPlayer->play("grab",true);
+                            serverData->currentPlayer->stop("grab");
+                            serverData->currentPlayer->play("grab",true);
                         }
                     }
                 }
 
                 if(event.button.button == SDL_BUTTON_RIGHT)
                 {
-                    if(ohWow.ghostCar)
+                    if(serverData->ghostCar)
                     {
-                        delete ohWow.ghostCar;
-                        ohWow.ghostCar = 0;
+                        delete serverData->ghostCar;
+                        serverData->ghostCar = 0;
                     }
 
                     box->currentPhase = selectionBox::selectionPhase::idle;
@@ -1220,20 +1192,20 @@ int main(int argc, char *argv[])
 
                 if(event.button.button == SDL_BUTTON_LEFT && context.getMouseLocked())
                 {
-                    if(ohWow.ghostCar)
+                    if(serverData->ghostCar)
                     {
                         if(idx != -1)
-                            sendBrickCarToServer(&ohWow,ohWow.ghostCar,BtToGlm(res.m_hitPointWorld[idx]));
+                            sendBrickCarToServer(&clientEnvironment,serverData->ghostCar,BtToGlm(res.m_hitPointWorld[idx]));
                         else
-                            sendBrickCarToServer(&ohWow,ohWow.ghostCar,BtToGlm(rayend) + glm::vec3(0,5,0));
-                        delete ohWow.ghostCar;
-                        ohWow.ghostCar = 0;
+                            sendBrickCarToServer(&clientEnvironment,serverData->ghostCar,BtToGlm(rayend) + glm::vec3(0,5,0));
+                        delete serverData->ghostCar;
+                        serverData->ghostCar = 0;
                     }
 
                     //We actually clicked on something in the world...
-                    if(idx != -1 && ohWow.cameraTarget)
+                    if(idx != -1 && serverData->cameraTarget)
                     {
-                        if(ohWow.currentlyOpen == brickBar)
+                        if(clientEnvironment.currentlyOpen == brickBar)
                             myTempBrick.teleport(BtToGlm(res.m_hitPointWorld[idx]));
 
                         if(box->currentPhase == selectionBox::selectionPhase::waitingForClick)
@@ -1266,35 +1238,35 @@ int main(int argc, char *argv[])
 
         if(playerInput.commandPressed(debugInfo))
         {
-            if(ohWow.currentPlayer)
+            if(serverData->currentPlayer)
             {
-                btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                btTransform t = serverData->currentPlayer->body->getWorldTransform();
                 btVector3 v = t.getOrigin();
                 std::cout<<"Physics pos: "<<v.x()<<","<<v.y()<<","<<v.z()<<"\n";
             }
 
-            std::cout<<"Position: "<<ohWow.playerCamera->getPosition().x<<","<<ohWow.playerCamera->getPosition().y<<","<<ohWow.playerCamera->getPosition().z<<"\n";
-            std::cout<<"Direction: "<<ohWow.playerCamera->getDirection().x<<","<<ohWow.playerCamera->getDirection().y<<","<<ohWow.playerCamera->getDirection().z<<"\n";
+            std::cout<<"Position: "<<serverData->playerCamera->getPosition().x<<","<<serverData->playerCamera->getPosition().y<<","<<serverData->playerCamera->getPosition().z<<"\n";
+            std::cout<<"Direction: "<<serverData->playerCamera->getDirection().x<<","<<serverData->playerCamera->getDirection().y<<","<<serverData->playerCamera->getDirection().z<<"\n";
 
-            std::cout<<"Num dynamics: "<<ohWow.newDynamics.size()<<"\n";
-            std::cout<<"Num items: "<<ohWow.items.size()<<"\n";
-            std::cout<<"Num emitters: "<<ohWow.emitters.size()<<"\n";
-            std::cout<<"Num lights: "<<ohWow.lights.size()<<"\n";
-            std::cout<<"Num cars: "<<ohWow.livingBricks.size()<<"\n";
-            std::cout<<"Last crit packet ID: "<<ohWow.connection->nextPacketID<<"\n";
-            std::cout<<"Highest server crit ID: "<<ohWow.connection->highestServerCritID<<"\n";
+            std::cout<<"Num dynamics: "<<serverData->newDynamics.size()<<"\n";
+            std::cout<<"Num items: "<<serverData->items.size()<<"\n";
+            std::cout<<"Num emitters: "<<serverData->emitters.size()<<"\n";
+            std::cout<<"Num lights: "<<serverData->lights.size()<<"\n";
+            std::cout<<"Num cars: "<<serverData->livingBricks.size()<<"\n";
+            std::cout<<"Last crit packet ID: "<<serverData->connection->nextPacketID<<"\n";
+            std::cout<<"Highest server crit ID: "<<serverData->connection->highestServerCritID<<"\n";
             std::cout<<"Sound locations: "<<location::locations.size()<<"\n";
 
             std::cout<<"Program open for "<<SDL_GetTicks()<<"ms\n";
 
-            for(int a = 0; a<32; a++)
-                std::cout<<"Of packet type "<<a<<" received "<<ohWow.numGottenPackets[a]<<" packets.\n";
+            //for(int a = 0; a<32; a++)
+            //    std::cout<<"Of packet type "<<a<<" received "<<serverData->numGottenPackets[a]<<" packets.\n";
         }
 
         if(playerInput.commandPressed(playersListButton))
         {
-            ohWow.playerList->setVisible(true);
-            ohWow.playerList->moveToFront();
+            clientEnvironment.playerList->setVisible(true);
+            clientEnvironment.playerList->moveToFront();
         }
 
         if(playerInput.commandPressed(dropCameraAtPlayer))
@@ -1302,7 +1274,7 @@ int main(int argc, char *argv[])
             packet data;
             data.writeUInt(14,4);
             data.writeBit(true);
-            ohWow.connection->send(&data,true);
+            serverData->connection->send(&data,true);
         }
 
         if(playerInput.commandPressed(dropPlayerAtCamera))
@@ -1310,15 +1282,15 @@ int main(int argc, char *argv[])
             packet data;
             data.writeUInt(14,4);
             data.writeBit(false);
-            data.writeFloat(ohWow.playerCamera->getPosition().x);
-            data.writeFloat(ohWow.playerCamera->getPosition().y);
-            data.writeFloat(ohWow.playerCamera->getPosition().z);
-            ohWow.connection->send(&data,true);
+            data.writeFloat(serverData->playerCamera->getPosition().x);
+            data.writeFloat(serverData->playerCamera->getPosition().y);
+            data.writeFloat(serverData->playerCamera->getPosition().z);
+            serverData->connection->send(&data,true);
         }
 
         if(playerInput.commandPressed(changeMaterial))
         {
-            ohWow.currentlyOpen = paintCan;
+            clientEnvironment.currentlyOpen = paintCan;
 
             switch(myTempBrick.mat)
             {
@@ -1334,16 +1306,16 @@ int main(int argc, char *argv[])
                 case brickMaterial::foil: myTempBrick.mat = none; break;
             }
 
-            ohWow.palette->window->getChild("PaintName")->setText(getBrickMatName(myTempBrick.mat));
+            clientEnvironment.palette->window->getChild("PaintName")->setText(getBrickMatName(myTempBrick.mat));
 
-            ohWow.palette->open();
+            clientEnvironment.palette->open();
         }
         if(playerInput.commandPressed(startSelection))
             box->currentPhase = selectionBox::selectionPhase::waitingForClick;
-        if(playerInput.commandPressed(dropPlayerAtCamera) && ohWow.cameraTarget)
+        if(playerInput.commandPressed(dropPlayerAtCamera) && serverData->cameraTarget)
         {
-            //ohWow.cameraTarget->setPosition(btVector3(ohWow.playerCamera->getPosition().x,ohWow.playerCamera->getPosition().y,ohWow.playerCamera->getPosition().z));
-            //ohWow.cameraTarget->setLinearVelocity(glm::vec3(0,0,0));
+            //serverData->cameraTarget->setPosition(btVector3(serverData->playerCamera->getPosition().x,serverData->playerCamera->getPosition().y,serverData->playerCamera->getPosition().z));
+            //serverData->cameraTarget->setLinearVelocity(glm::vec3(0,0,0));
         }
         if(playerInput.commandPressed(changeCameraMode))
         {
@@ -1358,15 +1330,15 @@ int main(int argc, char *argv[])
         if(playerInput.commandPressed(openBrickSelector))
         {
             context.setMouseLock(false);
-            ohWow.brickSelector->setVisible(true);
-            ohWow.brickSelector->moveToFront();
+            clientEnvironment.brickSelector->setVisible(true);
+            clientEnvironment.brickSelector->moveToFront();
         }
         if(playerInput.commandPressed(openInventory))
         {
-            if(ohWow.currentlyOpen == inventory)
-                ohWow.currentlyOpen = allClosed;
+            if(clientEnvironment.currentlyOpen == inventory)
+                clientEnvironment.currentlyOpen = allClosed;
             else
-                ohWow.currentlyOpen = inventory;
+                clientEnvironment.currentlyOpen = inventory;
         }
         if(playerInput.commandPressed(openEvalWindow))
         {
@@ -1391,16 +1363,16 @@ int main(int argc, char *argv[])
 
         if(playerInput.commandPressed(changePaintColumn))
         {
-            ohWow.currentlyOpen = paintCan;
-            glm::vec3 pos = ohWow.playerCamera->getPosition();
-            //ohWow.speaker->playSound("Rattle",false,pos.x,pos.y,pos.z);
-            ohWow.speaker->playSound2D(ohWow.speaker->resolveSound("Rattle"));
-            ohWow.palette->advanceColumn();
+            clientEnvironment.currentlyOpen = paintCan;
+            glm::vec3 pos = serverData->playerCamera->getPosition();
+            //clientEnvironment.speaker->playSound("Rattle",false,pos.x,pos.y,pos.z);
+            clientEnvironment.speaker->playSound2D(clientEnvironment.speaker->resolveSound("Rattle"));
+            clientEnvironment.palette->advanceColumn();
             myTempBrick.basicChanged = myTempBrick.basicChanged || myTempBrick.isBasic;
             myTempBrick.specialChanged = myTempBrick.specialChanged || !myTempBrick.isBasic;
         }
 
-        bottomBarShouldBeOpen = ohWow.currentlyOpen == brickBar; //myTempBrick.brickSlotSelected != -1;
+        bottomBarShouldBeOpen = clientEnvironment.currentlyOpen == brickBar; //myTempBrick.brickSlotSelected != -1;
         float bottomBarPos = std::clamp(((float)SDL_GetTicks() - bottomBarLastAct) / bottomBarOpenTime,0.f,1.f);
         if(bottomBarShouldBeOpen)
             bottomBarPos = bottomBarClose + bottomBarPos * (bottomBarOpen - bottomBarClose);
@@ -1421,23 +1393,23 @@ int main(int argc, char *argv[])
         }
 
         bool guiOpened=false,guiClosed=false;
-        myTempBrick.selectBrick(playerInput,hud,ohWow.brickSelector,ohWow.staticBricks,guiOpened,guiClosed);
+        myTempBrick.selectBrick(playerInput,hud,clientEnvironment.brickSelector,serverData->staticBricks,guiOpened,guiClosed);
         if(guiOpened && !guiClosed)
         {
-            if(ohWow.currentlyOpen != brickBar)
+            if(clientEnvironment.currentlyOpen != brickBar)
                 bottomBarLastAct = SDL_GetTicks();
-            ohWow.currentlyOpen = brickBar;
+            clientEnvironment.currentlyOpen = brickBar;
 
         }
         if(guiClosed && !guiOpened)
         {
-            if(ohWow.currentlyOpen == brickBar)
+            if(clientEnvironment.currentlyOpen == brickBar)
                 bottomBarLastAct = SDL_GetTicks();
-            ohWow.currentlyOpen = allClosed;
+            clientEnvironment.currentlyOpen = allClosed;
         }
 
         if(myTempBrick.brickSlotSelected != -1)
-            myTempBrick.manipulate(playerInput,hud,ohWow.brickSelector,ohWow.playerCamera->getYaw(),ohWow.speaker,ohWow.staticBricks);
+            myTempBrick.manipulate(playerInput,hud,clientEnvironment.brickSelector,serverData->playerCamera->getYaw(),clientEnvironment.speaker,serverData->staticBricks);
 
         if(playerInput.commandPressed(plantBrick))
         {
@@ -1451,50 +1423,50 @@ int main(int argc, char *argv[])
                 data.writeFloat(box->maxExtents.x());
                 data.writeFloat(box->maxExtents.y());
                 data.writeFloat(box->maxExtents.z());
-                ohWow.connection->send(&data,true);
+                serverData->connection->send(&data,true);
 
                 box->currentPhase = selectionBox::selectionPhase::idle;
             }
             else
-                myTempBrick.plant(ohWow.staticBricks,world,&ohWow);
+                myTempBrick.plant(serverData->staticBricks,world,serverData);
         }
 
-        myTempBrick.update(ohWow.staticBricks,ohWow.palette);
+        myTempBrick.update(serverData->staticBricks,clientEnvironment.palette);
 
-        if(ohWow.adminCam && camMode != cammode_adminCam)
+        if(serverData->adminCam && camMode != cammode_adminCam)
             camMode = cammode_adminCam;
-        else if(!ohWow.adminCam && camMode == cammode_adminCam)
+        else if(!serverData->adminCam && camMode == cammode_adminCam)
             camMode = cammode_firstPerson;
 
         if(camMode == cammode_adminCam) //admin cam
         {
             crossHair->setVisible(false);
-            ohWow.playerCamera->thirdPerson = false;
+            serverData->playerCamera->thirdPerson = false;
             float cameraSpeed = 0.035;
             if(states[SDL_SCANCODE_LCTRL] == SDL_PRESSED)
                 cameraSpeed = 0.2;
             if(playerInput.commandKeyDown(walkForward))
-                ohWow.playerCamera->walkForward(deltaT * cameraSpeed);
+                serverData->playerCamera->walkForward(deltaT * cameraSpeed);
             if(playerInput.commandKeyDown(walkBackward))
-                ohWow.playerCamera->walkForward(-deltaT * cameraSpeed);
+                serverData->playerCamera->walkForward(-deltaT * cameraSpeed);
             if(playerInput.commandKeyDown(walkLeft))
-                ohWow.playerCamera->walkRight(-deltaT * cameraSpeed);
+                serverData->playerCamera->walkRight(-deltaT * cameraSpeed);
             if(playerInput.commandKeyDown(walkRight))
-                ohWow.playerCamera->walkRight(deltaT * cameraSpeed);
+                serverData->playerCamera->walkRight(deltaT * cameraSpeed);
         }
         else
         {
-            if(ohWow.boundToObject && ohWow.cameraTarget)
+            if(serverData->boundToObject && serverData->cameraTarget)
             {
                 if(camMode == cammode_firstPerson) //1st person
                 {
                     crossHair->setVisible(true);
-                    ohWow.playerCamera->thirdPerson = false;
+                    serverData->playerCamera->thirdPerson = false;
 
                     glm::vec3 pos;
-                    if(ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer)
+                    if(serverData->currentPlayer && !serverData->giveUpControlOfCurrentPlayer)
                     {
-                        btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                        btTransform t = serverData->currentPlayer->body->getWorldTransform();
                         btVector3 v = t.getOrigin();
                         pos.x = v.x();
                         pos.y = v.y();
@@ -1502,101 +1474,101 @@ int main(int argc, char *argv[])
                     }
                     else
                     {
-                        if(ohWow.currentPlayer)
-                            ohWow.currentPlayer->useGlobalTransform = false;
-                        pos = ohWow.cameraTarget->modelInterpolator.getPosition();
+                        if(serverData->currentPlayer)
+                            serverData->currentPlayer->useGlobalTransform = false;
+                        pos = serverData->cameraTarget->modelInterpolator.getPosition();
                     }
 
-                    pos += ohWow.cameraTarget->type->eyeOffset;
-                    ohWow.playerCamera->setPosition( pos );
+                    pos += serverData->cameraTarget->type->eyeOffset;
+                    serverData->playerCamera->setPosition( pos );
                 }
                 else //3rd person
                 {
                     crossHair->setVisible(false);
-                    ohWow.playerCamera->thirdPerson = true;
+                    serverData->playerCamera->thirdPerson = true;
 
                     //3rd person camera follow distance backwards raycast:
                     btVector3 v;
-                    if(ohWow.currentPlayer && ohWow.currentPlayer->body)
+                    if(serverData->currentPlayer && serverData->currentPlayer->body)
                     {
-                        btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                        btTransform t = serverData->currentPlayer->body->getWorldTransform();
                         v = t.getOrigin();
                     }
                     else
                     {
-                        v = glmToBt(ohWow.cameraTarget->modelInterpolator.getPosition());
+                        v = glmToBt(serverData->cameraTarget->modelInterpolator.getPosition());
                     }
 
-                    v += glmToBt(ohWow.cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0));
+                    v += glmToBt(serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0));
 
                     btVector3 raystart = glmToBt(glm::vec3(v.x(),v.y(),v.z()));
-                    btVector3 rayend = glmToBt(glm::vec3(v.x(),v.y(),v.z()) - ohWow.playerCamera->getDirection() * glm::vec3(30.0));
+                    btVector3 rayend = glmToBt(glm::vec3(v.x(),v.y(),v.z()) - serverData->playerCamera->getDirection() * glm::vec3(30.0));
                     btCollisionWorld::ClosestRayResultCallback res(raystart,rayend);
                     world->rayTest(raystart,rayend,res);
 
                     /*int idx = -1;
                     float dist = 9999999;
 
-                    if(ohWow.cameraTarget)
+                    if(serverData->cameraTarget)
                     {
                         for(int a = 0; a<res.m_collisionObjects.size(); a++)
                         {
-                            if(res.m_collisionObjects[a] != ohWow.cameraTarget->body)
+                            if(res.m_collisionObjects[a] != serverData->cameraTarget->body)
                             {
-                                if(fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-ohWow.playerCamera->getPosition())) < dist)
+                                if(fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition())) < dist)
                                 {
-                                    dist = fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-ohWow.playerCamera->getPosition()));
+                                    dist = fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition()));
                                     idx = a;
                                 }
                             }
                         }
                     }*/
 
-                    if(ohWow.currentPlayer && ohWow.currentPlayer->body && !ohWow.giveUpControlOfCurrentPlayer)
+                    if(serverData->currentPlayer && serverData->currentPlayer->body && !serverData->giveUpControlOfCurrentPlayer)
                     {
-                        btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                        btTransform t = serverData->currentPlayer->body->getWorldTransform();
                         v = t.getOrigin();
-                        ohWow.playerCamera->thirdPersonTarget = glm::vec3(v.x(),v.y(),v.z()) + ohWow.cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
-                        ohWow.playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
-                        ohWow.playerCamera->setPosition(glm::vec3(v.x(),v.y(),v.z()));
-                        ohWow.playerCamera->turn(0,0);
-                        ohWow.currentPlayer->useGlobalTransform = true;
+                        serverData->playerCamera->thirdPersonTarget = glm::vec3(v.x(),v.y(),v.z()) + serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
+                        serverData->playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
+                        serverData->playerCamera->setPosition(glm::vec3(v.x(),v.y(),v.z()));
+                        serverData->playerCamera->turn(0,0);
+                        serverData->currentPlayer->useGlobalTransform = true;
                         btQuaternion bulletRot = t.getRotation();
                         glm::quat rot = glm::quat(bulletRot.w(),bulletRot.x(),bulletRot.y(),bulletRot.z());
-                        ohWow.currentPlayer->globalTransform = glm::translate(glm::vec3(v.x(),v.y(),v.z())) * glm::toMat4(rot);
+                        serverData->currentPlayer->globalTransform = glm::translate(glm::vec3(v.x(),v.y(),v.z())) * glm::toMat4(rot);
                     }
                     else
                     {
-                        if(ohWow.currentPlayer)
-                            ohWow.currentPlayer->useGlobalTransform = false;
+                        if(serverData->currentPlayer)
+                            serverData->currentPlayer->useGlobalTransform = false;
 
-                        ohWow.playerCamera->thirdPersonTarget = ohWow.cameraTarget->modelInterpolator.getPosition() + ohWow.cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
-                        ohWow.playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
-                        ohWow.playerCamera->setPosition(ohWow.cameraTarget->modelInterpolator.getPosition());
-                        ohWow.playerCamera->turn(0,0);
+                        serverData->playerCamera->thirdPersonTarget = serverData->cameraTarget->modelInterpolator.getPosition() + serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
+                        serverData->playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
+                        serverData->playerCamera->setPosition(serverData->cameraTarget->modelInterpolator.getPosition());
+                        serverData->playerCamera->turn(0,0);
                     }
                 }
                 //TODO: Should just store which item is the current held not-hidden item, loop is bad
-                for(int a = 0; a<ohWow.items.size(); a++)
+                for(int a = 0; a<serverData->items.size(); a++)
                 {
-                    if(ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden)
+                    if(serverData->currentPlayer && serverData->items[a]->heldBy == serverData->currentPlayer && !serverData->items[a]->hidden)
                     {
-                        if(ohWow.giveUpControlOfCurrentPlayer)
-                            ohWow.items[a]->updateTransform(false,ohWow.playerCamera->getYaw(),ohWow.playerCamera->getPitch());
+                        if(serverData->giveUpControlOfCurrentPlayer)
+                            serverData->items[a]->updateTransform(false,serverData->playerCamera->getYaw(),serverData->playerCamera->getPitch());
                         else
-                            ohWow.items[a]->updateTransform(true,ohWow.playerCamera->getYaw(),ohWow.playerCamera->getPitch());
-                        ohWow.items[a]->calculateMeshTransforms(deltaT); //The item we are currently holding
+                            serverData->items[a]->updateTransform(true,serverData->playerCamera->getYaw(),serverData->playerCamera->getPitch());
+                        serverData->items[a]->calculateMeshTransforms(deltaT); //The item we are currently holding
                     }
                 }
             }
             else //static cam
             {
-                ohWow.playerCamera->thirdPerson = false;
-                ohWow.playerCamera->setPosition(ohWow.cameraPos);
-                if(!ohWow.freeLook)
+                serverData->playerCamera->thirdPerson = false;
+                serverData->playerCamera->setPosition(serverData->cameraPos);
+                if(!serverData->freeLook)
                 {
-                    ohWow.playerCamera->setDirection(ohWow.cameraDir);
-                    ohWow.playerCamera->turn(0,0);
+                    serverData->playerCamera->setDirection(serverData->cameraDir);
+                    serverData->playerCamera->turn(0,0);
                 }
             }
         }
@@ -1604,45 +1576,45 @@ int main(int argc, char *argv[])
         if(playerInput.commandKeyDown(zoom))
             desiredFov = 15;
         else
-            desiredFov = ohWow.settings->fieldOfView;
+            desiredFov = clientEnvironment.settings->fieldOfView;
 
         currentZoom += (desiredFov - currentZoom) * deltaT * 0.0025;
-        ohWow.playerCamera->setFieldOfVision(currentZoom);
+        serverData->playerCamera->setFieldOfVision(currentZoom);
 
-        glm::vec3 microphoneDir = glm::vec3(sin(ohWow.playerCamera->getYaw()),0,cos(ohWow.playerCamera->getYaw()));
-        //ohWow.speaker->microphone(ohWow.playerCamera->getPosition()+glm::vec3(0.05,0.05,0.05),microphoneDir);
-        ohWow.speaker->update(ohWow.playerCamera->getPosition(),microphoneDir);
+        glm::vec3 microphoneDir = glm::vec3(sin(serverData->playerCamera->getYaw()),0,cos(serverData->playerCamera->getYaw()));
+        //clientEnvironment.speaker->microphone(serverData->playerCamera->getPosition()+glm::vec3(0.05,0.05,0.05),microphoneDir);
+        clientEnvironment.speaker->update(serverData->playerCamera->getPosition(),microphoneDir);
 
         if(playerInput.commandKeyDown(jump))
             doJump = true;
 
-        for(unsigned int a = 0; a<ohWow.items.size(); a++)
+        for(unsigned int a = 0; a<serverData->items.size(); a++)
         {
-            heldItemType *type = ohWow.items[a]->itemType;
+            heldItemType *type = serverData->items[a]->itemType;
             if(type->useDefaultSwing)
             {
-                if(ohWow.items[a]->heldBy == ohWow.cameraTarget)
-                    ohWow.items[a]->advance(context.getMouseLocked() && mouseState & SDL_BUTTON_LEFT,deltaT);
+                if(serverData->items[a]->heldBy == serverData->cameraTarget)
+                    serverData->items[a]->advance(context.getMouseLocked() && mouseState & SDL_BUTTON_LEFT,deltaT);
                 else
-                    ohWow.items[a]->advance(false,deltaT);
+                    serverData->items[a]->advance(false,deltaT);
             }
             else
-                ohWow.items[a]->advance(false,deltaT);
-            ohWow.items[a]->bufferSubData();
+                serverData->items[a]->advance(false,deltaT);
+            serverData->items[a]->bufferSubData();
         }
 
-        for(int a = 0; a<ohWow.newDynamics.size(); a++)
+        for(int a = 0; a<serverData->newDynamics.size(); a++)
         {
-            ohWow.newDynamics[a]->hidden = (ohWow.newDynamics[a] == ohWow.cameraTarget) && (camMode == cammode_firstPerson);
-            ohWow.newDynamics[a]->calculateMeshTransforms(deltaT);
-            ohWow.newDynamics[a]->bufferSubData();
+            serverData->newDynamics[a]->hidden = (serverData->newDynamics[a] == serverData->cameraTarget) && (camMode == cammode_firstPerson);
+            serverData->newDynamics[a]->calculateMeshTransforms(deltaT);
+            serverData->newDynamics[a]->bufferSubData();
         }
-        for(int a = 0; a<ohWow.items.size(); a++)
-            if(!(ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
-                ohWow.items[a]->calculateMeshTransforms(deltaT); //Any item we are not currently holding
+        for(int a = 0; a<serverData->items.size(); a++)
+            if(!(serverData->currentPlayer && serverData->items[a]->heldBy == serverData->currentPlayer && !serverData->items[a]->hidden))
+                serverData->items[a]->calculateMeshTransforms(deltaT); //Any item we are not currently holding
 
-        auto emitterIter = ohWow.emitters.begin();
-        while(emitterIter != ohWow.emitters.end())
+        auto emitterIter = serverData->emitters.begin();
+        while(emitterIter != serverData->emitters.end())
         {
             emitter *e = *emitterIter;
             if(e->type->lifetimeMS != 0 && !e->attachedToCar && !e->attachedToBasicBrick && !e->attachedToSpecialBrick)
@@ -1650,54 +1622,54 @@ int main(int argc, char *argv[])
                 if(e->creationTime + e->type->lifetimeMS < SDL_GetTicks())
                 {
                     delete e;
-                    emitterIter = ohWow.emitters.erase(emitterIter);
+                    emitterIter = serverData->emitters.erase(emitterIter);
                     continue;
                 }
             }
-            bool usePhysicsPos = ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer;
-            e->update(ohWow.playerCamera->position,
-                      ohWow.playerCamera->direction,
+            bool usePhysicsPos = serverData->currentPlayer && !serverData->giveUpControlOfCurrentPlayer;
+            e->update(serverData->playerCamera->position,
+                      serverData->playerCamera->direction,
                       usePhysicsPos,
-                      (camMode == cammode_firstPerson) && (ohWow.currentPlayer == e->attachedToModel || (e->attachedToItem && ohWow.currentPlayer == e->attachedToItem->heldBy)),
-                      ohWow.playerCamera->getYaw(),
-                      ohWow.playerCamera->getPitch());
+                      (camMode == cammode_firstPerson) && (serverData->currentPlayer == e->attachedToModel || (e->attachedToItem && serverData->currentPlayer == e->attachedToItem->heldBy)),
+                      serverData->playerCamera->getYaw(),
+                      serverData->playerCamera->getPitch());
             ++emitterIter;
         }
 
-        for(unsigned int a = 0; a<ohWow.particleTypes.size(); a++)
-            ohWow.particleTypes[a]->deadParticlesCheck(ohWow.playerCamera->getPosition(),deltaT);
+        for(unsigned int a = 0; a<serverData->particleTypes.size(); a++)
+            serverData->particleTypes[a]->deadParticlesCheck(serverData->playerCamera->getPosition(),deltaT);
 
-        sortLights(ohWow.lights,ohWow.playerCamera->getPosition(),deltaT);
+        sortLights(serverData->lights,serverData->playerCamera->getPosition(),deltaT);
 
         //Networking:
 
-        ohWow.tryApplyHeldPackets();
+        serverData->tryApplyHeldPackets();
 
-        checkForCameraToBind(&ohWow);
+        checkForCameraToBind(serverData);
 
         if(connected)
         {
             glm::vec3 up = glm::vec3(0,1,0);
-            ohWow.playerCamera->nominalUp = up;
+            serverData->playerCamera->nominalUp = up;
 
-            if(ohWow.cameraLean && camMode == 0 && ohWow.cameraTarget)
+            if(serverData->cameraLean && camMode == 0 && serverData->cameraTarget)
             {
-                ohWow.totalLean += playerInput.commandKeyDown(walkLeft) ? deltaT * 0.001 : 0;
-                ohWow.totalLean -= playerInput.commandKeyDown(walkRight) ? deltaT * 0.001 : 0;
+                serverData->totalLean += playerInput.commandKeyDown(walkLeft) ? deltaT * 0.001 : 0;
+                serverData->totalLean -= playerInput.commandKeyDown(walkRight) ? deltaT * 0.001 : 0;
                 if(!(playerInput.commandKeyDown(walkRight) || playerInput.commandKeyDown(walkLeft)))
-                    ohWow.totalLean *= 0.9;
+                    serverData->totalLean *= 0.9;
 
-                if(ohWow.totalLean > 0.17)
-                    ohWow.totalLean = 0.17;
-                if(ohWow.totalLean < -0.17)
-                    ohWow.totalLean = -0.17;
+                if(serverData->totalLean > 0.17)
+                    serverData->totalLean = 0.17;
+                if(serverData->totalLean < -0.17)
+                    serverData->totalLean = -0.17;
 
-                glm::vec3 playerForward = glm::vec3(0,0,1);//ohWow.playerCamera->getDirection();
+                glm::vec3 playerForward = glm::vec3(0,0,1);//serverData->playerCamera->getDirection();
                 glm::vec3 playerRight = glm::normalize(glm::cross(up,playerForward));
 
-                glm::vec3 dir = glm::normalize(glm::vec3(ohWow.totalLean * playerRight.x,1,ohWow.totalLean * playerRight.z));
-                glm::vec4 afterDir = glm::toMat4(ohWow.cameraTarget->modelInterpolator.getRotation()) * glm::vec4(dir.x,dir.y,dir.z,0);
-                ohWow.playerCamera->nominalUp = glm::vec3(afterDir.x,afterDir.y,afterDir.z);
+                glm::vec3 dir = glm::normalize(glm::vec3(serverData->totalLean * playerRight.x,1,serverData->totalLean * playerRight.z));
+                glm::vec4 afterDir = glm::toMat4(serverData->cameraTarget->modelInterpolator.getRotation()) * glm::vec4(dir.x,dir.y,dir.z,0);
+                serverData->playerCamera->nominalUp = glm::vec3(afterDir.x,afterDir.y,afterDir.z);
             }
 
             bool didJump = false;
@@ -1713,26 +1685,26 @@ int main(int argc, char *argv[])
                 netControlState = 0;
 
             //Move client player for client physics:
-            if(ohWow.currentPlayer && !ohWow.giveUpControlOfCurrentPlayer && camMode != cammode_adminCam)
+            if(serverData->currentPlayer && !serverData->giveUpControlOfCurrentPlayer && camMode != cammode_adminCam)
             {
-                if(SDL_GetTicks() - ohWow.currentPlayer->flingPreventionStartTime > 100)
+                if(SDL_GetTicks() - serverData->currentPlayer->flingPreventionStartTime > 100)
                 {
-                    if(ohWow.currentPlayer->control(atan2(ohWow.playerCamera->getDirection().x,ohWow.playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,ohWow.canJet && rightDown))
+                    if(serverData->currentPlayer->control(atan2(serverData->playerCamera->getDirection().x,serverData->playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,serverData->canJet && rightDown))
                         didJump = true;
                     if(didJump)
-                        ohWow.speaker->playSound2D(ohWow.speaker->resolveSound("Jump"));
-                        //ohWow.speaker->playSound("Jump",false,ohWow.playerCamera->getPosition().x,ohWow.playerCamera->getPosition().y-1.0,ohWow.playerCamera->getPosition().z);
+                        clientEnvironment.speaker->playSound2D(clientEnvironment.speaker->resolveSound("Jump"));
+                        //clientEnvironment.speaker->playSound("Jump",false,serverData->playerCamera->getPosition().x,serverData->playerCamera->getPosition().y-1.0,serverData->playerCamera->getPosition().z);
                 }
             }
 
             int fullControlState  = netControlState + (leftDown << 5);
-            fullControlState |= (ohWow.currentlyOpen == inventory) ? 0b1000000 : 0;
-            fullControlState |= ohWow.selectedSlot << 7;
+            fullControlState |= (clientEnvironment.currentlyOpen == inventory) ? 0b1000000 : 0;
+            fullControlState |= serverData->selectedSlot << 7;
             fullControlState += rightDown << 11;
-            fullControlState |= (ohWow.currentlyOpen == paintCan) ? (1 << 12) : 0;
+            fullControlState |= (clientEnvironment.currentlyOpen == paintCan) ? (1 << 12) : 0;
             fullControlState |= chatEditbox->isActive() ? (1 << 13) : 0;
 
-            glm::vec3 playerDirDiff = ohWow.playerCamera->getDirection() - lastPlayerDir;
+            glm::vec3 playerDirDiff = serverData->playerCamera->getDirection() - lastPlayerDir;
             if(fabs(glm::length(playerDirDiff)) > 0.02 || fullControlState != lastPlayerControlMask || doJump || SDL_GetTicks() > (unsigned)(lastSentTransData + 1000))
             {
                 if(SDL_GetTicks() > (unsigned)(lastSentTransData + 5))
@@ -1747,10 +1719,10 @@ int main(int argc, char *argv[])
                     transPacket.writeBit(didJump);//This one controls if the sound is played
                     transPacket.writeBit(context.getMouseLocked() && leftDown);
                     transPacket.writeBit(context.getMouseLocked() && rightDown);
-                    transPacket.writeBit(ohWow.currentlyOpen == paintCan);
-                    if(ohWow.currentlyOpen == paintCan)
+                    transPacket.writeBit(clientEnvironment.currentlyOpen == paintCan);
+                    if(clientEnvironment.currentlyOpen == paintCan)
                     {
-                        glm::vec4 paintColor = ohWow.palette->getColor();
+                        glm::vec4 paintColor = clientEnvironment.palette->getColor();
                         transPacket.writeFloat(paintColor.r);
                         transPacket.writeFloat(paintColor.g);
                         transPacket.writeFloat(paintColor.b);
@@ -1759,87 +1731,87 @@ int main(int argc, char *argv[])
 
                     doJump = false;
 
-                    lastPlayerDir = ohWow.playerCamera->getDirection();
-                    transPacket.writeFloat(ohWow.playerCamera->getDirection().x);
-                    transPacket.writeFloat(ohWow.playerCamera->getDirection().y);
-                    transPacket.writeFloat(ohWow.playerCamera->getDirection().z);
-                    if(ohWow.currentlyOpen == inventory)
-                        transPacket.writeUInt(ohWow.selectedSlot,3);
+                    lastPlayerDir = serverData->playerCamera->getDirection();
+                    transPacket.writeFloat(serverData->playerCamera->getDirection().x);
+                    transPacket.writeFloat(serverData->playerCamera->getDirection().y);
+                    transPacket.writeFloat(serverData->playerCamera->getDirection().z);
+                    if(clientEnvironment.currentlyOpen == inventory)
+                        transPacket.writeUInt(serverData->selectedSlot,3);
                     else
                         transPacket.writeUInt(7,3);
 
-                    transPacket.writeBit(ohWow.adminCam);
-                    if(ohWow.adminCam)
+                    transPacket.writeBit(serverData->adminCam);
+                    if(serverData->adminCam)
                     {
-                        transPacket.writeFloat(ohWow.playerCamera->getPosition().x);
-                        transPacket.writeFloat(ohWow.playerCamera->getPosition().y);
-                        transPacket.writeFloat(ohWow.playerCamera->getPosition().z);
+                        transPacket.writeFloat(serverData->playerCamera->getPosition().x);
+                        transPacket.writeFloat(serverData->playerCamera->getPosition().y);
+                        transPacket.writeFloat(serverData->playerCamera->getPosition().z);
                     }
                     transPacket.writeBit(chatEditbox->isActive());
 
                     bool actuallyUseClientPhysics = useClientPhysics;
-                    if(!ohWow.currentPlayer)
+                    if(!serverData->currentPlayer)
                         actuallyUseClientPhysics = false;
-                    if(ohWow.giveUpControlOfCurrentPlayer)
+                    if(serverData->giveUpControlOfCurrentPlayer)
                         actuallyUseClientPhysics = false;
 
                     transPacket.writeBit(actuallyUseClientPhysics);
                     if(actuallyUseClientPhysics)
                     {
-                        btTransform t = ohWow.currentPlayer->body->getWorldTransform();
+                        btTransform t = serverData->currentPlayer->body->getWorldTransform();
                         btVector3 o = t.getOrigin();
                         transPacket.writeFloat(o.x());
                         transPacket.writeFloat(o.y());
                         transPacket.writeFloat(o.z());
-                        btVector3 v = ohWow.currentPlayer->body->getLinearVelocity();
+                        btVector3 v = serverData->currentPlayer->body->getLinearVelocity();
                         transPacket.writeFloat(v.x());
                         transPacket.writeFloat(v.y());
                         transPacket.writeFloat(v.z());
                     }
 
-                    serverConnection.send(&transPacket,false);
+                    serverConnection->send(&transPacket,false);
 
                     lastSentTransData = SDL_GetTicks();
                 }
             }
 
-            float progress = ((float)ohWow.staticBricks.getBrickCount()) / ((float)ohWow.skippingCompileNextBricks);
-            setBrickLoadProgress(progress,ohWow.staticBricks.getBrickCount());
+            float progress = ((float)serverData->staticBricks.getBrickCount()) / ((float)serverData->skippingCompileNextBricks);
+            setBrickLoadProgress(progress,serverData->staticBricks.getBrickCount());
 
-            serverConnection.run();
+            serverConnection->run();
         }
 
-        for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
+        for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
         {
             //std::cout<<"Advancing: "<<deltaT<<"\n";
-            ohWow.livingBricks[a]->carTransform.advance(deltaT);
+            serverData->livingBricks[a]->carTransform.advance(deltaT);
             //std::cout<<"\n";
 
-            for(int wheel = 0; wheel<ohWow.livingBricks[a]->newWheels.size(); wheel++)
+            for(int wheel = 0; wheel<serverData->livingBricks[a]->newWheels.size(); wheel++)
             {
-                ohWow.livingBricks[a]->newWheels[wheel]->calculateMeshTransforms(deltaT);
-                ohWow.livingBricks[a]->newWheels[wheel]->bufferSubData();
+                serverData->livingBricks[a]->newWheels[wheel]->calculateMeshTransforms(deltaT);
+                serverData->livingBricks[a]->newWheels[wheel]->bufferSubData();
             }
         }
 
-        for(unsigned int a = 0; a<ohWow.items.size(); a++)
+        for(unsigned int a = 0; a<serverData->items.size(); a++)
         {
-            if(!(!ohWow.giveUpControlOfCurrentPlayer && ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
-                ohWow.items[a]->updateTransform();
+            if(!(!serverData->giveUpControlOfCurrentPlayer && serverData->currentPlayer && serverData->items[a]->heldBy == serverData->currentPlayer && !serverData->items[a]->hidden))
+                serverData->items[a]->updateTransform();
         }
 
-        //std::cout<<ohWow.staticBricks.opaqueBasicBricks.size()<<" bricks\n";
+        //std::cout<<serverData->staticBricks.opaqueBasicBricks.size()<<" bricks\n";
 
-        auto fakeKillIter = ohWow.fakeKills.begin();
-        while(fakeKillIter != ohWow.fakeKills.end())
+        auto fakeKillIter = serverData->fakeKills.begin();
+        while(fakeKillIter != serverData->fakeKills.end())
         {
             if((*fakeKillIter).endTime < SDL_GetTicks())
             {
                 if((*fakeKillIter).basic)
-                    ohWow.staticBricks.removeBasicBrick((*fakeKillIter).basic,ohWow.world);
+                    serverData->staticBricks.removeBasicBrick((*fakeKillIter).basic,serverData->world);
                 if((*fakeKillIter).special)
-                    ohWow.staticBricks.removeSpecialBrick((*fakeKillIter).special,ohWow.world);
-                fakeKillIter = ohWow.fakeKills.erase(fakeKillIter);
+                    serverData->staticBricks.removeSpecialBrick((*fakeKillIter).special,serverData->world);
+                fakeKillIter = serverData->fakeKills.erase(fakeKillIter);
             }
             else
             {
@@ -1850,13 +1822,13 @@ int main(int argc, char *argv[])
                 {
                     (*fakeKillIter).basic->position += (*fakeKillIter).linVel;
                     (*fakeKillIter).basic->rotation = glm::slerp((*fakeKillIter).basic->rotation,glm::quat((*fakeKillIter).angVel),progress);
-                    ohWow.staticBricks.updateBasicBrick((*fakeKillIter).basic,ohWow.world);
+                    serverData->staticBricks.updateBasicBrick((*fakeKillIter).basic,serverData->world);
                 }
                 if((*fakeKillIter).special)
                 {
                     (*fakeKillIter).special->position += (*fakeKillIter).linVel;
                     (*fakeKillIter).special->rotation = glm::slerp((*fakeKillIter).special->rotation,glm::quat((*fakeKillIter).angVel),progress);
-                    ohWow.staticBricks.updateSpecialBrick((*fakeKillIter).special,ohWow.world,0);
+                    serverData->staticBricks.updateSpecialBrick((*fakeKillIter).special,serverData->world,0);
                 }
                 fakeKillIter++;
             }
@@ -1868,8 +1840,8 @@ int main(int argc, char *argv[])
 
         //Graphics:
         //Sun direction sundirection
-        //ohWow.env->iblShadowsCalc(ohWow.playerCamera,glm::vec3(0.496595,0.50,0.856871));
-        ohWow.env->iblShadowsCalc(ohWow.playerCamera,glm::vec3(0.540455,0.742971,0.394844));
+        //serverData->env->iblShadowsCalc(serverData->playerCamera,glm::vec3(0.496595,0.50,0.856871));
+        serverData->env->iblShadowsCalc(serverData->playerCamera,glm::vec3(0.540455,0.742971,0.394844));
 
         glActiveTexture(GL_TEXTURE0 + cubeMapRadiance);
         glBindTexture(GL_TEXTURE_CUBE_MAP,IBLRad);
@@ -1879,30 +1851,30 @@ int main(int argc, char *argv[])
 
         std::string oldName = "";
 
-        ohWow.env->godRayPass->bind();
-        if(ohWow.settings->godRayQuality != godRaysOff)
+        serverData->env->godRayPass->bind();
+        if(clientEnvironment.settings->godRayQuality != godRaysOff)
         {
             godPrePassSunUnis->use();
 
                 glUniform1i(godPrePassSunUnis->doingGodRayPass,true);
-                oldName = ohWow.playerCamera->name;
-                ohWow.playerCamera->name = "Shadow";
-                ohWow.playerCamera->render(godPrePassSunUnis);
-                ohWow.env->passUniforms(godPrePassSunUnis);
-                ohWow.env->drawSun(godPrePassSunUnis);
+                oldName = serverData->playerCamera->name;
+                serverData->playerCamera->name = "Shadow";
+                serverData->playerCamera->render(godPrePassSunUnis);
+                serverData->env->passUniforms(godPrePassSunUnis);
+                serverData->env->drawSun(godPrePassSunUnis);
                 glUniform1i(godPrePassSunUnis->doingGodRayPass,false);
 
             godPrePassBrickUnis->use();
 
                 glUniform1i(godPrePassBrickUnis->doingGodRayPass,true);
-                ohWow.playerCamera->render(godPrePassBrickUnis);
-                ohWow.playerCamera->name = oldName;
-                ohWow.staticBricks.renderEverything(godPrePassBrickUnis,true,0,SDL_GetTicks()/25);
-                for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                    ohWow.livingBricks[a]->renderAlive(godPrePassBrickUnis,true,SDL_GetTicks()/25);
+                serverData->playerCamera->render(godPrePassBrickUnis);
+                serverData->playerCamera->name = oldName;
+                serverData->staticBricks.renderEverything(godPrePassBrickUnis,true,0,SDL_GetTicks()/25);
+                for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                    serverData->livingBricks[a]->renderAlive(godPrePassBrickUnis,true,SDL_GetTicks()/25);
                 glUniform1i(godPrePassBrickUnis->doingGodRayPass,false);
         }
-        ohWow.env->godRayPass->unbind();
+        serverData->env->godRayPass->unbind();
 
         //Begin drawing to water textures
 
@@ -1910,70 +1882,57 @@ int main(int argc, char *argv[])
         if(waterFrame >= 2)
             waterFrame = 0;
 
-        if(ohWow.settings->waterQuality != waterStatic && waterRefraction)
+        if(clientEnvironment.settings->waterQuality != waterStatic && waterRefraction)
         {
             if(waterFrame == 0)
             {
                 waterReflection->bind();
 
                     oldModelUnis->use();
-                        glUniform1f(oldModelUnis->clipHeight,ohWow.waterLevel);
-                        ohWow.playerCamera->renderReflection(oldModelUnis,ohWow.waterLevel);
-                        ohWow.env->passUniforms(oldModelUnis);
-                        ohWow.settings->render(oldModelUnis);
+                        glUniform1f(oldModelUnis->clipHeight,serverData->waterLevel);
+                        serverData->playerCamera->renderReflection(oldModelUnis,serverData->waterLevel);
+                        serverData->env->passUniforms(oldModelUnis);
+                        clientEnvironment.settings->render(oldModelUnis);
                         glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
                         glBindTexture(GL_TEXTURE_CUBE_MAP,IBL);
-                        ohWow.env->drawSky(oldModelUnis);
+                        serverData->env->drawSky(oldModelUnis);
 
                         glEnable(GL_CLIP_DISTANCE0);
-                        /*for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                        {
-                            for(unsigned int wheel = 0; wheel<ohWow.livingBricks[a]->wheels.size(); wheel++)
-                            {
-                                wheelModel.render(&oldModelUnis,
-                                                  glm::translate(ohWow.livingBricks[a]->wheels[wheel]->getPosition()) *
-                                                  glm::toMat4(ohWow.livingBricks[a]->wheels[wheel]->getRotation()) *
-                                                  glm::scale(glm::vec3(0.06)) *
-                                                  glm::scale(ohWow.livingBricks[a]->wheels[wheel]->scale)
-                                                  );
-                            }
-                        }*/
-
 
                     modelUnis->use();
-                        glUniform1f(modelUnis->clipHeight,ohWow.waterLevel);
-                        ohWow.settings->render(modelUnis);
-                        ohWow.playerCamera->renderReflection(modelUnis,ohWow.waterLevel);
-                        ohWow.env->passUniforms(modelUnis);
-                        for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                            ohWow.newDynamicTypes[a]->renderInstanced(modelUnis);
+                        glUniform1f(modelUnis->clipHeight,serverData->waterLevel);
+                        clientEnvironment.settings->render(modelUnis);
+                        serverData->playerCamera->renderReflection(modelUnis,serverData->waterLevel);
+                        serverData->env->passUniforms(modelUnis);
+                        for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
+                            serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
 
-                        ohWow.newWheelModel->renderInstanced(modelUnis);
+                        clientEnvironment.newWheelModel->renderInstanced(modelUnis);
 
 
-                        /*for(unsigned int a = 0; a<ohWow.dynamics.size(); a++)
-                                ohWow.dynamics[a]->render(&basic);*/
+                        /*for(unsigned int a = 0; a<serverData->dynamics.size(); a++)
+                                serverData->dynamics[a]->render(&basic);*/
 
                      /*tessUnis->use();
                         glUniform1f(tess.clipHeight,waterLevel);
-                        ohWow.playerCamera->render(tess);
-                        ohWow.env->passUniforms(tess);
+                        serverData->playerCamera->render(tess);
+                        serverData->env->passUniforms(tess);
                         grass.use(tess);
                         theMap.render(tess);*/
 
                     simpleBrickUnis->use();
                         glUniform1i(simpleBrickUnis->target->getUniformLocation("debugMode"),debugMode);
 
-                        glUniform1f(simpleBrickUnis->clipHeight,ohWow.waterLevel);
-                        ohWow.playerCamera->renderReflection(simpleBrickUnis,ohWow.waterLevel);
-                        ohWow.env->passUniforms(simpleBrickUnis);
-                        ohWow.settings->render(simpleBrickUnis);
+                        glUniform1f(simpleBrickUnis->clipHeight,serverData->waterLevel);
+                        serverData->playerCamera->renderReflection(simpleBrickUnis,serverData->waterLevel);
+                        serverData->env->passUniforms(simpleBrickUnis);
+                        clientEnvironment.settings->render(simpleBrickUnis);
 
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        ohWow.staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
-                        for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                            ohWow.livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
+                        serverData->staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
+                        for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                            serverData->livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
                         glDisable(GL_BLEND);
 
                 waterReflection->unbind();
@@ -1984,54 +1943,38 @@ int main(int argc, char *argv[])
                 waterRefraction->bind();
 
                     modelUnis->use();
-                        glUniform1f(modelUnis->clipHeight,-ohWow.waterLevel);
-                        ohWow.settings->render(modelUnis);
-                        ohWow.playerCamera->render(modelUnis);
-                        ohWow.env->passUniforms(modelUnis);
-                        for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                            ohWow.newDynamicTypes[a]->renderInstanced(modelUnis);
+                        glUniform1f(modelUnis->clipHeight,-serverData->waterLevel);
+                        clientEnvironment.settings->render(modelUnis);
+                        serverData->playerCamera->render(modelUnis);
+                        serverData->env->passUniforms(modelUnis);
+                        for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
+                            serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
 
-                        ohWow.newWheelModel->renderInstanced(modelUnis);
+                        clientEnvironment.newWheelModel->renderInstanced(modelUnis);
 
                     oldModelUnis->use();
-                        glUniform1f(oldModelUnis->clipHeight,-ohWow.waterLevel);
-                        ohWow.playerCamera->render(oldModelUnis);
-                        ohWow.env->passUniforms(oldModelUnis);
-
-                        /*for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                        {
-                            for(unsigned int wheel = 0; wheel<ohWow.livingBricks[a]->wheels.size(); wheel++)
-                            {
-                                wheelModel.render(&oldModelUnis,
-                                                  glm::translate(ohWow.livingBricks[a]->wheels[wheel]->getPosition()) *
-                                                  glm::toMat4(ohWow.livingBricks[a]->wheels[wheel]->getRotation()) *
-                                                  glm::scale(glm::vec3(0.06)) *
-                                                  glm::scale(ohWow.livingBricks[a]->wheels[wheel]->scale)
-                                                  );
-                            }
-                        }*/
-                        //ohWow.env->drawSky(basic);
-                        /*(for(unsigned int a = 0; a<ohWow.dynamics.size(); a++)
-                                ohWow.dynamics[a]->render(&basic);*/
+                        glUniform1f(oldModelUnis->clipHeight,-serverData->waterLevel);
+                        serverData->playerCamera->render(oldModelUnis);
+                        serverData->env->passUniforms(oldModelUnis);
 
                     /*tessUnis->use();
-                        ohWow.playerCamera->render(tess);
+                        serverData->playerCamera->render(tess);
                         glUniform1f(tess.clipHeight,-waterLevel);
-                        ohWow.env->passUniforms(tess);
+                        serverData->env->passUniforms(tess);
                         grass.use(tess);
                         theMap.render(tess);*/
 
                     simpleBrickUnis->use();
                     glUniform1i(simpleBrickUnis->target->getUniformLocation("debugMode"),debugMode);
-                    ohWow.env->passUniforms(simpleBrickUnis);
-                    ohWow.settings->render(simpleBrickUnis);
-                        glUniform1f(simpleBrickUnis->clipHeight,-ohWow.waterLevel);
-                        ohWow.playerCamera->render(simpleBrickUnis);
+                    serverData->env->passUniforms(simpleBrickUnis);
+                    clientEnvironment.settings->render(simpleBrickUnis);
+                        glUniform1f(simpleBrickUnis->clipHeight,-serverData->waterLevel);
+                        serverData->playerCamera->render(simpleBrickUnis);
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        ohWow.staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
-                        for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                            ohWow.livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
+                        serverData->staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
+                        for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                            serverData->livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
                         glDisable(GL_BLEND);
 
 
@@ -2042,60 +1985,44 @@ int main(int argc, char *argv[])
             /*waterDepth->bind();
                  /*tessUnis->use();
                     glUniform1f(tess.clipHeight,-waterLevel);
-                    ohWow.playerCamera->render(tess);
+                    serverData->playerCamera->render(tess);
                     grass.use(tess); //TODO: Yes, at the moment, this is required for some reason...
                     theMap.render(tess);
 
                 brickUnis->use();
-                    ohWow.playerCamera->render(brickUnis);
-                    ohWow.env->passUniforms(brickUnis);
-                    ohWow.staticBricks.renderEverything(brickUnis,true,0,SDL_GetTicks()/25);
-                    for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                        ohWow.livingBricks[a]->renderAlive(brickUnis,true,SDL_GetTicks()/25);
+                    serverData->playerCamera->render(brickUnis);
+                    serverData->env->passUniforms(brickUnis);
+                    serverData->staticBricks.renderEverything(brickUnis,true,0,SDL_GetTicks()/25);
+                    for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                        serverData->livingBricks[a]->renderAlive(brickUnis,true,SDL_GetTicks()/25);
 
             waterDepth->unbind();*/
         }
 
         //End drawing to water textures
 
-        if(ohWow.settings->shadowResolution != shadowsOff)
+        if(clientEnvironment.settings->shadowResolution != shadowsOff)
         {
             //Begin drawing shadows to shadow texture
             glDisable(GL_CULL_FACE);
             glCullFace(GL_FRONT);
             glEnable(GL_BLEND);
 
-            ohWow.env->shadowBuffer->bind();
-
-                /*shadowUnis->use();
-                    ohWow.env->passLightMatricies(shadow);
-
-                    for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                    {
-                        for(unsigned int wheel = 0; wheel<ohWow.livingBricks[a]->wheels.size(); wheel++)
-                        {
-                            wheelModel.render(&shadow,
-                                              glm::translate(ohWow.livingBricks[a]->wheels[wheel]->getPosition()) *
-                                              glm::toMat4(ohWow.livingBricks[a]->wheels[wheel]->getRotation()) *
-                                              glm::scale(glm::vec3(0.06)) *
-                                              glm::scale(ohWow.livingBricks[a]->wheels[wheel]->scale),true
-                                              );
-                        }
-                    }*/
+            serverData->env->shadowBuffer->bind();
 
                 modelShadowUnis->use();
-                    ohWow.env->passLightMatricies(modelShadowUnis);
-                    for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                        ohWow.newDynamicTypes[a]->renderInstancedWithoutMaterials();
+                    serverData->env->passLightMatricies(modelShadowUnis);
+                    for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
+                        serverData->newDynamicTypes[a]->renderInstancedWithoutMaterials();
 
 
                 shadowBrickUnis->use();
-                        ohWow.env->passLightMatricies(shadowBrickUnis);
-                        ohWow.staticBricks.renderEverything(shadowBrickUnis,true,0,SDL_GetTicks()/25);
-                        for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                            ohWow.livingBricks[a]->renderAlive(shadowBrickUnis,true,SDL_GetTicks()/25);
+                        serverData->env->passLightMatricies(shadowBrickUnis);
+                        serverData->staticBricks.renderEverything(shadowBrickUnis,true,0,SDL_GetTicks()/25);
+                        for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                            serverData->livingBricks[a]->renderAlive(shadowBrickUnis,true,SDL_GetTicks()/25);
 
-            ohWow.env->shadowBuffer->unbind();
+            serverData->env->shadowBuffer->unbind();
 
             glDisable(GL_BLEND);
             glCullFace(GL_BACK);
@@ -2104,29 +2031,29 @@ int main(int argc, char *argv[])
         }
 
         //Begin drawing final scene
-        context.clear(ohWow.env->skyColor.r,ohWow.env->skyColor.g,ohWow.env->skyColor.b);
+        context.clear(serverData->env->skyColor.r,serverData->env->skyColor.g,serverData->env->skyColor.b);
         context.select();
 
             oldModelUnis->use();
-                ohWow.settings->render(oldModelUnis);
-                ohWow.playerCamera->render(oldModelUnis); //change
-                ohWow.env->passUniforms(oldModelUnis);
-                renderLights(oldModelUnis,ohWow.lights);
+                clientEnvironment.settings->render(oldModelUnis);
+                serverData->playerCamera->render(oldModelUnis); //change
+                serverData->env->passUniforms(oldModelUnis);
+                renderLights(oldModelUnis,serverData->lights);
 
                 glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
                 glBindTexture(GL_TEXTURE_CUBE_MAP,IBL);
 
-                ohWow.env->drawSky(oldModelUnis);
+                serverData->env->drawSky(oldModelUnis);
 
-                if(ohWow.settings->waterQuality != waterStatic && waterRefraction)
+                if(clientEnvironment.settings->waterQuality != waterStatic && waterRefraction)
                 {
                     waterUnis->use();
-                        ohWow.settings->render(waterUnis);
+                        clientEnvironment.settings->render(waterUnis);
                         glUniform1f(waterUnis->deltaT,((float)SDL_GetTicks()) / 1000.0);     //why both of these...?
                         glUniform1f(waterUnis->waterDelta,((float)SDL_GetTicks())*0.0001);
-                        glUniform1f(waterUnis->target->getUniformLocation("waterLevel"),ohWow.waterLevel); //TODO: Don't string match this every frame
-                        ohWow.env->passUniforms(waterUnis,true);
-                        ohWow.playerCamera->render(waterUnis);
+                        glUniform1f(waterUnis->target->getUniformLocation("waterLevel"),serverData->waterLevel); //TODO: Don't string match this every frame
+                        serverData->env->passUniforms(waterUnis,true);
+                        serverData->playerCamera->render(waterUnis);
 
                         waterReflection->colorResult->bind(reflection);
                         waterRefraction->colorResult->bind(refraction);
@@ -2139,42 +2066,42 @@ int main(int argc, char *argv[])
                 }
 
                 //Render faces for players, pretty much:
-                for(unsigned int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                    ohWow.newDynamicTypes[a]->renderNonInstanced(oldModelUnis);
+                for(unsigned int a = 0; a<serverData->newDynamicTypes.size(); a++)
+                    serverData->newDynamicTypes[a]->renderNonInstanced(oldModelUnis);
 
                 //Start rendering item icons...
                 oldModelUnis->setModelMatrix(glm::mat4(1.0));
 
-                for(unsigned int a = 0; a<ohWow.items.size(); a++)
+                for(unsigned int a = 0; a<serverData->items.size(); a++)
                 {
                     //Skip updating transforms for items that we are currently holding, since we should use client physics transform for that instead of interpolated server snapshots...
-                    if(!(!ohWow.giveUpControlOfCurrentPlayer && ohWow.currentPlayer && ohWow.items[a]->heldBy == ohWow.currentPlayer && !ohWow.items[a]->hidden))
-                        ohWow.items[a]->updateTransform();
+                    if(!(!serverData->giveUpControlOfCurrentPlayer && serverData->currentPlayer && serverData->items[a]->heldBy == serverData->currentPlayer && !serverData->items[a]->hidden))
+                        serverData->items[a]->updateTransform();
                 }
 
                 //Render paint can or not...
-                if(ohWow.paintCan && ohWow.fixedPaintCanItem && ohWow.currentlyOpen == paintCan && ohWow.cameraTarget)
+                if(serverData->paintCan && serverData->fixedPaintCanItem && clientEnvironment.currentlyOpen == paintCan && serverData->cameraTarget)
                 {
-                    ohWow.fixedPaintCanItem->pitch = -1.57;
-                    ohWow.fixedPaintCanItem->hidden = false;
-                    ohWow.fixedPaintCanItem->heldBy = ohWow.cameraTarget;
-                    ohWow.fixedPaintCanItem->updateTransform(true,ohWow.playerCamera->getYaw());
+                    serverData->fixedPaintCanItem->pitch = -1.57;
+                    serverData->fixedPaintCanItem->hidden = false;
+                    serverData->fixedPaintCanItem->heldBy = serverData->cameraTarget;
+                    serverData->fixedPaintCanItem->updateTransform(true,serverData->playerCamera->getYaw());
                 }
                 else
-                    ohWow.fixedPaintCanItem->hidden = true;
+                    serverData->fixedPaintCanItem->hidden = true;
 
                 //Item icons...
                 //Start all item icons as hidden by default...
-                /*for(int a = 0; a<ohWow.itemIcons.size(); a++)
-                    if(ohWow.itemIcons[a]) //Paint can at a bare minimum will NOT have any icon!
-                        ohWow.itemIcons[a]->hidden = true;*/
+                /*for(int a = 0; a<serverData->itemIcons.size(); a++)
+                    if(serverData->itemIcons[a]) //Paint can at a bare minimum will NOT have any icon!
+                        serverData->itemIcons[a]->hidden = true;*/
 
-                if(ohWow.currentlyOpen == inventory)
+                if(clientEnvironment.currentlyOpen == inventory)
                 {
                     //For each inventory slot
                     for(unsigned int a = 0; a<inventorySize; a++)
                     {
-                        heldItemType *type = ohWow.inventory[a];
+                        heldItemType *type = serverData->inventory[a];
                         if(!type)
                         {
                             hud->getChild("Inventory/ItemIcon" + std::to_string(a+1) + "/icon")->setProperty("Image","");
@@ -2188,57 +2115,6 @@ int main(int argc, char *argv[])
                         }
 
                         hud->getChild("Inventory/ItemIcon" + std::to_string(a+1) + "/icon")->setProperty("Image",type->uiName);
-
-                        /*if(!type->icon)//Paint can at a bare minimum will NOT have any icon!
-                            continue;
-
-                        glm::vec3 startSize = type->type->totalColMax - type->type->totalColMin;
-
-                        float highestDim = startSize.x;
-                        if(startSize.y > highestDim)
-                            highestDim = startSize.y;
-                        if(startSize.z > highestDim)
-                            highestDim = startSize.z;
-
-                        startSize.x = 1.0 / highestDim;
-                        startSize.y = 1.0 / highestDim;
-                        startSize.z = 1.0 / highestDim;
-
-                        glm::vec3 trans = startSize * type->type->totalColMin;
-
-                        std::cout<<type->uiName<<"\n";
-                        std::cout<<"Start size: "<<startSize.x<<","<<startSize.y<<","<<startSize.z<<"\n";
-                        std::cout<<"colMin: "<<type->type->totalColMin.x<<","<<type->type->totalColMin.y<<","<<type->type->totalColMin.z<<"\n";
-                        std::cout<<"colMax: "<<type->type->totalColMax.x<<","<<type->type->totalColMax.y<<","<<type->type->totalColMax.z<<"\n";
-                        std::cout<<"Trans: "<<trans.x<<","<<trans.y<<","<<trans.z<<"\n\n";
-
-                        glm::mat4 tot;
-                        if(ohWow.selectedSlot == a)
-                            tot = glm::scale(startSize) * glm::translate(-type->type->totalColMin) * glm::toMat4(glm::quat(glm::vec3(0,fmod(((float)SDL_GetTicks())*0.0033,6.28),0)));
-                        else
-                            tot = glm::scale(startSize) * glm::translate(-type->type->totalColMin) * glm::toMat4(glm::quat(glm::vec3(0,1.57,0)));
-
-                        printMatScale(tot,"tot1");
-
-                        tot = glm::scale(glm::vec3(2,2,1)) * tot;
-                        tot = glm::translate(glm::vec3(-1,-1,0)) * tot;
-
-                        printMatScale(tot,"tot2");
-
-                        float boxSize = 0.21;//0.15372;
-                        //tot = glm::scale(glm::vec3(0.15)) * tot;
-                        printMatScale(tot,"tot3");
-                        tot = glm::translate(glm::vec3(0.87+0.09,1 - (0.04875+boxSize+(boxSize*2*a)),0)) * tot;
-                        printMatScale(tot,"tot4");
-
-                        type->icon->useGlobalTransform = true;
-                        type->icon->hidden = false;
-                        type->icon->globalTransform = tot;
-                        type->icon->calculateMeshTransforms(0);
-                        type->icon->bufferSubData();
-                        /*glUniform1i(oldModelUnis->target->getUniformLocation("skipCamera"),1);
-                        ((animatedModel*)type->type->oldModelType)->render(&oldModelUnis,0,tot);
-                        glUniform1i(oldModelUnis->target->getUniformLocation("skipCamera"),0);*/
                     }
                 }
 
@@ -2246,7 +2122,7 @@ int main(int argc, char *argv[])
                 if(showPreview)
                 {
                     glUniform1i(oldModelUnis->previewTexture,true);
-                    ohWow.env->godRayPass->colorResult->bind(normal);
+                    serverData->env->godRayPass->colorResult->bind(normal);
                     glBindVertexArray(quadVAO);
                     glDrawArrays(GL_TRIANGLES,0,6);
                     glBindVertexArray(0);
@@ -2254,90 +2130,90 @@ int main(int argc, char *argv[])
                 }
                 //end preview texture
 
-                //drawDebugLocations(oldModelUnis,cubeVAO,ohWow.debugLocations,ohWow.debugColors);
+                //drawDebugLocations(oldModelUnis,cubeVAO,serverData->debugLocations,serverData->debugColors);
 
 /*            tessUnis->use();
-                ohWow.settings->render(tess);
-                ohWow.playerCamera->render(tess); //change
-                ohWow.env->passUniforms(tess);*/
+                clientEnvironment.settings->render(tess);
+                serverData->playerCamera->render(tess); //change
+                serverData->env->passUniforms(tess);*/
 
 //                grass.use(tess);
  //               theMap.render(tess);
 
                 modelUnis->use();
-                    ohWow.settings->render(modelUnis);
-                    ohWow.playerCamera->render(modelUnis);
-                    ohWow.env->passUniforms(modelUnis);
-                    renderLights(modelUnis,ohWow.lights);
-                    for(int a = 0; a<ohWow.newDynamicTypes.size(); a++)
-                        ohWow.newDynamicTypes[a]->renderInstanced(modelUnis);
+                    clientEnvironment.settings->render(modelUnis);
+                    serverData->playerCamera->render(modelUnis);
+                    serverData->env->passUniforms(modelUnis);
+                    renderLights(modelUnis,serverData->lights);
+                    for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
+                        serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
 
-                ohWow.newWheelModel->renderInstanced(modelUnis);
+                clientEnvironment.newWheelModel->renderInstanced(modelUnis);
 
             brickUnis->use();
-                ohWow.playerCamera->render(brickUnis);
-                ohWow.env->passUniforms(brickUnis);
-                ohWow.settings->render(brickUnis);
-                renderLights(brickUnis,ohWow.lights);
+                serverData->playerCamera->render(brickUnis);
+                serverData->env->passUniforms(brickUnis);
+                clientEnvironment.settings->render(brickUnis);
+                renderLights(brickUnis,serverData->lights);
                 glUniform1i(brickUnis->target->getUniformLocation("debugMode"),debugMode);
 
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                ohWow.staticBricks.renderEverything(brickUnis,false,&grass,SDL_GetTicks()/25);
-                for(unsigned int a = 0; a<ohWow.livingBricks.size(); a++)
-                    ohWow.livingBricks[a]->renderAlive(brickUnis,false,SDL_GetTicks()/25);
-                if(ohWow.ghostCar)
-                    ohWow.ghostCar->renderAlive(brickUnis,false,SDL_GetTicks()/25);
+                serverData->staticBricks.renderEverything(brickUnis,false,&grass,SDL_GetTicks()/25);
+                for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
+                    serverData->livingBricks[a]->renderAlive(brickUnis,false,SDL_GetTicks()/25);
+                if(serverData->ghostCar)
+                    serverData->ghostCar->renderAlive(brickUnis,false,SDL_GetTicks()/25);
                 glDisable(GL_BLEND);
 
                 glEnable(GL_BLEND);
                 glDisable(GL_CULL_FACE);
                 emitterUnis->use();
-                    ohWow.playerCamera->render(emitterUnis);
-                    ohWow.env->passUniforms(emitterUnis);
-                    ohWow.settings->render(emitterUnis);
+                    serverData->playerCamera->render(emitterUnis);
+                    serverData->env->passUniforms(emitterUnis);
+                    clientEnvironment.settings->render(emitterUnis);
 
-                    for(unsigned int a = 0; a<ohWow.particleTypes.size(); a++)
-                        ohWow.particleTypes[a]->render(emitterUnis);
+                    for(unsigned int a = 0; a<serverData->particleTypes.size(); a++)
+                        serverData->particleTypes[a]->render(emitterUnis);
 
 
-            ohWow.bulletTrails->purge();
+            serverData->bulletTrails->purge();
             glDisable(GL_CULL_FACE);
             bulletUnis->use();
-                ohWow.playerCamera->render(bulletUnis);
-                ohWow.bulletTrails->render(bulletUnis);
+                serverData->playerCamera->render(bulletUnis);
+                serverData->bulletTrails->render(bulletUnis);
             glEnable(GL_CULL_FACE);
 
 
                 glLineWidth(3.0);
                 boxEdgesUnis->use();
                     glUniform1i(boxEdgesUnis->target->getUniformLocation("drawingRopes"),true);
-                    ohWow.playerCamera->render(boxEdgesUnis);
-                    for(unsigned int a = 0; a<ohWow.ropes.size(); a++)
-                        ohWow.ropes[a]->render();
+                    serverData->playerCamera->render(boxEdgesUnis);
+                    for(unsigned int a = 0; a<serverData->ropes.size(); a++)
+                        serverData->ropes[a]->render();
                     glUniform1i(boxEdgesUnis->target->getUniformLocation("drawingRopes"),false);
 
             glDisable(GL_DEPTH_TEST);
             glEnable(GL_BLEND);
             glDisable(GL_CULL_FACE);
             fontUnis->use();
-                    ohWow.playerCamera->render(fontUnis);
-                    for(unsigned int a = 0; a<ohWow.newDynamics.size(); a++)
+                    serverData->playerCamera->render(fontUnis);
+                    for(unsigned int a = 0; a<serverData->newDynamics.size(); a++)
                     {
-                        if(!ohWow.newDynamics[a])
+                        if(!serverData->newDynamics[a])
                             continue;
-                        if(ohWow.newDynamics[a]->shapeName.length() < 1)
+                        if(serverData->newDynamics[a]->shapeName.length() < 1)
                             continue;
-                        if(ohWow.newDynamics[a] == ohWow.cameraTarget && camMode == 0)
+                        if(serverData->newDynamics[a] == serverData->cameraTarget && camMode == 0)
                             continue;
 
-                        glm::vec3 pos = ohWow.newDynamics[a]->modelInterpolator.getPosition();
-                        if(ohWow.currentPlayer == ohWow.newDynamics[a] && !ohWow.giveUpControlOfCurrentPlayer && ohWow.currentPlayer->body)
+                        glm::vec3 pos = serverData->newDynamics[a]->modelInterpolator.getPosition();
+                        if(serverData->currentPlayer == serverData->newDynamics[a] && !serverData->giveUpControlOfCurrentPlayer && serverData->currentPlayer->body)
                         {
-                            btVector3 o = ohWow.currentPlayer->body->getWorldTransform().getOrigin();
+                            btVector3 o = serverData->currentPlayer->body->getWorldTransform().getOrigin();
                             pos = glm::vec3(o.x(),o.y(),o.z());
                         }
-                        defaultFont.naiveRender(fontUnis,ohWow.newDynamics[a]->shapeName,pos+ohWow.newDynamics[a]->type->eyeOffset+glm::vec3(0,2,0),glm::length(ohWow.newDynamics[a]->scale),ohWow.newDynamics[a]->shapeNameColor);
+                        defaultFont.naiveRender(fontUnis,serverData->newDynamics[a]->shapeName,pos+serverData->newDynamics[a]->type->eyeOffset+glm::vec3(0,2,0),glm::length(serverData->newDynamics[a]->scale),serverData->newDynamics[a]->shapeNameColor);
                     }
 
             //glEnable(GL_CULL_FACE);
@@ -2346,55 +2222,36 @@ int main(int argc, char *argv[])
 
             //Remember, 'god rays' actually includes the underwater texture too
             screenOverlaysUnis->use();
-                glUniform1f(screenOverlaysUnis->target->getUniformLocation("waterLevel"),ohWow.waterLevel); //TODO: Don't string match this every frame
-                glUniform1f(screenOverlaysUnis->target->getUniformLocation("vignetteStrength"),ohWow.vignetteStrength);
-                glUniform3f(screenOverlaysUnis->target->getUniformLocation("vignetteColor"),ohWow.vignetteColor.r,ohWow.vignetteColor.g,ohWow.vignetteColor.b);
-                if(ohWow.vignetteStrength >= 0)
-                    ohWow.vignetteStrength -= deltaT * 0.001;
-                if(ohWow.vignetteStrength < 0)
-                    ohWow.vignetteStrength = 0;
+                glUniform1f(screenOverlaysUnis->target->getUniformLocation("waterLevel"),serverData->waterLevel); //TODO: Don't string match this every frame
+                glUniform1f(screenOverlaysUnis->target->getUniformLocation("vignetteStrength"),clientEnvironment.vignetteStrength);
+                glUniform3f(screenOverlaysUnis->target->getUniformLocation("vignetteColor"),clientEnvironment.vignetteColor.r,clientEnvironment.vignetteColor.g,clientEnvironment.vignetteColor.b);
+                if(clientEnvironment.vignetteStrength >= 0)
+                    clientEnvironment.vignetteStrength -= deltaT * 0.001;
+                if(clientEnvironment.vignetteStrength < 0)
+                    clientEnvironment.vignetteStrength = 0;
 
-                ohWow.settings->render(screenOverlaysUnis);
-                ohWow.playerCamera->render(screenOverlaysUnis);
-                ohWow.env->passUniforms(screenOverlaysUnis);
-                ohWow.env->renderGodRays(screenOverlaysUnis);
-
-            /*spriteUnis->use();
-                glEnable(GL_CLIP_DISTANCE0);
-                glUniform1f(spriteUnis.clipHeight,waterLevel); //TODO: Only cull plants underwater if camera above water
-                ohWow.playerCamera->render(spriteUnis); //change
-                ohWow.env->passUniforms(spriteUnis);
-
-                cumT += deltaT;
-                glUniform1f(spriteUnis.deltaT,SDL_GetTicks());
-                glUniform1i(spriteUnis.useNormal,true);
-                glUniform1i(spriteUnis.useAlbedo,true);
-                glUniform1i(spriteUnis.calcTBN,true);
-                plant1.bind(albedo);
-                plant1n.bind(normal);
-//                theMap.render(spriteUnis,true);
-                glDisable(GL_CULL_FACE);
-                bush.render();
-                glEnable(GL_CULL_FACE);
-                glDisable(GL_CLIP_DISTANCE0);*/
+                clientEnvironment.settings->render(screenOverlaysUnis);
+                serverData->playerCamera->render(screenOverlaysUnis);
+                serverData->env->passUniforms(screenOverlaysUnis);
+                serverData->env->renderGodRays(screenOverlaysUnis);
 
             glEnable(GL_BLEND);
 
             boxEdgesUnis->use();
-                ohWow.playerCamera->render(boxEdgesUnis);
+                serverData->playerCamera->render(boxEdgesUnis);
                 box->render(boxEdgesUnis);
 
             glEnable(GL_CULL_FACE);
 
             //Just for the transparent blue quad of crappy water, good water is rendered first thing
-            if(ohWow.settings->waterQuality == waterStatic || !waterRefraction)
+            if(clientEnvironment.settings->waterQuality == waterStatic || !waterRefraction)
             {
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
                 waterUnis->use();
-                    ohWow.settings->render(waterUnis);
-                    ohWow.env->passUniforms(waterUnis,true);
-                    ohWow.playerCamera->render(waterUnis);
+                    clientEnvironment.settings->render(waterUnis);
+                    serverData->env->passUniforms(waterUnis,true);
+                    serverData->playerCamera->render(waterUnis);
 
                     water.render(waterUnis);
 
@@ -2402,10 +2259,10 @@ int main(int argc, char *argv[])
             }
         //End drawing final scene
 
-        ohWow.bottomPrint.checkForTimeouts();
-        ohWow.palette->calcAnimation();
-        float chatScroll = ohWow.chat->getVertScrollbar()->getScrollPosition();
-        chatScrollArrow->setVisible(chatScroll < (ohWow.chat->getVertScrollbar()->getDocumentSize() - ohWow.chat->getVertScrollbar()->getPageSize()));
+        clientEnvironment.bottomPrint.checkForTimeouts();
+        clientEnvironment.palette->calcAnimation();
+        float chatScroll = clientEnvironment.chat->getVertScrollbar()->getScrollPosition();
+        chatScrollArrow->setVisible(chatScroll < (clientEnvironment.chat->getVertScrollbar()->getDocumentSize() - clientEnvironment.chat->getVertScrollbar()->getPageSize()));
         CEGUI::System::getSingleton().getRenderer()->setDisplaySize(CEGUI::Size<float>(context.getResolution().x,context.getResolution().y));
         glViewport(0,0,context.getResolution().x,context.getResolution().y);
         glDisable(GL_DEPTH_TEST);

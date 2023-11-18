@@ -4,13 +4,14 @@
 #include "code/utility/ceguiHelper.h"
 #include "code/networking/recv.h"
 #include <filesystem>
+#include "code/utility/clientStuff.h"
 
 using namespace std::filesystem;
 
 namespace syj
 {
-    void sendBrickCarToServer(serverStuff *common,livingBrick *car,glm::vec3 origin);
-    CEGUI::Window *loadSaveLoadWindow(serverStuff *common);
+    void sendBrickCarToServer(clientStuff *common,livingBrick *car,glm::vec3 origin);
+    CEGUI::Window *loadSaveLoadWindow(clientStuff *common);
 }
 
 

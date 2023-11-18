@@ -17,13 +17,13 @@ namespace syj
         CEGUI::Window *evalWindow = root->getChild("HUD/EvalWindow");
         std::string code = evalWindow->getChild("Code/Editbox")->getText().c_str();
         evalWindow->getChild("Code/Editbox")->setText("");
-        serverStuff *common = (serverStuff*)evalWindow->getUserData();
+        clientStuff *clientEnvironment = (clientStuff*)evalWindow->getUserData();
 
         packet data;
         data.writeUInt(7,4);
-        data.writeString(common->lastGuessedEvalPass);
+        data.writeString(clientEnvironment->serverData->lastGuessedEvalPass);
         data.writeString(code);
-        common->connection->send(&data,true);
+        clientEnvironment->serverData->connection->send(&data,true);
 
         return true;
     }
@@ -33,7 +33,7 @@ namespace syj
         CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
         CEGUI::Window *evalWindow = root->getChild("HUD/EvalWindow");
         CEGUI::Editbox *pass = (CEGUI::Editbox*)evalWindow->getChild("Login/Editbox");
-        serverStuff *common = (serverStuff*)evalWindow->getUserData();
+        clientStuff *clientEnvironment = (clientStuff*)evalWindow->getUserData();
 
         std::string guess = pass->getText().c_str();
         if(guess.length() < 1)
@@ -46,21 +46,21 @@ namespace syj
         br_sha256_out(&shaContext,hash);
         std::string hexStr = GetHexRepresentation(hash,32);
 
-        common->lastGuessedEvalPass = hexStr;
+        clientEnvironment->serverData->lastGuessedEvalPass = hexStr;
 
         packet data;
         data.writeUInt(6,4);
         data.writeString(hexStr);
-        common->connection->send(&data,true);
+        clientEnvironment->serverData->connection->send(&data,true);
 
         return true;
     }
 
-    CEGUI::Window* configureEvalWindow(CEGUI::Window *hud,serverStuff *common)
+    CEGUI::Window* configureEvalWindow(CEGUI::Window *hud,clientStuff *clientEnvironment)
     {
         CEGUI::Window *evalWindow = hud->getChild("EvalWindow");
 
-        evalWindow->setUserData(common);
+        evalWindow->setUserData(clientEnvironment);
         evalWindow->subscribeEvent(CEGUI::FrameWindow::EventCloseClicked,CEGUI::Event::Subscriber(&closeEvalWindow));
         evalWindow->getChild("Login/Button")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&guessLuaPassword));
         evalWindow->getChild("Code/Editbox")->subscribeEvent(CEGUI::Editbox::EventTextAccepted,CEGUI::Event::Subscriber(&submitEvalString));

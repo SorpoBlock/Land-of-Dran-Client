@@ -13,8 +13,8 @@ namespace syj
     bool exitToWindowsButton(const CEGUI::EventArgs &e)
     {
         CEGUI::Window *escapeMenu = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("EscapeMenu");
-        serverStuff *ohWow = (serverStuff*)escapeMenu->getUserData();
-        ohWow->exitToWindows = true;
+        clientStuff *clientEnvironment = (clientStuff*)escapeMenu->getUserData();
+        clientEnvironment->exitToWindows = true;
 
         return true;
     }
@@ -22,9 +22,9 @@ namespace syj
     bool playerListButton(const CEGUI::EventArgs &e)
     {
         CEGUI::Window *escapeMenu = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("EscapeMenu");
-        serverStuff *ohWow = (serverStuff*)escapeMenu->getUserData();
-        ohWow->playerList->setVisible(true);
-        ohWow->playerList->moveToFront();
+        clientStuff *clientEnvironment = (clientStuff*)escapeMenu->getUserData();
+        clientEnvironment->playerList->setVisible(true);
+        clientEnvironment->playerList->moveToFront();
 
         return true;
     }
@@ -32,24 +32,21 @@ namespace syj
     bool escapeAvatarButton(const CEGUI::EventArgs &e)
     {
         CEGUI::Window *escapeMenu = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("EscapeMenu");
-        serverStuff *ohWow = (serverStuff*)escapeMenu->getUserData();
+        clientStuff *clientEnvironment = (clientStuff*)escapeMenu->getUserData();
         //uniformsHolder *basicShader = (uniformsHolder*)escapeMenu->getChild("AvatarPrefs")->getUserData();
 
-        bool isMouseLocked = ohWow->context->getMouseLocked();
-        ohWow->context->setMouseLock(false);
-        //TODO: Update avatar picker code
-        /*if(!ohWow->picker->playerModel)
-            ohWow->picker->playerModel = ohWow->newDynamicTypes[0];*/
+        bool isMouseLocked = clientEnvironment->context->getMouseLocked();
+        clientEnvironment->context->setMouseLock(false);
 
-        ohWow->palette->window->setVisible(false);
-        ohWow->inventoryBox->setVisible(false);
-        ohWow->evalWindow->setVisible(false);
-        ohWow->wheelWrench->setVisible(false);
-        ohWow->wrench->setVisible(false);
-        ohWow->playerList->setVisible(false);
+        clientEnvironment->palette->window->setVisible(false);
+        clientEnvironment->inventoryBox->setVisible(false);
+        clientEnvironment->evalWindow->setVisible(false);
+        clientEnvironment->wheelWrench->setVisible(false);
+        clientEnvironment->wrench->setVisible(false);
+        clientEnvironment->playerList->setVisible(false);
         CEGUI::Window *saveLoadWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("SaveLoad");
         saveLoadWindow->setVisible(false);
-        ohWow->brickSelector->setVisible(false);
+        clientEnvironment->brickSelector->setVisible(false);
         escapeMenu->setVisible(false);
         CEGUI::Window *optionsWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("Options");
         optionsWindow->setVisible(false);
@@ -61,16 +58,16 @@ namespace syj
         y.d_scale = 100;
         brickPopup->setPosition(CEGUI::UVector2(x,y));
 
-        ohWow->picker->picking = true;
-        ohWow->picker->runPickCycle(ohWow->context,ohWow->instancedShader,ohWow->nonInstancedShader,ohWow->connection,ohWow->prefs);
-        ohWow->context->setMouseLock(isMouseLocked);
+        clientEnvironment->serverData->picker->picking = true;
+        clientEnvironment->serverData->picker->runPickCycle(clientEnvironment->context,clientEnvironment->instancedShader,clientEnvironment->nonInstancedShader,clientEnvironment->serverData->connection,clientEnvironment->prefs);
+        clientEnvironment->context->setMouseLock(isMouseLocked);
 
-        for(unsigned int a = 0; a<ohWow->newDynamics.size(); a++)
+        for(unsigned int a = 0; a<clientEnvironment->serverData->newDynamics.size(); a++)
         {
-            ohWow->newDynamics[a]->modelInterpolator.keyFrames.clear();
+            clientEnvironment->serverData->newDynamics[a]->modelInterpolator.keyFrames.clear();
         }
 
-        ohWow->palette->window->setVisible(true);
+        clientEnvironment->palette->window->setVisible(true);
 
         return true;
     }
@@ -115,10 +112,10 @@ namespace syj
         return true;
     }
 
-    CEGUI::Window *addEscapeMenu(serverStuff *ohWow,uniformsHolder *basicShader)
+    CEGUI::Window *addEscapeMenu(clientStuff *clientEnvironment,uniformsHolder *basicShader)
     {
         CEGUI::Window *escapeMenu = addGUIFromFile("escapeMenu.layout");
-        escapeMenu->setUserData(ohWow);
+        escapeMenu->setUserData(clientEnvironment);
         escapeMenu->subscribeEvent(CEGUI::FrameWindow::EventCloseClicked,CEGUI::Event::Subscriber(&closeEscapeMenu));
 
         escapeMenu->getChild("ExitToWindows/Button")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&exitToWindowsButton));

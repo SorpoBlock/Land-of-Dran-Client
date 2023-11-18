@@ -86,7 +86,8 @@ bool saveBuild(const CEGUI::EventArgs &e)
 {
     CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
     CEGUI::Window *saveLoadWindow = root->getChild("SaveLoad");
-    serverStuff *ohWow = (serverStuff*)saveLoadWindow->getUserData();
+    clientStuff *clientEnvironment = (clientStuff*)saveLoadWindow->getUserData();
+    serverStuff *serverData = serverData;
 
     std::string fileName = saveLoadWindow->getChild("BuildFilePath")->getText().c_str();
     if(fileName.length() < 1)
@@ -108,15 +109,15 @@ bool saveBuild(const CEGUI::EventArgs &e)
     unsigned int uIntBuf = landOfDranBuildMagic;
     build.write((char*)&uIntBuf,sizeof(unsigned int));
 
-    uIntBuf = ohWow->staticBricks.getBrickCount();
+    uIntBuf = serverData->staticBricks.getBrickCount();
     build.write((char*)&uIntBuf,sizeof(unsigned int));
 
-    uIntBuf = ohWow->staticBricks.blocklandTypes->specialBrickTypes.size();
+    uIntBuf = serverData->staticBricks.blocklandTypes->specialBrickTypes.size();
     build.write((char*)&uIntBuf,sizeof(unsigned int));
 
-    for(int a = 0; a<ohWow->staticBricks.blocklandTypes->specialBrickTypes.size(); a++)
+    for(int a = 0; a<serverData->staticBricks.blocklandTypes->specialBrickTypes.size(); a++)
     {
-        std::string name = ohWow->staticBricks.blocklandTypes->specialBrickTypes[a]->fileName;
+        std::string name = serverData->staticBricks.blocklandTypes->specialBrickTypes[a]->fileName;
         if(name.length() < 1 || name.length() > 255)
         {
             charBuf = 0;
@@ -131,12 +132,12 @@ bool saveBuild(const CEGUI::EventArgs &e)
         build.write(name.c_str(),name.length());
     }
 
-    uIntBuf = ohWow->staticBricks.opaqueBasicBricks.size();
+    uIntBuf = serverData->staticBricks.opaqueBasicBricks.size();
     build.write((char*)&uIntBuf,sizeof(unsigned int));
 
-    for(int a = 0; a<ohWow->staticBricks.opaqueBasicBricks.size(); a++)
+    for(int a = 0; a<serverData->staticBricks.opaqueBasicBricks.size(); a++)
     {
-        basicBrickRenderData *brick = ohWow->staticBricks.opaqueBasicBricks[a];
+        basicBrickRenderData *brick = serverData->staticBricks.opaqueBasicBricks[a];
 
         charBuf = brick->color.r * 255.0;
         build.write((char*)&charBuf,sizeof(unsigned char));
@@ -170,12 +171,12 @@ bool saveBuild(const CEGUI::EventArgs &e)
         build.write((char*)&charBuf,sizeof(unsigned char));
     }
 
-    uIntBuf = ohWow->staticBricks.transparentBasicBricks.size();
+    uIntBuf = serverData->staticBricks.transparentBasicBricks.size();
     build.write((char*)&uIntBuf,sizeof(unsigned int));
 
-    for(int a = 0; a<ohWow->staticBricks.transparentBasicBricks.size(); a++)
+    for(int a = 0; a<serverData->staticBricks.transparentBasicBricks.size(); a++)
     {
-        basicBrickRenderData *brick = ohWow->staticBricks.transparentBasicBricks[a];
+        basicBrickRenderData *brick = serverData->staticBricks.transparentBasicBricks[a];
 
         charBuf = brick->color.r * 255.0;
         build.write((char*)&charBuf,sizeof(unsigned char));
@@ -209,12 +210,12 @@ bool saveBuild(const CEGUI::EventArgs &e)
         build.write((char*)&charBuf,sizeof(unsigned char));
     }
 
-    uIntBuf = ohWow->staticBricks.opaqueSpecialBricks.size();
+    uIntBuf = serverData->staticBricks.opaqueSpecialBricks.size();
     build.write((char*)&uIntBuf,sizeof(unsigned int));
 
-    for(int a = 0; a<ohWow->staticBricks.opaqueSpecialBricks.size(); a++)
+    for(int a = 0; a<serverData->staticBricks.opaqueSpecialBricks.size(); a++)
     {
-        specialBrickRenderData *brick = ohWow->staticBricks.opaqueSpecialBricks[a];
+        specialBrickRenderData *brick = serverData->staticBricks.opaqueSpecialBricks[a];
 
         charBuf = brick->color.r * 255.0;
         build.write((char*)&charBuf,sizeof(unsigned char));
@@ -242,12 +243,12 @@ bool saveBuild(const CEGUI::EventArgs &e)
         build.write((char*)&charBuf,sizeof(unsigned char));
     }
 
-    uIntBuf = ohWow->staticBricks.transparentSpecialBricks.size();
+    uIntBuf = serverData->staticBricks.transparentSpecialBricks.size();
     build.write((char*)&uIntBuf,sizeof(unsigned int));
 
-    for(int a = 0; a<ohWow->staticBricks.transparentSpecialBricks.size(); a++)
+    for(int a = 0; a<serverData->staticBricks.transparentSpecialBricks.size(); a++)
     {
-        specialBrickRenderData *brick = ohWow->staticBricks.transparentSpecialBricks[a];
+        specialBrickRenderData *brick = serverData->staticBricks.transparentSpecialBricks[a];
 
         charBuf = brick->color.r * 255.0;
         build.write((char*)&charBuf,sizeof(unsigned char));
@@ -284,8 +285,9 @@ bool saveCar(const CEGUI::EventArgs &e)
 {
     CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
     CEGUI::Window *saveLoadWindow = root->getChild("SaveLoad");
-    serverStuff *ohWow = (serverStuff*)saveLoadWindow->getUserData();
-    if(!ohWow)
+    clientStuff *clientEnvironment = (clientStuff*)saveLoadWindow->getUserData();
+    serverStuff *serverData = clientEnvironment->serverData;
+    if(!clientEnvironment)
         return false;
 
     std::string fileName = saveLoadWindow->getChild("CarFilePath")->getText().c_str();
@@ -296,18 +298,18 @@ bool saveCar(const CEGUI::EventArgs &e)
     }
     fileName = "saves/" + fileName + ".lds";
 
-    if(ohWow->drivenCarId == -1)
+    if(serverData->drivenCarId == -1)
     {
         error("You are not driving a car!");
         return false;
     }
 
     livingBrick *brickCar = 0;
-    for(unsigned int a = 0; a<ohWow->livingBricks.size(); a++)
+    for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
     {
-        if(ohWow->livingBricks[a]->serverID == ohWow->drivenCarId)
+        if(serverData->livingBricks[a]->serverID == serverData->drivenCarId)
         {
-            brickCar = ohWow->livingBricks[a];
+            brickCar = serverData->livingBricks[a];
             break;
         }
     }
@@ -332,9 +334,9 @@ bool saveCar(const CEGUI::EventArgs &e)
     car.write((char*)&intBuf,sizeof(int));
 
     std::vector<light*> carLights;
-    for(int a = 0; a<ohWow->lights.size(); a++)
-        if(ohWow->lights[a]->attachedCar && ohWow->lights[a]->attachedCar == brickCar)
-            carLights.push_back(ohWow->lights[a]);
+    for(int a = 0; a<serverData->lights.size(); a++)
+        if(serverData->lights[a]->attachedCar && serverData->lights[a]->attachedCar == brickCar)
+            carLights.push_back(serverData->lights[a]);
 
     intBuf = carLights.size();
     car.write((char*)&intBuf,sizeof(int));
@@ -586,8 +588,9 @@ bool loadCar()
 
     CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
     CEGUI::Window *saveLoadWindow = root->getChild("SaveLoad");
-    serverStuff *ohWow = (serverStuff*)saveLoadWindow->getUserData();
-    if(!ohWow)
+    clientStuff *clientEnvironment = (clientStuff*)saveLoadWindow->getUserData();
+    serverStuff *serverData = clientEnvironment->serverData;
+    if(!clientEnvironment)
         return false;
 
     CEGUI::MultiColumnList *saves = (CEGUI::MultiColumnList*)saveLoadWindow->getChild("SavesList");
@@ -608,20 +611,20 @@ bool loadCar()
         return false;
     }
 
-    if(ohWow->ghostCar)
+    if(serverData->ghostCar)
     {
         error("Ghost car already existed, deleting.");
-        delete ohWow->ghostCar;
-        ohWow->ghostCar = 0;
+        delete serverData->ghostCar;
+        serverData->ghostCar = 0;
     }
 
-    ohWow->ghostCar = new livingBrick;
-    ohWow->ghostCar->allocateVertBuffer();
-    ohWow->ghostCar->allocatePerTexture(ohWow->brickMat);
-    ohWow->ghostCar->allocatePerTexture(ohWow->brickMatSide,true,true);
-    ohWow->ghostCar->allocatePerTexture(ohWow->brickMatBottom,true);
-    ohWow->ghostCar->allocatePerTexture(ohWow->brickMatRamp);
-    ohWow->ghostCar->addBlocklandCompatibility(ohWow->staticBricks.blocklandTypes);
+    serverData->ghostCar = new livingBrick;
+    serverData->ghostCar->allocateVertBuffer();
+    serverData->ghostCar->allocatePerTexture(clientEnvironment->brickMat);
+    serverData->ghostCar->allocatePerTexture(clientEnvironment->brickMatSide,true,true);
+    serverData->ghostCar->allocatePerTexture(clientEnvironment->brickMatBottom,true);
+    serverData->ghostCar->allocatePerTexture(clientEnvironment->brickMatRamp);
+    serverData->ghostCar->addBlocklandCompatibility(serverData->staticBricks.blocklandTypes);
 
     int intBuf;
     float floatBuf;
@@ -637,12 +640,12 @@ bool loadCar()
     if((!carFile.is_open()) || carFile.eof())
     {
         error("(1) Reached end of car file prematurely!");
-        delete ohWow->ghostCar;
-        ohWow->ghostCar = 0;
+        delete serverData->ghostCar;
+        serverData->ghostCar = 0;
         return false;
     }
 
-    ohWow->ghostCarLights.clear();
+    serverData->ghostCarLights.clear();
     carFile.read((char*)&intBuf,sizeof(int));
     int numLights = intBuf;
     if(numLights < 0 || numLights >= 100)
@@ -655,7 +658,7 @@ bool loadCar()
     for(int a = 0; a<numLights; a++)
     {
         light *tmp = new light;
-        ohWow->ghostCarLights.push_back(tmp);
+        serverData->ghostCarLights.push_back(tmp);
 
         carFile.read((char*)&floatBuf,sizeof(float));
         tmp->color.r = floatBuf;
@@ -705,8 +708,8 @@ bool loadCar()
     if((!carFile.is_open()) || carFile.eof())
     {
         error("(2) Reached end of car file prematurely!");
-        delete ohWow->ghostCar;
-        ohWow->ghostCar = 0;
+        delete serverData->ghostCar;
+        serverData->ghostCar = 0;
         return false;
     }
 
@@ -719,8 +722,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(3) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -728,8 +731,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(4) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -737,8 +740,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(5) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -746,8 +749,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(6) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -755,8 +758,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(7) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -764,8 +767,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(8) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -773,8 +776,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(9) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -782,8 +785,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(10) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -791,8 +794,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(11) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -800,8 +803,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(12) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -809,8 +812,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(13) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -818,8 +821,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(14) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -827,8 +830,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(15) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -838,8 +841,8 @@ bool loadCar()
             if((!carFile.is_open()) || carFile.eof())
             {
                 error("(16) Reached end of car file prematurely!");
-                delete ohWow->ghostCar;
-                ohWow->ghostCar = 0;
+                delete serverData->ghostCar;
+                serverData->ghostCar = 0;
                 return false;
             }
 
@@ -851,15 +854,15 @@ bool loadCar()
             if(!brickTypeName)
             {
                 error("Invalid brick type name string read from file!");
-                delete ohWow->ghostCar;
-                ohWow->ghostCar = 0;
+                delete serverData->ghostCar;
+                serverData->ghostCar = 0;
                 return false;
             }
 
             brickTypeName[intBuf] = 0;
-            for(unsigned int z = 0; z<ohWow->staticBricks.blocklandTypes->specialBrickTypes.size(); z++)
+            for(unsigned int z = 0; z<serverData->staticBricks.blocklandTypes->specialBrickTypes.size(); z++)
             {
-                if(ohWow->staticBricks.blocklandTypes->specialBrickTypes[z]->fileName == std::string(brickTypeName))
+                if(serverData->staticBricks.blocklandTypes->specialBrickTypes[z]->fileName == std::string(brickTypeName))
                 {
                     foundBrickType = true;
                     wheel.typeID = z;
@@ -871,16 +874,16 @@ bool loadCar()
             if((!carFile.is_open()) || carFile.eof())
             {
                 error("(17) Reached end of car file prematurely!");
-                delete ohWow->ghostCar;
-                ohWow->ghostCar = 0;
+                delete serverData->ghostCar;
+                serverData->ghostCar = 0;
                 return false;
             }
 
             if(!foundBrickType)
             {
                 error("Server does not have brick type " + std::string(brickTypeName) + " for wheel!");
-                delete ohWow->ghostCar;
-                ohWow->ghostCar = 0;
+                delete serverData->ghostCar;
+                serverData->ghostCar = 0;
                 return false;
             }
             else
@@ -891,14 +894,14 @@ bool loadCar()
                 brick->position.z = wheel.carZ;
                 brick->color = glm::vec4(1,1,1,1);
                 brick->figuredAngleID = 0;
-                brick->rotation = ohWow->ghostCar->rotations[0];
-                ohWow->ghostCar->addSpecialBrick(brick,ohWow->world,wheel.typeID,brick->figuredAngleID,false);
+                brick->rotation = serverData->ghostCar->rotations[0];
+                serverData->ghostCar->addSpecialBrick(brick,serverData->world,wheel.typeID,brick->figuredAngleID,false);
             }
         }
         else
             error("No special brick type for wheel brick saved!");
 
-        ohWow->ghostCar->wheelBrickData.push_back(wheel);
+        serverData->ghostCar->wheelBrickData.push_back(wheel);
     }
 
     carFile.read((char*)&intBuf,sizeof(int));
@@ -907,8 +910,8 @@ bool loadCar()
     if((!carFile.is_open()) || carFile.eof())
     {
         error("(18) Reached end of car file prematurely!");
-        delete ohWow->ghostCar;
-        ohWow->ghostCar = 0;
+        delete serverData->ghostCar;
+        serverData->ghostCar = 0;
         return false;
     }
 
@@ -929,8 +932,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(19) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -940,8 +943,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(20) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -957,8 +960,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(21) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -968,16 +971,16 @@ bool loadCar()
         if(brick->dimensions.x < 0 || brick->dimensions.x > 255)
         {
             error("Brick X dimension was " + std::to_string(brick->dimensions.x) + " this is an error.");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(22) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -987,16 +990,16 @@ bool loadCar()
         if(brick->dimensions.y < 0 || brick->dimensions.y > 255)
         {
             error("Brick Y dimension was " + std::to_string(brick->dimensions.y) + " this is an error.");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(23) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1006,16 +1009,16 @@ bool loadCar()
         if(brick->dimensions.z < 0 || brick->dimensions.z > 255)
         {
             error("Brick Z dimension was " + std::to_string(brick->dimensions.z) + " this is an error.");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(24) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1027,13 +1030,13 @@ bool loadCar()
             rot = 0;
         }
         brick->figuredAngleID = rot;
-        brick->rotation = ohWow->ghostCar->rotations[rot];
+        brick->rotation = serverData->ghostCar->rotations[rot];
 
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(25) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1043,8 +1046,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(26) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1054,8 +1057,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(27) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1065,8 +1068,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(28) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1076,8 +1079,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(29) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1087,12 +1090,12 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(30) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
-        ohWow->ghostCar->addBasicBrick(brick,brick->figuredAngleID,0,ohWow->world,false);
+        serverData->ghostCar->addBasicBrick(brick,brick->figuredAngleID,0,serverData->world,false);
     }
 
     carFile.read((char*)&intBuf,sizeof(int));
@@ -1101,8 +1104,8 @@ bool loadCar()
     if((!carFile.is_open()) || carFile.eof())
     {
         error("(31) Reached end of car file prematurely!");
-        delete ohWow->ghostCar;
-        ohWow->ghostCar = 0;
+        delete serverData->ghostCar;
+        serverData->ghostCar = 0;
         return false;
     }
 
@@ -1123,8 +1126,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(32) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1134,8 +1137,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(33) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1151,8 +1154,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(34) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1161,8 +1164,8 @@ bool loadCar()
         if(intBuf < 1 || intBuf > 200)
         {
             error("Special brick type file name appears to be " + std::to_string(intBuf) + " characters long.");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1181,15 +1184,15 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(35) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
         int typeIdx = -1;
-        for(unsigned int b = 0; b<ohWow->ghostCar->blocklandTypes->specialBrickTypes.size(); b++)
+        for(unsigned int b = 0; b<serverData->ghostCar->blocklandTypes->specialBrickTypes.size(); b++)
         {
-            specialBrickType *tmp = ohWow->ghostCar->blocklandTypes->specialBrickTypes[b];
+            specialBrickType *tmp = serverData->ghostCar->blocklandTypes->specialBrickTypes[b];
             if(tmp->fileName == name)
             {
                 typeIdx = b;
@@ -1205,13 +1208,13 @@ bool loadCar()
             rot = 0;
         }
         brick->figuredAngleID = rot;
-        brick->rotation = ohWow->ghostCar->rotations[rot];
+        brick->rotation = serverData->ghostCar->rotations[rot];
 
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(36) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1221,8 +1224,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(37) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1232,8 +1235,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(38) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -1242,8 +1245,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(39) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -1252,8 +1255,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(40) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
         carFile.read((char*)&floatBuf,sizeof(float));
@@ -1262,8 +1265,8 @@ bool loadCar()
         if((!carFile.is_open()) || carFile.eof())
         {
             error("(41) Reached end of car file prematurely!");
-            delete ohWow->ghostCar;
-            ohWow->ghostCar = 0;
+            delete serverData->ghostCar;
+            serverData->ghostCar = 0;
             return false;
         }
 
@@ -1273,13 +1276,13 @@ bool loadCar()
             continue;
         }
 
-        ohWow->ghostCar->addSpecialBrick(brick,ohWow->world,typeIdx,brick->figuredAngleID,false);
+        serverData->ghostCar->addSpecialBrick(brick,serverData->world,typeIdx,brick->figuredAngleID,false);
     }
 
-    ohWow->ghostCar->recompileEverything();
-    ohWow->ghostCar->compiled = true;
+    serverData->ghostCar->recompileEverything();
+    serverData->ghostCar->compiled = true;
 
-    ohWow->ghostCar->carTransform.addTransform(0,glm::vec3(0,0,0),glm::quat(1,0,0,0));
+    serverData->ghostCar->carTransform.addTransform(0,glm::vec3(0,0,0),glm::quat(1,0,0,0));
 
     carFile.close();
 
@@ -1290,8 +1293,8 @@ bool loadCarAsCar(const CEGUI::EventArgs &e)
 {
     CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
     CEGUI::Window *saveLoadWindow = root->getChild("SaveLoad");
-    serverStuff *ohWow = (serverStuff*)saveLoadWindow->getUserData();
-    ohWow->loadCarAsCar = true;
+    clientStuff *clientEnvironment = (clientStuff*)saveLoadWindow->getUserData();
+    clientEnvironment->serverData->loadCarAsCar = true;
     return loadCar();
 }
 
@@ -1299,15 +1302,17 @@ bool loadCarAsBricks(const CEGUI::EventArgs &e)
 {
     CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
     CEGUI::Window *saveLoadWindow = root->getChild("SaveLoad");
-    serverStuff *ohWow = (serverStuff*)saveLoadWindow->getUserData();
-    ohWow->loadCarAsCar = false;
+    clientStuff *clientEnvironment = (clientStuff*)saveLoadWindow->getUserData();
+    clientEnvironment->serverData->loadCarAsCar = false;
     return loadCar();
 }
 
 namespace syj
 {
-    void sendBrickCarToServer(serverStuff *common,livingBrick *car,glm::vec3 origin)
+    void sendBrickCarToServer(clientStuff *clientEnvironment,livingBrick *car,glm::vec3 origin)
     {
+        serverStuff *serverData = clientEnvironment->serverData;
+
         std::vector<basicBrickRenderData*> allBasicBricks;
         for(int a = 0; a<car->opaqueBasicBricks.size(); a++)
             allBasicBricks.push_back(car->opaqueBasicBricks[a]);
@@ -1332,38 +1337,38 @@ namespace syj
         amountPacket.writeUInt(0,3);  //0 = amounts packet
         amountPacket.writeUInt(allBasicBricks.size(),10);
         amountPacket.writeUInt(allSpecialBricks.size(),10);
-        amountPacket.writeUInt(common->ghostCarLights.size(),6);
+        amountPacket.writeUInt(serverData->ghostCarLights.size(),6);
         amountPacket.writeUInt(car->wheelBrickData.size(),6);
-        amountPacket.writeBit(common->loadCarAsCar); //If false, just load the bricks from it
+        amountPacket.writeBit(serverData->loadCarAsCar); //If false, just load the bricks from it
         amountPacket.writeFloat(origin.x);  //Where we want to load the car
         amountPacket.writeFloat(origin.y);
         amountPacket.writeFloat(origin.z);
-        common->connection->send(&amountPacket,true);
+        serverData->connection->send(&amountPacket,true);
 
         packet lightPacket;
         lightPacket.writeUInt(11,4); //11 = carPlantRequest
         lightPacket.writeUInt(1,3);  //1  = lights packet
-        lightPacket.writeUInt(common->ghostCarLights.size(),8);
-        for(int a = 0; a<common->ghostCarLights.size(); a++)
+        lightPacket.writeUInt(serverData->ghostCarLights.size(),8);
+        for(int a = 0; a<serverData->ghostCarLights.size(); a++)
         {
-            lightPacket.writeFloat(common->ghostCarLights[a]->color.r);
-            lightPacket.writeFloat(common->ghostCarLights[a]->color.g);
-            lightPacket.writeFloat(common->ghostCarLights[a]->color.b);
+            lightPacket.writeFloat(serverData->ghostCarLights[a]->color.r);
+            lightPacket.writeFloat(serverData->ghostCarLights[a]->color.g);
+            lightPacket.writeFloat(serverData->ghostCarLights[a]->color.b);
 
-            lightPacket.writeFloat(common->ghostCarLights[a]->attachOffset.x);
-            lightPacket.writeFloat(common->ghostCarLights[a]->attachOffset.y);
-            lightPacket.writeFloat(common->ghostCarLights[a]->attachOffset.z);
+            lightPacket.writeFloat(serverData->ghostCarLights[a]->attachOffset.x);
+            lightPacket.writeFloat(serverData->ghostCarLights[a]->attachOffset.y);
+            lightPacket.writeFloat(serverData->ghostCarLights[a]->attachOffset.z);
 
-            lightPacket.writeBit(common->ghostCarLights[a]->isSpotlight);
-            if(common->ghostCarLights[a]->isSpotlight)
+            lightPacket.writeBit(serverData->ghostCarLights[a]->isSpotlight);
+            if(serverData->ghostCarLights[a]->isSpotlight)
             {
-                lightPacket.writeFloat(common->ghostCarLights[a]->direction.x);
-                lightPacket.writeFloat(common->ghostCarLights[a]->direction.y);
-                lightPacket.writeFloat(common->ghostCarLights[a]->direction.z);
-                lightPacket.writeFloat(common->ghostCarLights[a]->direction.w);
+                lightPacket.writeFloat(serverData->ghostCarLights[a]->direction.x);
+                lightPacket.writeFloat(serverData->ghostCarLights[a]->direction.y);
+                lightPacket.writeFloat(serverData->ghostCarLights[a]->direction.z);
+                lightPacket.writeFloat(serverData->ghostCarLights[a]->direction.w);
             }
         }
-        common->connection->send(&lightPacket,true);
+        serverData->connection->send(&lightPacket,true);
 
         packet wheelPacket;
         wheelPacket.writeUInt(11,4); //11 = carPlantRequest
@@ -1385,15 +1390,15 @@ namespace syj
             wheelPacket.writeFloat(car->wheelBrickData[a].frictionSlip);
             wheelPacket.writeFloat(car->wheelBrickData[a].rollInfluence);
             int typeID = car->wheelBrickData[a].typeID;
-            if(typeID < 0 || typeID >= common->staticBricks.blocklandTypes->specialBrickTypes.size())
+            if(typeID < 0 || typeID >= serverData->staticBricks.blocklandTypes->specialBrickTypes.size())
                 wheelPacket.writeUInt(0,10);
             else
             {
-                typeID = common->staticBricks.blocklandTypes->specialBrickTypes[typeID]->serverID;
+                typeID = serverData->staticBricks.blocklandTypes->specialBrickTypes[typeID]->serverID;
                 wheelPacket.writeUInt(typeID,10);
             }
         }
-        common->connection->send(&wheelPacket,true);
+        serverData->connection->send(&wheelPacket,true);
 
         int bricksLeftToSend = allBasicBricks.size();
         int bricksSent = 0;
@@ -1447,7 +1452,7 @@ namespace syj
             bricksLeftToSend -= bricksSentThisPacket;
             bricksSent += bricksSentThisPacket;
 
-            common->connection->send(&basicBrickPacket,true);
+            serverData->connection->send(&basicBrickPacket,true);
         }
 
         bricksLeftToSend = allSpecialBricks.size();
@@ -1500,14 +1505,14 @@ namespace syj
             bricksLeftToSend -= bricksSentThisPacket;
             bricksSent += bricksSentThisPacket;
 
-            common->connection->send(&specialBrickPacket,true);
+            serverData->connection->send(&specialBrickPacket,true);
         }
     }
 
-    CEGUI::Window *loadSaveLoadWindow(serverStuff *common)
+    CEGUI::Window *loadSaveLoadWindow(clientStuff *clientEnvironment)
     {
         CEGUI::Window *saveLoadWindow = addGUIFromFile("saveLoad.layout");
-        saveLoadWindow->setUserData(common);
+        saveLoadWindow->setUserData(clientEnvironment);
         saveLoadWindow->subscribeEvent(CEGUI::FrameWindow::EventCloseClicked,CEGUI::Event::Subscriber(&closeSaveLoadWindow));
 
         saveLoadWindow->getChild("Refresh")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&refreshButton));

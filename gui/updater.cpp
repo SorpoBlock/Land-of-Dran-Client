@@ -302,7 +302,7 @@ namespace syj
         float vertBounceDir = 1;
         int totalFiles = pathsToDownload.size();
         CEGUI::Window *bounceText = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("Bouncer");
-        renderContext *context = ((serverStuff*)updater->getUserData())->context;
+        renderContext *context = ((clientStuff*)updater->getUserData())->context;
 
         whichFileLock = SDL_CreateSemaphore(1);
         SDL_Thread *thread = SDL_CreateThread(updateThread,"UpdaterThread",&pathsToDownload);
@@ -403,15 +403,15 @@ namespace syj
 
         updater->getChild("Button")->setDisabled(false);
 
-        ((serverStuff*)updater->getUserData())->prefs->set("REVISION",((serverStuff*)updater->getUserData())->masterRevision);
-        ((serverStuff*)updater->getUserData())->prefs->set("NETWORK",((serverStuff*)updater->getUserData())->masterNetwork);
-        ((serverStuff*)updater->getUserData())->prefs->exportToFile("config.txt");
+        ((clientStuff*)updater->getUserData())->prefs->set("REVISION",((clientStuff*)updater->getUserData())->masterRevision);
+        ((clientStuff*)updater->getUserData())->prefs->set("NETWORK",((clientStuff*)updater->getUserData())->masterNetwork);
+        ((clientStuff*)updater->getUserData())->prefs->exportToFile("config.txt");
     }
 
-    CEGUI::Window *addUpdater(serverStuff *ohWow)
+    CEGUI::Window *addUpdater(clientStuff *clientEnvironment)
     {
         CEGUI::Window *updater = addGUIFromFile("updater.layout");
-        updater->setUserData(ohWow);
+        updater->setUserData(clientEnvironment);
         updater->subscribeEvent(CEGUI::FrameWindow::EventCloseClicked,CEGUI::Event::Subscriber(&closeUpdater));
         updater->getChild("Button")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&updateButton));
 

@@ -8,7 +8,7 @@
 namespace syj
 {
     bool closeEvalWindow(const CEGUI::EventArgs &e);
-    CEGUI::Window *configureEvalWindow(CEGUI::Window *hud,serverStuff *common);
+    CEGUI::Window *configureEvalWindow(CEGUI::Window *hud,clientStuff *common);
 }
 
 #endif // EVALWINDOW_H_INCLUDED

@@ -37,7 +37,7 @@ namespace syj
                 if(response.substr(0,7) == "GOODKEY")
                 {
                     info("Welcome back!");
-                    ((serverStuff*)userp)->loggedIn = true;
+                    ((clientStuff*)userp)->loggedIn = true;
                     CEGUI::Window *statusText = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/StatusText");
                     statusText->setText(std::string("Welcome, ") + std::string(CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/UsernameBox")->getText().c_str()));
                     CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setText("Join");
@@ -45,16 +45,16 @@ namespace syj
                 else
                 {
                     error("Expired session token, you need to log in again!");
-                    ((serverStuff*)userp)->loggedIn = false;
-                    ((serverStuff*)userp)->sessionToken = "";
-                    ((serverStuff*)userp)->loggedName = "";
+                    ((clientStuff*)userp)->loggedIn = false;
+                    ((clientStuff*)userp)->sessionToken = "";
+                    ((clientStuff*)userp)->loggedName = "";
                 }
             }
         }
         return nmemb;
     }
 
-    void checkForSessionKey(serverStuff *ohWow,preferenceFile &prefs)
+    void checkForSessionKey(clientStuff *clientEnvironment,preferenceFile &prefs)
     {
         std::string username = "";
         std::string key = "";
@@ -73,8 +73,8 @@ namespace syj
 
         info("Logging in with previous credentials...");
 
-        ohWow->sessionToken = key;
-        ohWow->loggedName = username;
+        clientEnvironment->sessionToken = key;
+        clientEnvironment->loggedName = username;
 
         CURL *curlHandle = curl_easy_init();
 
@@ -83,7 +83,7 @@ namespace syj
         std::string url = "https://dran.land/verifySessionToken.php";
         curl_easy_setopt(curlHandle,CURLOPT_URL,url.c_str());
         curl_easy_setopt(curlHandle,CURLOPT_WRITEFUNCTION,verifyLogin);
-        curl_easy_setopt(curlHandle,CURLOPT_WRITEDATA,ohWow);
+        curl_easy_setopt(curlHandle,CURLOPT_WRITEDATA,clientEnvironment);
         curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYPEER , 0);
         curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYHOST , 0);
         std::string args = "key=" + key + "&name=" + username;
@@ -95,8 +95,8 @@ namespace syj
 
     size_t getLoginResponse(void *buffer,size_t size,size_t nmemb,void *userp)
     {
-        serverStuff *ohWow = (serverStuff*)userp;
-        if(!ohWow)
+        clientStuff *clientEnvironment = (clientStuff*)userp;
+        if(!clientEnvironment)
             return nmemb;
 
         if(nmemb > 0)
@@ -123,13 +123,13 @@ namespace syj
                 statusText->setText(std::string("Welcome, ") + std::string(CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/UsernameBox")->getText().c_str()));
                 CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setText("Join");
                 std::string afterSpace = response.substr(space+1,response.length() - (space+1));
-                ohWow->loggedIn = true;
-                ohWow->sessionToken = afterSpace;
-                if(ohWow->prefs->getPreference("SESSION"))
-                    ohWow->prefs->set("SESSION",afterSpace);
+                clientEnvironment->loggedIn = true;
+                clientEnvironment->sessionToken = afterSpace;
+                if(clientEnvironment->prefs->getPreference("SESSION"))
+                    clientEnvironment->prefs->set("SESSION",afterSpace);
                 else
-                    ohWow->prefs->addStringPreference("SESSION",afterSpace);
-                ohWow->prefs->exportToFile("config.txt");
+                    clientEnvironment->prefs->addStringPreference("SESSION",afterSpace);
+                clientEnvironment->prefs->exportToFile("config.txt");
             }
             else if(beforeSpace == "BAD")
                 statusText->setText("Incorrect password!");
@@ -235,7 +235,7 @@ namespace syj
     bool loginButton(const CEGUI::EventArgs &e)
     {
         CEGUI::Window *joinServerWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer");
-        serverStuff *ohWow = (serverStuff*)joinServerWindow->getUserData();
+        clientStuff *clientEnvironment = (clientStuff*)joinServerWindow->getUserData();
         std::string username = joinServerWindow->getChild("UsernameBox")->getText().c_str();
         std::string password = joinServerWindow->getChild("PasswordBox")->getText().c_str();
 
@@ -246,12 +246,12 @@ namespace syj
             return true;
         }
 
-        ohWow->loggedName = username;
+        clientEnvironment->loggedName = username;
 
         CURL *curlHandle = curl_easy_init();
         curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYPEER , 0);
         curl_easy_setopt(curlHandle, CURLOPT_SSL_VERIFYHOST , 0);
-        curl_easy_setopt(curlHandle, CURLOPT_WRITEDATA, ohWow);
+        curl_easy_setopt(curlHandle, CURLOPT_WRITEDATA, clientEnvironment);
         curl_easy_setopt(curlHandle,CURLOPT_WRITEFUNCTION,getLoginResponse);
         std::string url = "https://dran.land/getSessionToken.php";
         std::string args = "pass=" + password + "&name=" + username;
@@ -270,27 +270,27 @@ namespace syj
             return true;
         if(name.length() < 1)
             return true;
-        serverStuff *ohWow = (serverStuff*)joinServerWindow->getUserData();
-        if(!ohWow)
+        clientStuff *clientEnvironment = (clientStuff*)joinServerWindow->getUserData();
+        if(!clientEnvironment)
             return true;
-        ohWow->prefs->set("Name",name);
-        ohWow->prefs->set("IP",ip);
+        clientEnvironment->prefs->set("Name",name);
+        clientEnvironment->prefs->set("IP",ip);
         joinServerWindow->getChild("StatusText")->setText("Connecting...");
 
-        ohWow->wantedIP = ip;
-        ohWow->wantedName = name;
-        ohWow->waitingToPickServer = false;
+        clientEnvironment->wantedIP = ip;
+        clientEnvironment->wantedName = name;
+        clientEnvironment->waitingToPickServer = false;
 
         unsigned char r = ((CEGUI::Slider*)joinServerWindow->getChild("RedSlider"))->getCurrentValue();
         unsigned char g = ((CEGUI::Slider*)joinServerWindow->getChild("GreenSlider"))->getCurrentValue();
         unsigned char b = ((CEGUI::Slider*)joinServerWindow->getChild("BlueSlider"))->getCurrentValue();
-        ohWow->prefs->set("PlayerColorRed",r);
-        ohWow->prefs->set("PlayerColorGreen",g);
-        ohWow->prefs->set("PlayerColorBlue",b);
-        ohWow->wantedColor = glm::vec3(r,g,b);
-        ohWow->wantedColor /= glm::vec3(255);
+        clientEnvironment->prefs->set("PlayerColorRed",r);
+        clientEnvironment->prefs->set("PlayerColorGreen",g);
+        clientEnvironment->prefs->set("PlayerColorBlue",b);
+        clientEnvironment->wantedColor = glm::vec3(r,g,b);
+        clientEnvironment->wantedColor /= glm::vec3(255);
 
-        ohWow->prefs->exportToFile("config.txt");
+        clientEnvironment->prefs->exportToFile("config.txt");
 
         return true;
     }
@@ -319,27 +319,27 @@ namespace syj
     bool mainMenuExit(const CEGUI::EventArgs &e)
     {
         CEGUI::Window *joinServerWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer");
-        serverStuff *ohWow = (serverStuff*)joinServerWindow->getUserData();
-        if(!ohWow)
+        clientStuff *clientEnvironment = (clientStuff*)joinServerWindow->getUserData();
+        if(!clientEnvironment)
             return true;
-        ohWow->clickedMainMenuExit = true;
+        clientEnvironment->clickedMainMenuExit = true;
     }
 
-    CEGUI::Window *loadJoinServer(serverStuff *ohWow)
+    CEGUI::Window *loadJoinServer(clientStuff *clientEnvironment)
     {
         CEGUI::Window *joinServerWindow = addGUIFromFile("joinServer.layout");
-        joinServerWindow->setUserData(ohWow);
-        if(ohWow->prefs->getPreference("Name"))
-            joinServerWindow->getChild("UsernameBox")->setText(ohWow->prefs->getPreference("Name")->toString());
-        if(ohWow->prefs->getPreference("IP"))
-            joinServerWindow->getChild("IPBox")->setText(ohWow->prefs->getPreference("IP")->toString());
+        joinServerWindow->setUserData(clientEnvironment);
+        if(clientEnvironment->prefs->getPreference("Name"))
+            joinServerWindow->getChild("UsernameBox")->setText(clientEnvironment->prefs->getPreference("Name")->toString());
+        if(clientEnvironment->prefs->getPreference("IP"))
+            joinServerWindow->getChild("IPBox")->setText(clientEnvironment->prefs->getPreference("IP")->toString());
 
-        if(ohWow->prefs->getPreference("PlayerColorRed"))
-            ((CEGUI::Slider*)joinServerWindow->getChild("RedSlider"))->setCurrentValue(ohWow->prefs->getPreference("PlayerColorRed")->toInteger());
-        if(ohWow->prefs->getPreference("PlayerColorGreen"))
-            ((CEGUI::Slider*)joinServerWindow->getChild("GreenSlider"))->setCurrentValue(ohWow->prefs->getPreference("PlayerColorGreen")->toInteger());
-        if(ohWow->prefs->getPreference("PlayerColorBlue"))
-            ((CEGUI::Slider*)joinServerWindow->getChild("BlueSlider"))->setCurrentValue(ohWow->prefs->getPreference("PlayerColorBlue")->toInteger());
+        if(clientEnvironment->prefs->getPreference("PlayerColorRed"))
+            ((CEGUI::Slider*)joinServerWindow->getChild("RedSlider"))->setCurrentValue(clientEnvironment->prefs->getPreference("PlayerColorRed")->toInteger());
+        if(clientEnvironment->prefs->getPreference("PlayerColorGreen"))
+            ((CEGUI::Slider*)joinServerWindow->getChild("GreenSlider"))->setCurrentValue(clientEnvironment->prefs->getPreference("PlayerColorGreen")->toInteger());
+        if(clientEnvironment->prefs->getPreference("PlayerColorBlue"))
+            ((CEGUI::Slider*)joinServerWindow->getChild("BlueSlider"))->setCurrentValue(clientEnvironment->prefs->getPreference("PlayerColorBlue")->toInteger());
 
         joinServerWindow->getChild("ConnectButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&connectToServer));
         joinServerWindow->getChild("OptionsButton")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&optionsButton));

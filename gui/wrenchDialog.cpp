@@ -7,8 +7,8 @@ namespace syj
         CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
         CEGUI::Window *wrench = root->getChild("HUD/SteeringWrench");
         wrench->setVisible(false);
-        serverStuff *ohWow = (serverStuff*)wrench->getUserData();
-        ohWow->context->setMouseLock(true);
+        clientStuff *clientEnvironment = (clientStuff*)wrench->getUserData();
+        clientEnvironment->context->setMouseLock(true);
 
         return true;
     }
@@ -18,8 +18,8 @@ namespace syj
         CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
         CEGUI::Window *wrench = root->getChild("HUD/WheelWrench");
         wrench->setVisible(false);
-        serverStuff *ohWow = (serverStuff*)wrench->getUserData();
-        ohWow->context->setMouseLock(true);
+        clientStuff *clientEnvironment = (clientStuff*)wrench->getUserData();
+        clientEnvironment->context->setMouseLock(true);
 
         return true;
     }
@@ -29,8 +29,8 @@ namespace syj
         CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
         CEGUI::Window *wrench = root->getChild("HUD/Wrench");
         wrench->setVisible(false);
-        serverStuff *ohWow = (serverStuff*)wrench->getUserData();
-        ohWow->context->setMouseLock(true);
+        clientStuff *clientEnvironment = (clientStuff*)wrench->getUserData();
+        clientEnvironment->context->setMouseLock(true);
 
         return true;
     }
@@ -81,7 +81,7 @@ namespace syj
     {
         CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
         CEGUI::Window *wrench = root->getChild("HUD/Wrench");
-        serverStuff *ohWow = (serverStuff*)wrench->getUserData();
+        clientStuff *clientEnvironment = (clientStuff*)wrench->getUserData();
 
         packet data;
         data.writeUInt(10,4);
@@ -123,8 +123,8 @@ namespace syj
         else
             data.writeBit(false);
 
-        ohWow->context->setMouseLock(true);
-        ohWow->connection->send(&data,true);
+        clientEnvironment->context->setMouseLock(true);
+        clientEnvironment->serverData->connection->send(&data,true);
 
         wrench->setVisible(false);
         return true;
@@ -134,7 +134,7 @@ namespace syj
     {
         CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
         CEGUI::Window *wheelWrench = root->getChild("HUD/WheelWrench");
-        serverStuff *ohWow = (serverStuff*)wheelWrench->getUserData();
+        clientStuff *clientEnvironment = (clientStuff*)wheelWrench->getUserData();
 
         packet data;
         data.writeUInt(10,4);
@@ -150,8 +150,8 @@ namespace syj
         data.writeFloat(atof(wheelWrench->getChild("DampingCompression")->getText().c_str()));
         data.writeFloat(atof(wheelWrench->getChild("DampingRelaxation")->getText().c_str()));
 
-        ohWow->context->setMouseLock(true);
-        ohWow->connection->send(&data,true);
+        clientEnvironment->context->setMouseLock(true);
+        clientEnvironment->serverData->connection->send(&data,true);
         wheelWrench->setVisible(false);
 
         return true;
@@ -161,7 +161,7 @@ namespace syj
     {
         CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
         CEGUI::Window *wheelWrench = root->getChild("HUD/SteeringWrench");
-        serverStuff *ohWow = (serverStuff*)wheelWrench->getUserData();
+        clientStuff *clientEnvironment = (clientStuff*)wheelWrench->getUserData();
 
         packet data;
         data.writeUInt(10,4);
@@ -172,18 +172,18 @@ namespace syj
         data.writeFloat(atof(wheelWrench->getChild("Damping")->getText().c_str()));
         data.writeBit(((CEGUI::ToggleButton*)wheelWrench->getChild("CenterMass"))->isSelected());
 
-        ohWow->context->setMouseLock(true);
-        ohWow->connection->send(&data,true);
+        clientEnvironment->context->setMouseLock(true);
+        clientEnvironment->serverData->connection->send(&data,true);
         wheelWrench->setVisible(false);
 
         return true;
     }
 
-    void setUpWrenchDialogs(CEGUI::Window *hud,serverStuff *ohWow)
+    void setUpWrenchDialogs(CEGUI::Window *hud,clientStuff *clientEnvironment)
     {
         CEGUI::Window *wrench = hud->getChild("Wrench");
 
-        wrench->setUserData(ohWow);
+        wrench->setUserData(clientEnvironment);
         wrench->getChild("RenderAll")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&renderAllButton));
         wrench->getChild("RenderNone")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&renderNoneButton));
         wrench->subscribeEvent(CEGUI::FrameWindow::EventCloseClicked,CEGUI::Event::Subscriber(&closeWrench));
@@ -194,13 +194,13 @@ namespace syj
 
         wheelWrench->subscribeEvent(CEGUI::FrameWindow::EventCloseClicked,CEGUI::Event::Subscriber(&closeWheelWrench));
         wheelWrench->getChild("Submit")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&submitWheelWrench));
-        wheelWrench->setUserData(ohWow);
+        wheelWrench->setUserData(clientEnvironment);
 
         CEGUI::Window *steeringWrench = hud->getChild("SteeringWrench");
 
         steeringWrench->subscribeEvent(CEGUI::FrameWindow::EventCloseClicked,CEGUI::Event::Subscriber(&closeSteeringWrench));
         steeringWrench->getChild("Submit")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&submitSteeringWrench));
-        steeringWrench->setUserData(ohWow);
+        steeringWrench->setUserData(clientEnvironment);
     }
 }
 
