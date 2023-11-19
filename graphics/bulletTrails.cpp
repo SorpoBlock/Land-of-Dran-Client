@@ -52,7 +52,6 @@ bulletTrailsHolder::bulletTrailsHolder()
     glCreateVertexArrays(1,&quadVAO);
     glBindVertexArray(quadVAO);
 
-    GLuint buffer;
     glCreateBuffers(1,&buffer);
 
     glBindBuffer(GL_ARRAY_BUFFER,buffer);
@@ -69,4 +68,5 @@ bulletTrailsHolder::bulletTrailsHolder()
 bulletTrailsHolder::~bulletTrailsHolder()
 {
     glDeleteVertexArrays(1,&quadVAO);
+    glDeleteBuffers(1,&buffer);
 }

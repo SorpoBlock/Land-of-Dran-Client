@@ -318,6 +318,7 @@ namespace syj
         btRigidBody::btRigidBodyConstructionInfo info(0.0,ms,shape,btVector3(0,0,0));
         body = new btRigidBody(info);
         body->setCollisionFlags( btCollisionObject::CF_STATIC_OBJECT);
+        delete ms;
 
         int matAfterShapeFx = material;
         if(matAfterShapeFx >= 2000)

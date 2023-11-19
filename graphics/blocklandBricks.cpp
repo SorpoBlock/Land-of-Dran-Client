@@ -24,6 +24,12 @@ namespace syj
         }
     }
 
+    blocklandCompatibility::~blocklandCompatibility()
+    {
+        for(int a = 0; a<specialBrickTypes.size(); a++)
+            delete specialBrickTypes[a];
+    }
+
     specialBrickTypeInstanceHolder::specialBrickTypeInstanceHolder(specialBrickType *based) : type(based)
     {
         glGenVertexArrays(1,&vao);

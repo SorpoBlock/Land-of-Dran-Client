@@ -46,6 +46,17 @@ namespace syj
         backwardPull->setActivationState(DISABLE_SIMULATION);
     }
 
+    selectionBox::~selectionBox()
+    {
+        delete leftPull;
+        delete rightPull;
+        delete downPull;
+        delete upPull;
+        delete forwardPull;
+        delete backwardPull;
+        delete pullShape;
+    }
+
             /*glm::vec3 up = middle + glm::vec3(0,1.0 + halfs.y,0);
             glm::vec3 planeNormal = glm::normalize(up - position);
             float length = 0;

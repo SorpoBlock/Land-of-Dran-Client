@@ -24,7 +24,7 @@ namespace syj
         //Render data:
         unsigned int vertexCount = 0;
         //The 8 buffers from perTextureBuffers, but I don't think dimensionBuffer and directionBuffer would ever really be used in the shader:
-        GLuint buffers[9];
+        GLuint buffers[9]={0,0,0,0,0,0,0,0,0};
         void initFromVectors(
                              std::vector<glm::vec3> &vertPositions,
                              std::vector<glm::vec3> &normals,
@@ -39,6 +39,7 @@ namespace syj
         void initModTerrain(std::string filePath);
 
         specialBrickType(std::string blbFile);
+        ~specialBrickType();
     };
 }
 

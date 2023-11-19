@@ -182,6 +182,18 @@ namespace syj
         file.close();
     }
 
+    specialBrickType::~specialBrickType()
+    {
+        if(customNormalBuffer)
+            glDeleteBuffers(1,&buffers[customNormalBuffer]);
+        if(customUVBuffer)
+            glDeleteBuffers(1,&buffers[customUVBuffer]);
+        if(customVertexColorBuffer)
+            glDeleteBuffers(1,&buffers[customVertexColorBuffer]);
+        if(customVertexBuffer)
+            glDeleteBuffers(1,&buffers[customVertexBuffer]);
+    }
+
     specialBrickType::specialBrickType(std::string blbFile)
     {
         bool shouldBeModTerr = blbFile.find("ModTer") != std::string::npos;

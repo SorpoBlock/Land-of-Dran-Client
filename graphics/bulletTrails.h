@@ -17,6 +17,7 @@ struct bulletTrail
 
 struct bulletTrailsHolder
 {
+    GLuint buffer;
     GLuint quadVAO;
 
     std::vector<bulletTrail> bulletTrails;

@@ -25,6 +25,15 @@ namespace syj
 
         basicBrickRenderData(){}
 
+        ~basicBrickRenderData()
+        {
+            if(body)
+            {
+                delete body;
+                body = 0;
+            }
+        }
+
         basicBrickRenderData(const basicBrickRenderData &toCopy)
         {
             position = toCopy.position;
@@ -95,6 +104,9 @@ namespace syj
 
             for(int a = 0; a<transparentSpecialBrickTypes.size(); a++)
                 delete transparentSpecialBrickTypes[a];
+
+            delete collisionShapes;
+            collisionShapes = 0;
         }
 
         brickRenderData *getBrick(int serverID,bool &isSpecial)

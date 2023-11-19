@@ -79,6 +79,7 @@ namespace syj
             world->removeRigidBody(body);
             delete defaultMotionState;
             delete shape;
+            delete body;
         }
 
         for(unsigned int a = 0; a<type->nonInstancedMeshes.size(); a++)
@@ -1150,7 +1151,7 @@ namespace syj
         scope("instancedMesh::~instancedMesh");
 
         glDeleteVertexArrays(1,&vao);
-        glDeleteBuffers(8,buffers);
+        glDeleteBuffers(9,buffers);
     }
 
     nonInstancedMesh::~nonInstancedMesh()

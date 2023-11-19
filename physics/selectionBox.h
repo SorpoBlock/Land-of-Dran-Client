@@ -52,6 +52,7 @@ namespace syj
         void movePulls();
 
         selectionBox(btDynamicsWorld *_world,GLuint &_cubeVAO);
+        ~selectionBox();
     };
 }
 

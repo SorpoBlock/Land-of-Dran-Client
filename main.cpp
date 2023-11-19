@@ -311,6 +311,7 @@ int main(int argc, char *argv[])
     clientEnvironment.prints = new printLoader(".\\assets\\brick\\prints");
     texture *bdrf = generateBDRF(quadVAO);
     material grass("assets/ground/grass1/grass.txt");
+    clientEnvironment.newWheelModel = new newModel("assets/ball/ball.txt");
 
     //std::string iblName = "mountain";
     //std::string iblName = "MoonlessGolf";
@@ -332,7 +333,8 @@ int main(int argc, char *argv[])
     dudvTexture->createFromFile("assets/dudv.png");
     tessellation water(0);
 
-    blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",clientEnvironment.brickSelector,true);
+    //blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",clientEnvironment.brickSelector,true);
+    blocklandCompatibility *blocklandHolder = 0;
 
     CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
 
@@ -343,6 +345,10 @@ int main(int argc, char *argv[])
     btBroadphaseInterface* broadphase = new btDbvtBroadphase();
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
     btGImpactCollisionAlgorithm::registerAlgorithm(dispatcher);
+
+    btCollisionShape *plane = 0;
+    btDefaultMotionState* planeState = 0;
+    btRigidBody *groundPlane = 0;
 
     CEGUI::Window *bounceText = addGUIFromFile("justText.layout");
     bounceText->setVisible(true);
@@ -2139,12 +2145,16 @@ int main(int argc, char *argv[])
                 else
                     connected = true;
 
+                if(blocklandHolder)
+                    delete blocklandHolder;
+                blocklandHolder = new blocklandCompatibility("assets/brick/types/test.cs",".\\assets\\brick\\types",clientEnvironment.brickSelector,true);
+
                 serverData->staticBricks.allocateVertBuffer();
                 serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMat);
                 serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatSide,true,true);
                 serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatBottom,true);
                 serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMatRamp);
-                serverData->staticBricks.blocklandTypes = &blocklandHolder;
+                serverData->staticBricks.blocklandTypes = blocklandHolder;
 
                 packet requestName;
                 requestName.writeUInt(clientPacketType_requestName,4);
@@ -2275,10 +2285,16 @@ int main(int argc, char *argv[])
                 world->setForceUpdateAllAabbs(false);
                 serverData->world = world;
 
-                btCollisionShape *plane = new btStaticPlaneShape(btVector3(0,1,0),0);
-                btDefaultMotionState* planeState = new btDefaultMotionState();
+                if(plane)
+                    delete plane;
+                plane = new btStaticPlaneShape(btVector3(0,1,0),0);
+                if(planeState)
+                    delete planeState;
+                planeState = new btDefaultMotionState();
                 btRigidBody::btRigidBodyConstructionInfo planeCon(0,planeState,plane);
-                btRigidBody *groundPlane = new btRigidBody(planeCon);
+                if(groundPlane)
+                    delete groundPlane;
+                groundPlane = new btRigidBody(planeCon);
                 groundPlane->setFriction(1.0);
                 //groundPlane->setUserIndex(bodyUserIndex_plane);
                 world->addRigidBody(groundPlane);
@@ -2289,9 +2305,6 @@ int main(int argc, char *argv[])
 
                 for(unsigned int a = 0; a<clientEnvironment.prints->names.size(); a++)
                     serverData->staticBricks.allocatePerTexture(clientEnvironment.prints->textures[a],false,false,true);
-
-                //model wheelModel("assets/ball/ball.txt");
-                clientEnvironment.newWheelModel = new newModel("assets/ball/ball.txt");
 
                 //bool play = false;
 

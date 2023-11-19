@@ -310,6 +310,7 @@ namespace syj
 
             delete rearranged;
             delete hdrData;
+            hdrData = 0;
         }
         else
         {
@@ -332,6 +333,7 @@ namespace syj
 
             delete rearranged;
             delete ldrData;
+            ldrData = 0;
         }
 
         if(mipMaps)
@@ -475,6 +477,17 @@ namespace syj
 
     texture::~texture()
     {
+        if(ldrData)
+        {
+            delete ldrData;
+            ldrData = 0;
+        }
+        if(hdrData)
+        {
+            delete hdrData;
+            hdrData = 0;
+        }
+
         glDeleteTextures(1,&handle);
     }
 }

@@ -60,6 +60,9 @@ namespace syj
 
     struct environment
     {
+        GLuint skyBoxVertBuffer[6];
+        GLuint skyBoxUVBuffer[6];
+
         unsigned int numShadowLayers = 3;
 
         //Cascading shadow maps:
@@ -122,6 +125,7 @@ namespace syj
         void passLightMatricies(uniformsHolder *uniforms);
 
         environment(int resX,int resY);
+        ~environment();
     };
 
 }

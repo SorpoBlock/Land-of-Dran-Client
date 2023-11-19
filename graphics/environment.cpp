@@ -79,6 +79,15 @@ namespace syj
         sun = new model(path);
     }
 
+    environment::~environment()
+    {
+        delete lightSpaceMatricies;
+        delete godRayPass;
+        glDeleteVertexArrays(6,skyBoxFacesVAO);
+        glDeleteBuffers(6,skyBoxVertBuffer);
+        glDeleteBuffers(6,skyBoxUVBuffer);
+    }
+
     environment::environment(int resX,int resY)
     {
         lightSpaceMatricies = new glm::mat4[numShadowLayers];
@@ -200,9 +209,6 @@ namespace syj
         uvsflip[3] = glm::vec2(1,1);
         uvsflip[4] = glm::vec2(0,0);
         uvsflip[5] = glm::vec2(1,0);
-
-        GLuint skyBoxVertBuffer[6];
-        GLuint skyBoxUVBuffer[6];
 
         glGenBuffers(6,skyBoxVertBuffer);
         glGenBuffers(6,skyBoxUVBuffer);

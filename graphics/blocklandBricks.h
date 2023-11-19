@@ -70,6 +70,15 @@ namespace syj
             typeID = source.typeID;
             printID = source.printID;
         }
+
+        ~specialBrickRenderData()
+        {
+            if(body)
+            {
+                delete body;
+                body = 0;
+            }
+        }
     };
 
     struct specialBrickTypeInstanceHolder
@@ -110,6 +119,7 @@ namespace syj
 
         //Associate blockland ui names with brick dimensions
         blocklandCompatibility(std::string aliasFile,std::string searchPath,CEGUI::Window *brickSelector = 0,bool onlyBasic = false);
+        ~blocklandCompatibility();
 
         void addSpecialBrickType(std::string filePath,CEGUI::Window *brickSelector,int serverID);
     };
