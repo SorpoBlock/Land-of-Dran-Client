@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout version="4" >
+    <Window type="GWEN/FrameWindow" name="GodRays" >
+        <Property name="Area" value="{{0.33875,0},{0.54625,0},{0.64875,-90.75},{0.7225,20.25}}" />
+        <Property name="Text" value="God Rays Debug Settings" />
+        <Property name="CloseButtonEnabled" value="false" />
+        <Property name="AutoRenderingSurface" value="true" />
+        <AutoWindow namePath="__auto_titlebar__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="false" />
+        </AutoWindow>
+        <AutoWindow namePath="__auto_closebutton__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="true" />
+        </AutoWindow>
+        <Window type="GWEN/Editbox" name="Density" >
+            <Property name="Area" value="{{0.431208,0},{0.0447761,0},{0.968121,0},{0.216418,0}}" />
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText" >
+            <Property name="Area" value="{{0.0100671,0},{0.0354478,0},{0.325503,0},{0.229478,0}}" />
+            <Property name="Text" value="Density:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="true" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/Editbox" name="Exposure" >
+            <Property name="Area" value="{{0.42953,0},{0.242537,0},{0.966443,0},{0.414179,0}}" />
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText2" >
+            <Property name="Area" value="{{0.00838926,0},{0.233209,0},{0.377517,0},{0.427239,0}}" />
+            <Property name="Text" value="Exposure:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="true" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/Editbox" name="Decay" >
+            <Property name="Area" value="{{0.42953,0},{0.442164,0},{0.966443,0},{0.613806,0}}" />
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText22" >
+            <Property name="Area" value="{{0.00838926,0},{0.432836,0},{0.323826,0},{0.626866,0}}" />
+            <Property name="Text" value="Decay:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="true" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText222" >
+            <Property name="Area" value="{{0.00838926,0},{0.639925,0},{0.323826,0},{0.833955,0}}" />
+            <Property name="Text" value="Weight:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="true" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/Editbox" name="Weight" >
+            <Property name="Area" value="{{0.42953,0},{0.649254,0},{0.966443,0},{0.820896,0}}" />
+        </Window>
+        <Window type="GWEN/Button" name="Button" >
+            <Property name="Area" value="{{0.162752,0},{0.856343,0},{0.833893,0},{0.983209,0}}" />
+            <Property name="Text" value="Submit" />
+        </Window>
+    </Window>
+</GUILayout>

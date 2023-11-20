@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<Imageset autoScaled="false" imagefile="itemBox.png" name="ItemBox"      nativeHorzRes="100" nativeVertRes="100" version="2">
+	<Image height="100" width="100" xPos="0" yPos="0" name="ItemBox" />
+</Imageset>

@@ -1,0 +1,37 @@
+#	BDRF is actually still hard coded in the program for now...
+#	bdrf	frag	bdrf.frag.glsl
+#	bdrf	vert	bdrf.vert.glsl
+boxEdges	frag	boxEdges.frag.glsl
+boxEdges	vert	boxEdges.vert.glsl
+brick	frag	brick.frag.glsl
+brick	vert	brick.vert.glsl
+bullet	frag	bullet.frag.glsl
+bullet	vert	bullet.vert.glsl
+emitter	frag	emitter.frag.glsl
+emitter	vert	emitter.vert.glsl
+font	frag	font.frag.glsl
+font	vert	font.vert.glsl
+godPrePassBrick	frag	godPrePassBrick.frag.glsl
+godPrePassBrick	vert	godPrePassBrick.vert.glsl
+godPrePassSun	frag	godPrePassSun.frag.glsl
+godPrePassSun	vert	godPrePassSun.vert.glsl
+model	frag	model.frag.glsl
+model	vert	model.vert.glsl
+modelShadow	frag	modelShadow.frag.glsl
+modelShadow	geom	modelShadow.geom.glsl
+modelShadow	vert	modelShadow.vert.glsl
+oldModel	frag	oldModel.frag.glsl
+oldModel	vert	oldModel.vert.glsl
+rectToCube	frag	rectToCube.frag.glsl
+rectToCube	vert	rectToCube.vert.glsl
+screenOverlays	frag	screenOverlays.frag.glsl
+screenOverlays	vert	screenOverlays.vert.glsl
+shadowBrick	frag	shadowBrick.frag.glsl
+shadowBrick	geom	shadowBrick.geom.glsl
+shadowBrick	vert	shadowBrick.vert.glsl
+simpleBrick	frag	simpleBrick.frag.glsl
+simpleBrick	vert	simpleBrick.vert.glsl
+water	frag	water.frag.glsl
+water	tesc	water.tesc.glsl
+water	tese	water.tese.glsl
+water	vert	water.vert.glsl

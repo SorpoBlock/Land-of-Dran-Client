@@ -1,0 +1,1450 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout version="4" >
+    <Window type="DefaultWindow" name="HUD" >
+        <Property name="Area" value="{{0,1},{0,0},{1,1},{1,0}}" />
+        <Property name="MaxSize" value="{{1,0},{1,0}}" />
+        <Property name="MousePassThroughEnabled" value="true" />
+        <Property name="MouseInputPropagationEnabled" value="true" />
+        <Window type="GWEN/StaticImage" name="Palette" >
+            <Property name="Area" value="{{0,0},{0,0},{0,140},{0,280}}" />
+            <Property name="Image" value="Palette/ColorPalette" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <Property name="VerticalAlignment" value="Bottom" />
+            <Window type="GWEN/ProgressBar" name="Palette00" >
+                <Property name="Area" value="{{0,0},{0.9,0},{0.2,0},{1,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette08" >
+                <Property name="Area" value="{{0.2,0},{0.9,0},{0.4,0},{1,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette16" >
+                <Property name="Area" value="{{0.4,0},{0.9,0},{0.6,0},{1,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette24" >
+                <Property name="Area" value="{{0.6,0},{0.9,0},{0.8,0},{1,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette32" >
+                <Property name="Area" value="{{0.8,0},{0.9,0},{1,0},{1,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette17" >
+                <Property name="Area" value="{{0.4,0},{0.8,0},{0.6,0},{0.9,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette01" >
+                <Property name="Area" value="{{0,0},{0.8,0},{0.2,0},{0.9,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette25" >
+                <Property name="Area" value="{{0.6,0},{0.8,0},{0.8,0},{0.9,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette09" >
+                <Property name="Area" value="{{0.2,0},{0.8,0},{0.4,0},{0.9,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette33" >
+                <Property name="Area" value="{{0.8,0},{0.8,0},{1,0},{0.9,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette18" >
+                <Property name="Area" value="{{0.4,0},{0.7,0},{0.6,0},{0.8,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette02" >
+                <Property name="Area" value="{{0,0},{0.7,0},{0.2,0},{0.8,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette26" >
+                <Property name="Area" value="{{0.6,0},{0.7,0},{0.8,0},{0.8,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette10" >
+                <Property name="Area" value="{{0.2,0},{0.7,0},{0.4,0},{0.8,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette34" >
+                <Property name="Area" value="{{0.8,0},{0.7,0},{1,0},{0.8,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette19" >
+                <Property name="Area" value="{{0.4,0},{0.6,0},{0.6,0},{0.7,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette03" >
+                <Property name="Area" value="{{0,0},{0.6,0},{0.2,0},{0.7,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette27" >
+                <Property name="Area" value="{{0.6,0},{0.6,0},{0.8,0},{0.7,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette11" >
+                <Property name="Area" value="{{0.2,0},{0.6,0},{0.4,0},{0.7,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette35" >
+                <Property name="Area" value="{{0.8,0},{0.6,0},{1,0},{0.7,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette20" >
+                <Property name="Area" value="{{0.4,0},{0.5,0},{0.6,0},{0.6,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette04" >
+                <Property name="Area" value="{{0,0},{0.5,0},{0.2,0},{0.6,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette28" >
+                <Property name="Area" value="{{0.6,0},{0.5,0},{0.8,0},{0.6,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette12" >
+                <Property name="Area" value="{{0.2,0},{0.5,0},{0.4,0},{0.6,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette36" >
+                <Property name="Area" value="{{0.8,0},{0.5,0},{1,0},{0.6,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette21" >
+                <Property name="Area" value="{{0.4,0},{0.4,0},{0.6,0},{0.5,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette05" >
+                <Property name="Area" value="{{0,0},{0.4,0},{0.2,0},{0.5,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette29" >
+                <Property name="Area" value="{{0.6,0},{0.4,0},{0.8,0},{0.5,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette13" >
+                <Property name="Area" value="{{0.2,0},{0.4,0},{0.4,0},{0.5,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette37" >
+                <Property name="Area" value="{{0.8,0},{0.4,0},{1,0},{0.5,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette22" >
+                <Property name="Area" value="{{0.4,0},{0.3,0},{0.6,0},{0.4,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette06" >
+                <Property name="Area" value="{{0,0},{0.3,0},{0.2,0},{0.4,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette30" >
+                <Property name="Area" value="{{0.6,0},{0.3,0},{0.8,0},{0.4,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette14" >
+                <Property name="Area" value="{{0.2,0},{0.3,0},{0.4,0},{0.4,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/StaticImage" name="Selector" >
+                <Property name="Area" value="{{0,0},{0.9,0},{0.2,0},{1,0}}" />
+                <Property name="Image" value="PaintSelector/PaintSelector" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette38" >
+                <Property name="Area" value="{{0.8,0},{0.3,0},{1,0},{0.4,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/StaticText" name="PaintName" >
+                <Property name="Area" value="{{0.128571,0},{0.0464286,0},{0.85,2},{0.125,0}}" />
+                <Property name="Font" value="DejaVuSans-12" />
+                <Property name="Text" value="A Color" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFFFFFFF br:FFFFFFFF" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="HorzFormatting" value="CentreAligned" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette39" >
+                <Property name="Area" value="{{0.8,0},{0.2,0},{1,0},{0.3,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette31" >
+                <Property name="Area" value="{{0.6,0},{0.2,0},{0.8,0},{0.3,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette23" >
+                <Property name="Area" value="{{0.4,0},{0.2,0},{0.6,0},{0.3,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette15" >
+                <Property name="Area" value="{{0.2,0},{0.2,0},{0.4,0},{0.3,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="Palette07" >
+                <Property name="Area" value="{{0,0},{0.2,0},{0.2,0},{0.3,0}}" />
+                <Property name="StepSize" value="0.01" />
+            </Window>
+        </Window>
+        <Window type="GWEN/StaticText" name="ResizeText" >
+            <Property name="Area" value="{{0.81375,0},{0.935,0},{1,0},{0.99875,0}}" />
+            <Property name="Font" value="OpenSans-20" />
+            <Property name="Text" value="Resize Mode" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="Visible" value="false" />
+            <Property name="TextColours" value="tl:FFFFFF00 tr:FFFFFF00 bl:FF00FF00 br:FF00FF00" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/StaticText" name="ShiftText" >
+            <Property name="Area" value="{{0.82125,0},{0.87625,0},{0.99375,0},{0.91625,0}}" />
+            <Property name="Font" value="OpenSans-20" />
+            <Property name="Text" value="Super Shift" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="Visible" value="false" />
+            <Property name="TextColours" value="tl:FFFFFF00 tr:FFFFFF00 bl:FFFFFF00 br:FFFFFF00" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/StaticImage" name="BrickPopup" >
+            <Property name="Area" value="{{0.18125,0},{0,0},{0.8,0},{0.165,0}}" />
+            <Property name="Image" value="BrickPopup/BrickPopup" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <Property name="VerticalAlignment" value="Bottom" />
+            <Window type="GWEN/StaticText" name="BrickText" >
+                <Property name="Area" value="{{0.349495,0},{0.00990099,0},{0.664647,0},{0.168317,0}}" />
+                <Property name="Font" value="DejaVuSans-12" />
+                <Property name="Text" value="Basic 1-2-5" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFFFFFFF br:FFFFFFFF" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="HorzFormatting" value="CentreAligned" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticImage" name="Cart1" >
+                <Property name="Area" value="{{0,0},{0.326733,0},{0.111111,0},{0.990099,0}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="true" />
+                <Property name="BackgroundEnabled" value="true" />
+            </Window>
+            <Window type="GWEN/StaticImage" name="Cart2" >
+                <Property name="Area" value="{{0.111111,0},{0.326733,0},{0.222222,0},{0.990099,0}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="true" />
+                <Property name="BackgroundEnabled" value="true" />
+            </Window>
+            <Window type="GWEN/StaticImage" name="Cart3" >
+                <Property name="Area" value="{{0.222222,0},{0.326733,0},{0.333333,0},{0.990099,0}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="true" />
+                <Property name="BackgroundEnabled" value="true" />
+            </Window>
+            <Window type="GWEN/StaticImage" name="Cart4" >
+                <Property name="Area" value="{{0.333333,0},{0.326733,0},{0.444444,0},{0.990099,0}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="true" />
+                <Property name="BackgroundEnabled" value="true" />
+            </Window>
+            <Window type="GWEN/StaticImage" name="Cart7" >
+                <Property name="Area" value="{{0.666667,0},{0.326733,0},{0.777778,0},{0.990099,0}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="true" />
+                <Property name="BackgroundEnabled" value="true" />
+            </Window>
+            <Window type="GWEN/StaticImage" name="Cart5" >
+                <Property name="Area" value="{{0.444444,0},{0.326733,0},{0.555556,0},{0.990099,0}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="true" />
+                <Property name="BackgroundEnabled" value="true" />
+            </Window>
+            <Window type="GWEN/StaticImage" name="Cart6" >
+                <Property name="Area" value="{{0.555556,0},{0.326733,0},{0.666667,0},{0.990099,0}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="true" />
+                <Property name="BackgroundEnabled" value="true" />
+            </Window>
+            <Window type="GWEN/StaticImage" name="Cart8" >
+                <Property name="Area" value="{{0.777778,0},{0.326733,0},{0.888889,0},{0.990099,0}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="true" />
+                <Property name="BackgroundEnabled" value="true" />
+            </Window>
+            <Window type="GWEN/StaticImage" name="Cart9" >
+                <Property name="Area" value="{{0.888889,0},{0.326733,0},{1,0},{0.990099,0}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="true" />
+                <Property name="BackgroundEnabled" value="true" />
+            </Window>
+            <Window type="GWEN/StaticImage" name="Selector" >
+                <Property name="Area" value="{{0.0020202,0},{0.331818,0},{0.109091,0},{0.983333,0}}" />
+                <Property name="Alpha" value="0.5" />
+                <Property name="Image" value="PaintSelector/PaintSelector" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+            </Window>
+        </Window>
+        <Window type="GWEN/StaticText" name="Stats" >
+            <Property name="Area" value="{{0,363},{0,0},{1,-437},{0.03,0}}" />
+            <Property name="Font" value="DejaVuSans-10" />
+            <Property name="Text" value="Test Text" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/ProgressBar" name="Crosshair" >
+            <Property name="Area" value="{{0.495,0},{0.495,0},{0.505,0},{0.505,0}}" />
+            <Property name="StepSize" value="0.01" />
+            <Property name="AspectMode" value="Shrink" />
+            <Property name="SwatchColour" value="77777777" />
+        </Window>
+        <Window type="GWEN/FrameWindow" name="LoadingBricks" >
+            <Property name="Area" value="{{0.31,99},{0.365,16},{0.71375,99},{0.475,16}}" />
+            <Property name="Text" value="Loading Bricks" />
+            <Property name="AutoRenderingSurface" value="true" />
+            <AutoWindow namePath="__auto_titlebar__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="false" />
+            </AutoWindow>
+            <AutoWindow namePath="__auto_closebutton__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="true" />
+            </AutoWindow>
+            <Window type="GWEN/ProgressBar" name="ProgressBar" >
+                <Property name="Area" value="{{0,0},{0.57,0},{1,0},{1,0}}" />
+                <Property name="StepSize" value="0.001" />
+                <Property name="SwatchColour" value="9900FF00" />
+                <Property name="CurrentProgress" value="0.5" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText" >
+                <Property name="Area" value="{{0,0},{0.131148,0},{1,0},{0.47541,0}}" />
+                <Property name="Text" value="Brick count:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="true" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+        </Window>
+        <Window type="GWEN/FrameWindow" name="EvalWindow" >
+            <Property name="Area" value="{{0,460},{0,242},{0.40375,460},{0.44375,107}}" />
+            <Property name="Text" value="Eval" />
+            <Property name="Visible" value="false" />
+            <Property name="AutoRenderingSurface" value="true" />
+            <AutoWindow namePath="__auto_titlebar__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="false" />
+            </AutoWindow>
+            <AutoWindow namePath="__auto_closebutton__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="true" />
+            </AutoWindow>
+            <Window type="DefaultWindow" name="Login" >
+                <Property name="Area" value="{{0,0},{0,0},{1,0},{1,0}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Window type="GWEN/Editbox" name="Editbox" >
+                    <Property name="Area" value="{{0.0873362,0},{0.397959,0},{0.930131,0},{0.607143,0}}" />
+                    <Property name="MaskText" value="true" />
+                </Window>
+                <Window type="GWEN/StaticText" name="StaticText" >
+                    <Property name="Area" value="{{0.170306,0},{0.255102,0},{0.886463,0},{0.372449,0}}" />
+                    <Property name="Text" value="Enter admin password:" />
+                    <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                    <Property name="FrameEnabled" value="false" />
+                    <Property name="BackgroundEnabled" value="false" />
+                    <AutoWindow namePath="__auto_hscrollbar__" >
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_vscrollbar__" >
+                        <Property name="VerticalScrollbar" value="true" />
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                </Window>
+                <Window type="GWEN/Button" name="Button" >
+                    <Property name="Area" value="{{-0.00436681,0},{0.280612,0},{0.375546,0},{0.413265,0}}" />
+                    <Property name="Text" value="Submit" />
+                    <Property name="VerticalAlignment" value="Centre" />
+                    <Property name="HorizontalAlignment" value="Centre" />
+                </Window>
+            </Window>
+            <Window type="DefaultWindow" name="Code" >
+                <Property name="Area" value="{{-0.0031746,0},{0,0},{0.996825,0},{0.987805,0}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="Visible" value="false" />
+                <Window type="GWEN/Editbox" name="Editbox" >
+                    <Property name="Area" value="{{0.00873358,0},{0.853402,0},{0.986511,0},{0.994764,0}}" />
+                </Window>
+                <Window type="GWEN/Listbox" name="Listbox" >
+                    <Property name="Area" value="{{0.0131004,0},{0.0314136,0},{0.990878,0},{0.821989,0}}" />
+                    <AutoWindow namePath="__auto_hscrollbar__" >
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_vscrollbar__" >
+                        <Property name="VerticalScrollbar" value="true" />
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                </Window>
+            </Window>
+        </Window>
+        <Window type="GWEN/StaticText" name="BottomPrint" >
+            <Property name="Area" value="{{0.0275,0},{0.765,0},{0.99125,0},{0.805,0}}" />
+            <Property name="Font" value="OpenSans-20" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFFFFFFF br:FFFFFFFF" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="HorzFormatting" value="CentreAligned" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/FrameWindow" name="Wrench" >
+            <Property name="Area" value="{{0.0275,0},{0.2,0},{0.285,0},{0.64625,0}}" />
+            <Property name="Text" value="Wrench" />
+            <Property name="Visible" value="false" />
+            <Property name="AutoRenderingSurface" value="true" />
+            <AutoWindow namePath="__auto_titlebar__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="false" />
+            </AutoWindow>
+            <AutoWindow namePath="__auto_closebutton__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="true" />
+            </AutoWindow>
+            <Window type="GWEN/Button" name="Submit" >
+                <Property name="Area" value="{{0.686868,0},{0.929458,0},{0.994949,0},{0.996125,0}}" />
+                <Property name="Text" value="Submit" />
+            </Window>
+            <Window type="GWEN/Checkbox" name="Colliding" >
+                <Property name="Area" value="{{0.575758,0},{0.221213,0},{1.0101,0},{0.29091,0}}" />
+                <Property name="Text" value="Colliding" />
+            </Window>
+            <Window type="GWEN/Checkbox" name="RenderNorth" >
+                <Property name="Area" value="{{0,0},{0.360606,0},{0.29798,0},{0.418182,0}}" />
+                <Property name="Text" value="North" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText" >
+                <Property name="Area" value="{{0.29798,0},{0.309091,0},{0.722222,0},{0.354545,0}}" />
+                <Property name="Text" value="Rendering:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Checkbox" name="RenderSouth" >
+                <Property name="Area" value="{{0.338384,0},{0.360606,0},{0.656566,0},{0.418182,0}}" />
+                <Property name="Text" value="South" />
+            </Window>
+            <Window type="GWEN/Checkbox" name="RenderUp" >
+                <Property name="Area" value="{{0,0},{0.421212,0},{0.318182,0},{0.478788,0}}" />
+                <Property name="Text" value="Up" />
+            </Window>
+            <Window type="GWEN/Checkbox" name="RenderEast" >
+                <Property name="Area" value="{{0.681818,0},{0.360606,0},{1,0},{0.418182,0}}" />
+                <Property name="Text" value="East" />
+            </Window>
+            <Window type="GWEN/Checkbox" name="RenderDown" >
+                <Property name="Area" value="{{0.338384,0},{0.421212,0},{0.656566,0},{0.478788,0}}" />
+                <Property name="Text" value="Down" />
+            </Window>
+            <Window type="GWEN/Checkbox" name="RenderWest" >
+                <Property name="Area" value="{{0.681818,0},{0.421212,0},{1,0},{0.478788,0}}" />
+                <Property name="Text" value="West" />
+            </Window>
+            <Window type="GWEN/Button" name="RenderAll" >
+                <Property name="Area" value="{{0,0},{0.484849,0},{0.116162,0},{0.551515,0}}" />
+                <Property name="Text" value="All" />
+            </Window>
+            <Window type="GWEN/Button" name="RenderNone" >
+                <Property name="Area" value="{{0.141414,0},{0.484849,0},{0.358586,0},{0.551515,0}}" />
+                <Property name="Text" value="None" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText2" >
+                <Property name="Area" value="{{0.363636,0},{0.00606059,0},{0.60101,0},{0.060606,0}}" />
+                <Property name="Text" value="Music:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Combobox" name="MusicDropdown" >
+                <Property name="Area" value="{{0.00505051,0},{0.0636366,0},{0.989899,0},{0.518182,0}}" />
+                <Property name="Text" value="None" />
+                <Property name="ReadOnly" value="true" />
+                <Property name="SingleClickMode" value="true" />
+                <AutoWindow namePath="__auto_editbox__" >
+                    <Property name="Text" value="None" />
+                    <Property name="ReadOnly" value="true" />
+                </AutoWindow>
+                <AutoWindow namePath="__auto_droplist__" >
+                    <AutoWindow namePath="__auto_hscrollbar__" >
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_vscrollbar__" >
+                        <Property name="VerticalScrollbar" value="true" />
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText22" >
+                <Property name="Area" value="{{0.0101006,0},{0.142424,0},{0.217171,0},{0.19697,0}}" />
+                <Property name="Text" value="Pitch:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/HorizontalSlider" name="PitchSlider" >
+                <Property name="Area" value="{{0.227273,0},{0.145454,0},{0.818182,0},{0.196969,0}}" />
+                <Property name="MaximumValue" value="400" />
+                <Property name="VerticalSlider" value="false" />
+                <Property name="WantsMultiClickEvents" value="false" />
+                <Property name="MouseAutoRepeatEnabled" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="PitchResult" >
+                <Property name="Area" value="{{0.813131,0},{0.142424,0},{0.994949,0},{0.19697,0}}" />
+                <Property name="Text" value="100%" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText23" >
+                <Property name="Area" value="{{0.00505013,0},{0.230303,0},{0.242424,0},{0.284849,0}}" />
+                <Property name="Text" value="Name:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="BrickName" >
+                <Property name="Area" value="{{0.242424,0},{0.224243,0},{0.565656,0},{0.287879,0}}" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText24" >
+                <Property name="Area" value="{{0.363636,0},{0.575758,0},{0.60101,0},{0.630303,0}}" />
+                <Property name="Text" value="Light:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText222" >
+                <Property name="Area" value="{{-4.03987e-007,0},{0.636364,0},{0.444444,0},{0.690909,0}}" />
+                <Property name="Text" value="Brightness:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="Red" >
+                <Property name="Area" value="{{0,0},{0.69697,0},{0.237374,0},{0.760606,0}}" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText2222" >
+                <Property name="Area" value="{{0.262626,0},{0.7,0},{0.328282,0},{0.754545,0}}" />
+                <Property name="Text" value="R" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText22222" >
+                <Property name="Area" value="{{0.60101,0},{0.7,0},{0.666666,0},{0.754545,0}}" />
+                <Property name="Text" value="G" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="Green" >
+                <Property name="Area" value="{{0.338384,0},{0.69697,0},{0.575758,0},{0.760606,0}}" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText222222" >
+                <Property name="Area" value="{{0.934343,0},{0.684848,0},{1,0},{0.739394,0}}" />
+                <Property name="Text" value="B" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="Blue" >
+                <Property name="Area" value="{{0.681818,0},{0.69697,0},{0.90404,0},{0.760606,0}}" />
+            </Window>
+            <Window type="GWEN/Checkbox" name="UseLight" >
+                <Property name="Area" value="{{0.686869,0},{0.572728,0},{0.959596,0},{0.633334,0}}" />
+                <Property name="Text" value="Use" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText223" >
+                <Property name="Area" value="{{-4.04589e-007,0},{0.763636,0},{0.393939,0},{0.818182,0}}" />
+                <Property name="Text" value="Spotlight:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/HorizontalSlider" name="PhiSlider" >
+                <Property name="Area" value="{{0.505051,0},{0.763636,0},{0.99495,0},{0.815151,0}}" />
+                <Property name="MaximumValue" value="6.28" />
+                <Property name="VerticalSlider" value="false" />
+                <Property name="WantsMultiClickEvents" value="false" />
+                <Property name="MouseAutoRepeatEnabled" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Checkbox" name="IsSpotlight" >
+                <Property name="Area" value="{{0.409091,0},{0.754545,0},{0.489899,0},{0.824242,0}}" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText224" >
+                <Property name="Area" value="{{-4.03987e-007,0},{0.818182,0},{0.20707,0},{0.872727,0}}" />
+                <Property name="Text" value="Yaw:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/HorizontalSlider" name="YawSlider" >
+                <Property name="Area" value="{{0.217172,0},{0.821212,0},{0.984849,0},{0.872727,0}}" />
+                <Property name="MaximumValue" value="6.28" />
+                <Property name="VerticalSlider" value="false" />
+                <Property name="WantsMultiClickEvents" value="false" />
+                <Property name="MouseAutoRepeatEnabled" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText2242" >
+                <Property name="Area" value="{{-4.03987e-007,0},{0.875758,0},{0.20707,0},{0.930303,0}}" />
+                <Property name="Text" value="Pitch:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/HorizontalSlider" name="LightPitchSlider" >
+                <Property name="Area" value="{{0.217172,0},{0.878788,0},{0.984849,0},{0.930303,0}}" />
+                <Property name="MaximumValue" value="6.28" />
+                <Property name="VerticalSlider" value="false" />
+                <Property name="WantsMultiClickEvents" value="false" />
+                <Property name="MouseAutoRepeatEnabled" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/ProgressBar" name="ProgressBar" >
+                <Property name="Area" value="{{0,0},{0.554848,0},{1,0},{0.57,0}}" />
+                <Property name="StepSize" value="0.001" />
+                <Property name="SwatchColour" value="FFAA4444" />
+                <Property name="CurrentProgress" value="0.5" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="ProgressBar2" >
+                <Property name="Area" value="{{0,0},{0.291212,0},{1,0},{0.306364,0}}" />
+                <Property name="StepSize" value="0.001" />
+                <Property name="SwatchColour" value="FFAA4444" />
+                <Property name="CurrentProgress" value="0.5" />
+            </Window>
+            <Window type="GWEN/ProgressBar" name="ProgressBar3" >
+                <Property name="Area" value="{{0,0},{0.203333,0},{1,0},{0.218485,0}}" />
+                <Property name="StepSize" value="0.001" />
+                <Property name="SwatchColour" value="FFAA4444" />
+                <Property name="CurrentProgress" value="0.5" />
+            </Window>
+        </Window>
+        <Window type="GWEN/FrameWindow" name="WheelWrench" >
+            <Property name="Area" value="{{0.02625,148},{0.06875,339},{0.28375,148},{0.33125,388}}" />
+            <Property name="Text" value="Tire Properties" />
+            <Property name="Visible" value="false" />
+            <Property name="AutoRenderingSurface" value="true" />
+            <AutoWindow namePath="__auto_titlebar__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="false" />
+            </AutoWindow>
+            <AutoWindow namePath="__auto_closebutton__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="true" />
+            </AutoWindow>
+            <Window type="GWEN/Button" name="Submit" >
+                <Property name="Area" value="{{0.691919,0},{0.900862,0},{1,0},{0.995689,0}}" />
+                <Property name="Text" value="Submit" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText2" >
+                <Property name="Area" value="{{0.00505051,0},{0.125,0},{0.666667,0},{0.206897,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Steering Force:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText" >
+                <Property name="Area" value="{{0.00505051,0},{0.0258621,0},{0.479798,0},{0.107759,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Break Force:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="SteeringForce" >
+                <Property name="Area" value="{{0.661616,0},{0.12069,0},{0.989899,0},{0.206897,0}}" />
+                <Property name="Text" value="0.5" />
+            </Window>
+            <Window type="GWEN/Editbox" name="BreakForce" >
+                <Property name="Area" value="{{0.661616,0},{0.0215517,0},{0.994949,0},{0.107759,0}}" />
+                <Property name="Text" value="400" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText22" >
+                <Property name="Area" value="{{0.00505051,0},{0.224138,0},{0.666667,0},{0.306034,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Engine Force:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="EngineForce" >
+                <Property name="Area" value="{{0.661616,0},{0.219828,0},{0.989899,0},{0.306035,0}}" />
+                <Property name="Text" value="100" />
+            </Window>
+            <Window type="GWEN/Editbox" name="SuspensionLength" >
+                <Property name="Area" value="{{0.661616,0},{0.323276,0},{0.989899,0},{0.409483,0}}" />
+                <Property name="Text" value="0.7" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText222" >
+                <Property name="Area" value="{{0.00505051,0},{0.327586,0},{0.666667,0},{0.409483,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Suspension Length:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="SuspensionStiffness" >
+                <Property name="Area" value="{{0.661616,0},{0.413793,0},{0.989899,0},{0.5,0}}" />
+                <Property name="Text" value="100" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText2222" >
+                <Property name="Area" value="{{0,0},{0.418103,0},{0.661616,0},{0.5,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Suspension Stiffness:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="Friction" >
+                <Property name="Area" value="{{0.661616,0},{0.508621,0},{0.989899,0},{0.594828,0}}" />
+                <Property name="Text" value="1.2" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText22222" >
+                <Property name="Area" value="{{0,0},{0.512931,0},{0.661616,0},{0.594828,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Friction:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="RollInfluence" >
+                <Property name="Area" value="{{0.661616,0},{0.603448,0},{0.989899,0},{0.689655,0}}" />
+                <Property name="Text" value="1.0" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText222222" >
+                <Property name="Area" value="{{0,0},{0.607759,0},{0.661616,0},{0.689655,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Roll Influence:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText2222222" >
+                <Property name="Area" value="{{0,0},{0.702586,0},{0.661616,0},{0.784483,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Damping Compression:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="DampingCompression" >
+                <Property name="Area" value="{{0.661616,0},{0.698276,0},{0.989899,0},{0.784483,0}}" />
+                <Property name="Text" value="6" />
+            </Window>
+            <Window type="GWEN/Editbox" name="DampingRelaxation" >
+                <Property name="Area" value="{{0.661616,0},{0.793103,0},{0.989899,0},{0.87931,0}}" />
+                <Property name="Text" value="10" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText22222222" >
+                <Property name="Area" value="{{0,0},{0.797414,0},{0.661616,0},{0.87931,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Damping Relaxation:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Checkbox" name="Copy" >
+                <Property name="Area" value="{{0,0},{0.900862,0},{0.656566,0},{0.982759,0}}" />
+                <Property name="Text" value="Copy" />
+            </Window>
+        </Window>
+        <Window type="DefaultWindow" name="Inventory" >
+            <Property name="Area" value="{{0.855,0},{0.03875,0},{1,0},{0.77375,0}}" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Window type="GWEN/StaticImage" name="ItemIcon1" >
+                <Property name="Area" value="{{0.1,0},{0,0},{0.901724,0},{0.232993,0}}" />
+                <Property name="Image" value="ItemBox/ItemBox" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <Window type="GWEN/StaticImage" name="icon" >
+                    <Property name="Area" value="{{0.1,0},{0.1,0},{0.9,0},{0.9,0}}" />
+                    <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                    <Property name="FrameEnabled" value="false" />
+                    <Property name="BackgroundEnabled" value="false" />
+                </Window>
+            </Window>
+            <Window type="GWEN/StaticText" name="ItemName1" >
+                <Property name="Area" value="{{0.00517242,0},{0.238286,0},{0.97931,0},{0.318218,0}}" />
+                <Property name="Font" value="OpenSans-20" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFFFFFFF br:FFFFFFFF" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="HorzFormatting" value="CentreAligned" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticImage" name="ItemIcon2" >
+                <Property name="Area" value="{{0.0913043,0},{0.329759,0},{0.893028,0},{0.562752,0}}" />
+                <Property name="Image" value="ItemBox/ItemBox" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <Window type="GWEN/StaticImage" name="icon" >
+                    <Property name="Area" value="{{0.1,0},{0.1,0},{0.9,0},{0.9,0}}" />
+                    <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                    <Property name="FrameEnabled" value="false" />
+                    <Property name="BackgroundEnabled" value="false" />
+                </Window>
+            </Window>
+            <Window type="GWEN/StaticText" name="ItemName2" >
+                <Property name="Area" value="{{0.00517242,0},{0.566344,0},{0.987931,0},{0.653079,0}}" />
+                <Property name="Font" value="OpenSans-20" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFFFFFFF br:FFFFFFFF" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="HorzFormatting" value="CentreAligned" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticImage" name="ItemIcon3" >
+                <Property name="Area" value="{{0.0826087,0},{0.656836,0},{0.884333,0},{0.889829,0}}" />
+                <Property name="Image" value="ItemBox/ItemBox" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <Window type="GWEN/StaticImage" name="icon" >
+                    <Property name="Area" value="{{0.1,0},{0.1,0},{0.9,0},{0.9,0}}" />
+                    <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                    <Property name="FrameEnabled" value="false" />
+                    <Property name="BackgroundEnabled" value="false" />
+                </Window>
+            </Window>
+            <Window type="GWEN/StaticText" name="ItemName3" >
+                <Property name="Area" value="{{0.00517242,0},{0.893421,0},{0.97931,0},{0.973353,0}}" />
+                <Property name="Font" value="OpenSans-20" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFFFFFFF br:FFFFFFFF" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="HorzFormatting" value="CentreAligned" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+        </Window>
+        <Window type="GWEN/FrameWindow" name="SteeringWrench" >
+            <Property name="Area" value="{{0.47125,0},{0.5375,0},{0.74625,0},{0.70875,44}}" />
+            <Property name="Text" value="Vehicle Properties" />
+            <Property name="Visible" value="false" />
+            <Property name="AutoRenderingSurface" value="true" />
+            <AutoWindow namePath="__auto_titlebar__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="false" />
+            </AutoWindow>
+            <AutoWindow namePath="__auto_closebutton__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="true" />
+            </AutoWindow>
+            <Window type="GWEN/Button" name="Submit" >
+                <Property name="Area" value="{{0.696303,0},{0.829641,0},{0.993473,0},{0.985485,0}}" />
+                <Property name="Text" value="Submit" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText" >
+                <Property name="Area" value="{{0.010101,0},{0.0350141,0},{0.486516,0},{0.164884,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Mass per brick:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="Mass" >
+                <Property name="Area" value="{{0.661616,0},{0.035014,0},{0.996522,0},{0.177871,0}}" />
+                <Property name="Text" value="0" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText2" >
+                <Property name="Area" value="{{0.010101,0},{0.154061,0},{1.07614,0},{0.270945,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Must be between 1.5 and 30" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText23" >
+                <Property name="Area" value="{{-0.00505051,2},{0.431246,0},{0.999666,-1},{0.671505,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="use very small values, 1 stops all rotation / steering entirely" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="HorzFormatting" value="WordWrapLeftAligned" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText3" >
+                <Property name="Area" value="{{0.010101,0},{0.294754,0},{0.486516,0},{0.424624,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Angular Damping:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="Damping" >
+                <Property name="Area" value="{{0.661616,0},{0.294754,0},{0.996522,0},{0.437611,0}}" />
+                <Property name="Text" value="0.03" />
+                <Property name="CaretIndex" value="4" />
+                <Property name="SelectionStart" value="4" />
+            </Window>
+            <Window type="GWEN/Checkbox" name="CenterMass" >
+                <Property name="Area" value="{{0.00471698,0},{0.675325,0},{0.731132,0},{0.863636,0}}" />
+                <Property name="Text" value="Fix Center of Mass" />
+                <Property name="Selected" value="true" />
+            </Window>
+        </Window>
+        <Window type="GWEN/TransWindow" name="Chat" >
+            <Property name="Area" value="{{0.005,0},{0.02125,0},{0.845,0},{0.35625,0}}" />
+            <Property name="Text" value="Chat Window" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="SizingEnabled" value="false" />
+            <Property name="TitlebarEnabled" value="false" />
+            <Property name="CloseButtonEnabled" value="false" />
+            <Property name="RiseOnClickEnabled" value="false" />
+            <Property name="AutoRenderingSurface" value="true" />
+            <Property name="MousePassThroughEnabled" value="true" />
+            <AutoWindow namePath="__auto_titlebar__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="false" />
+            </AutoWindow>
+            <AutoWindow namePath="__auto_closebutton__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="true" />
+            </AutoWindow>
+            <Window type="GWEN/TransListbox" name="Listbox" >
+                <Property name="Area" value="{{0,0},{0,0},{1,0},{0.850746,0}}" />
+                <Property name="Font" value="DejaVuSans-12" />
+                <Property name="RiseOnClickEnabled" value="false" />
+                <Property name="MousePassThroughEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="DidScroll" >
+                <Property name="Area" value="{{0.00516987,0},{0.828358,0},{0.0642541,0},{0.91791,0}}" />
+                <Property name="Font" value="DejaVuSans-10" />
+                <Property name="Text" value="^^^" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="TextColours" value="tl:FF0000FF tr:FF0000FF bl:FF0000FF br:FF0000FF" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="false" />
+                <Property name="RiseOnClickEnabled" value="false" />
+                <Property name="MousePassThroughEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/TransEditbox" name="Editbox" >
+                <Property name="Area" value="{{0.00886263,0},{0.835821,0},{1.00443,0},{1.03358,0}}" />
+                <Property name="Font" value="OpenSans-20" />
+                <Property name="MaxTextLength" value="200" />
+                <Property name="NormalTextColour" value="FFFFFFFF" />
+                <Property name="RiseOnClickEnabled" value="false" />
+                <Property name="MousePassThroughEnabled" value="true" />
+            </Window>
+        </Window>
+        <Window type="GWEN/StaticText" name="WhosTyping" >
+            <Property name="Area" value="{{0.00125,0},{0,0},{0.4525,0},{0.0175,0}}" />
+            <Property name="Font" value="OpenSans-8" />
+            <Property name="Text" value=" " />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="TextColours" value="tl:FF0000FF tr:FF0000FF bl:FF0000FF br:FF0000FF" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/FrameWindow" name="PlayerList" >
+            <Property name="Area" value="{{0.12375,0},{0.0875,0},{0.34625,0},{0.33875,0}}" />
+            <Property name="Text" value="Player List" />
+            <Property name="Visible" value="false" />
+            <Property name="AutoRenderingSurface" value="true" />
+            <AutoWindow namePath="__auto_titlebar__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="false" />
+            </AutoWindow>
+            <AutoWindow namePath="__auto_closebutton__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="true" />
+            </AutoWindow>
+            <Window type="GWEN/MultiColumnList" name="List" >
+                <Property name="Area" value="{{0,0},{0.0229885,0},{1,0},{0.994253,0}}" />
+                <AutoWindow namePath="__auto_listheader__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+        </Window>
+    </Window>
+</GUILayout>

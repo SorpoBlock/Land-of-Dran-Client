@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<Imageset autoScaled="false" imagefile="brickPopup.png" name="BrickPopup"      nativeHorzRes="500" nativeVertRes="100" version="2">
+	<Image height="100" width="500" xPos="0" yPos="0" name="BrickPopup" />
+</Imageset>

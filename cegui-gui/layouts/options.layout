@@ -1,0 +1,854 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout version="4" >
+    <Window type="GWEN/FrameWindow" name="Options" >
+        <Property name="Area" value="{{0,149},{0,162},{0,610},{0,576}}" />
+        <Property name="Text" value="Options" />
+        <Property name="AutoRenderingSurface" value="true" />
+        <AutoWindow namePath="__auto_titlebar__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="false" />
+        </AutoWindow>
+        <AutoWindow namePath="__auto_closebutton__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="true" />
+        </AutoWindow>
+        <Window type="DefaultWindow" name="Graphics" >
+            <Property name="Area" value="{{0,0},{0.1,0},{1,0},{0.999225,0}}" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Window type="GWEN/HorizontalSlider" name="FOVSlider" >
+                <Property name="Area" value="{{0.187638,0},{0.0206718,0},{0.554084,0},{0.0801033,0}}" />
+                <Property name="CurrentValue" value="1" />
+                <Property name="MaximumValue" value="130" />
+                <Property name="ClickStepSize" value="10" />
+                <Property name="VerticalSlider" value="false" />
+                <Property name="WantsMultiClickEvents" value="false" />
+                <Property name="MouseAutoRepeatEnabled" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText" >
+                <Property name="Area" value="{{0.00883002,0},{0.0155039,0},{0.181015,0},{0.0723514,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Field of View:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="FOVText" >
+                <Property name="Area" value="{{0.571744,0},{0.0155039,0},{0.790287,0},{0.0723514,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="90 degrees" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="OpacityText" >
+                <Property name="Area" value="{{0.573952,0},{0.0904393,0},{0.746137,0},{0.147287,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="80%" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/HorizontalSlider" name="HUDOpacitySlider" >
+                <Property name="Area" value="{{0.189846,0},{0.0956072,0},{0.556292,0},{0.155039,0}}" />
+                <Property name="CurrentValue" value="1" />
+                <Property name="MaximumValue" value="100" />
+                <Property name="ClickStepSize" value="1" />
+                <Property name="VerticalSlider" value="false" />
+                <Property name="WantsMultiClickEvents" value="false" />
+                <Property name="MouseAutoRepeatEnabled" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText3" >
+                <Property name="Area" value="{{0.0110375,0},{0.0904393,0},{0.183223,0},{0.147287,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="HUD Opacity:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Checkbox" name="VSyncCheckbox" >
+                <Property name="Area" value="{{0.013245,0},{0.165375,0},{0.229581,0},{0.232558,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Use VSync" />
+            </Window>
+            <Window type="GWEN/Checkbox" name="FullscreenCheckbox" >
+                <Property name="Area" value="{{0.251656,0},{0.165375,0},{0.467992,0},{0.232558,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Use Fullscreen" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText32" >
+                <Property name="Area" value="{{0.013245,0},{0.242894,0},{0.18543,0},{0.299742,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Resolution:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Editbox" name="xResEditbox" >
+                <Property name="Area" value="{{0.198675,0},{0.242894,0},{0.30905,0},{0.299742,0}}" />
+            </Window>
+            <Window type="GWEN/Editbox" name="yResEditbox" >
+                <Property name="Area" value="{{0.322296,0},{0.242894,0},{0.432671,0},{0.299742,0}}" />
+            </Window>
+            <Window type="GWEN/Combobox" name="WaterQualityDropdown" >
+                <Property name="Area" value="{{0.443709,0},{0.24031,0},{0.750552,0},{0.599483,0}}" />
+                <Property name="ReadOnly" value="true" />
+                <Property name="TooltipText" value="For reflections and refractions." />
+                <Property name="SingleClickMode" value="true" />
+                <AutoWindow namePath="__auto_editbox__" >
+                    <Property name="ReadOnly" value="true" />
+                    <Property name="TooltipText" value="For reflections and refractions." />
+                </AutoWindow>
+                <AutoWindow namePath="__auto_droplist__" >
+                    <Property name="TooltipText" value="For reflections and refractions." />
+                    <AutoWindow namePath="__auto_hscrollbar__" >
+                        <Property name="TooltipText" value="For reflections and refractions." />
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="TooltipText" value="For reflections and refractions." />
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="TooltipText" value="For reflections and refractions." />
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="TooltipText" value="For reflections and refractions." />
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_vscrollbar__" >
+                        <Property name="TooltipText" value="For reflections and refractions." />
+                        <Property name="VerticalScrollbar" value="true" />
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="TooltipText" value="For reflections and refractions." />
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="TooltipText" value="For reflections and refractions." />
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="TooltipText" value="For reflections and refractions." />
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_button__" >
+                    <Property name="TooltipText" value="For reflections and refractions." />
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText322" >
+                <Property name="Area" value="{{0.516556,0},{0.170543,0},{0.688741,0},{0.227391,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Water Quality:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="TooltipText" value="For reflections and refractions." />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <Property name="TooltipText" value="For reflections and refractions." />
+                    <AutoWindow namePath="__auto_incbtn__" >
+                        <Property name="TooltipText" value="For reflections and refractions." />
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_decbtn__" >
+                        <Property name="TooltipText" value="For reflections and refractions." />
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="TooltipText" value="For reflections and refractions." />
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="TooltipText" value="For reflections and refractions." />
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_incbtn__" >
+                        <Property name="TooltipText" value="For reflections and refractions." />
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_decbtn__" >
+                        <Property name="TooltipText" value="For reflections and refractions." />
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="TooltipText" value="For reflections and refractions." />
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText3222" >
+                <Property name="Area" value="{{0.0154525,0},{0.322997,0},{0.253863,0},{0.379845,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Shadow Resolution:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Combobox" name="ShadowResolutionDropdown" >
+                <Property name="Area" value="{{0.271523,0},{0.315245,0},{0.492274,0},{0.677002,0}}" />
+                <Property name="ReadOnly" value="true" />
+                <Property name="SingleClickMode" value="true" />
+                <AutoWindow namePath="__auto_editbox__" >
+                    <Property name="ReadOnly" value="true" />
+                </AutoWindow>
+                <AutoWindow namePath="__auto_droplist__" >
+                    <AutoWindow namePath="__auto_hscrollbar__" >
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_vscrollbar__" >
+                        <Property name="VerticalScrollbar" value="true" />
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText32222" >
+                <Property name="Area" value="{{0.01766,0},{0.413437,0},{0.256071,0},{0.470285,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Shadow Softness:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Combobox" name="ShadowSoftnessDropdown" >
+                <Property name="Area" value="{{0.271523,0},{0.413437,0},{0.578366,0},{0.77261,0}}" />
+                <Property name="ReadOnly" value="true" />
+                <Property name="SingleClickMode" value="true" />
+                <AutoWindow namePath="__auto_editbox__" >
+                    <Property name="ReadOnly" value="true" />
+                </AutoWindow>
+                <AutoWindow namePath="__auto_droplist__" >
+                    <AutoWindow namePath="__auto_hscrollbar__" >
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_vscrollbar__" >
+                        <Property name="VerticalScrollbar" value="true" />
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Combobox" name="GodRayQualityDropdown" >
+                <Property name="Area" value="{{0.271523,0},{0.50646,0},{0.578366,0},{0.865633,0}}" />
+                <Property name="ReadOnly" value="true" />
+                <Property name="SingleClickMode" value="true" />
+                <AutoWindow namePath="__auto_editbox__" >
+                    <Property name="ReadOnly" value="true" />
+                </AutoWindow>
+                <AutoWindow namePath="__auto_droplist__" >
+                    <AutoWindow namePath="__auto_hscrollbar__" >
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_vscrollbar__" >
+                        <Property name="VerticalScrollbar" value="true" />
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText322222" >
+                <Property name="Area" value="{{0.01766,0},{0.50646,0},{0.256071,0},{0.563308,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="God Ray Quality:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText3222222" >
+                <Property name="Area" value="{{0.01766,0},{0.609819,0},{0.256071,0},{0.666667,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Sprite Density:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Combobox" name="SpriteDensityDropdown" >
+                <Property name="Area" value="{{0.271523,0},{0.609819,0},{0.578366,0},{0.968992,0}}" />
+                <Property name="ReadOnly" value="true" />
+                <Property name="SingleClickMode" value="true" />
+                <AutoWindow namePath="__auto_editbox__" >
+                    <Property name="ReadOnly" value="true" />
+                </AutoWindow>
+                <AutoWindow namePath="__auto_droplist__" >
+                    <AutoWindow namePath="__auto_hscrollbar__" >
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_vscrollbar__" >
+                        <Property name="VerticalScrollbar" value="true" />
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Checkbox" name="ColoredShadowsCheckbox" >
+                <Property name="Area" value="{{0.503312,0},{0.31783,0},{0.75276,0},{0.385013,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Colored Shadows" />
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText32222222" >
+                <Property name="Area" value="{{0.0154525,0},{0.702842,0},{0.267108,0},{0.75969,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Anti-Aliasing Samples:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Combobox" name="AASamplesDropdown" >
+                <Property name="Area" value="{{0.271523,0},{0.700258,0},{0.578366,0},{1.05943,0}}" />
+                <Property name="ReadOnly" value="true" />
+                <Property name="SingleClickMode" value="true" />
+                <AutoWindow namePath="__auto_editbox__" >
+                    <Property name="ReadOnly" value="true" />
+                </AutoWindow>
+                <AutoWindow namePath="__auto_droplist__" >
+                    <AutoWindow namePath="__auto_hscrollbar__" >
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_vscrollbar__" >
+                        <Property name="VerticalScrollbar" value="true" />
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText322222222" >
+                <Property name="Area" value="{{0.812362,0},{0.808785,0},{0.98234,0},{0.873385,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Most Settings" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText3222222222" >
+                <Property name="Area" value="{{0.801324,0},{0.863049,0},{0.995584,0},{0.927648,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Require Restart" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText33" >
+                <Property name="Area" value="{{0.022075,0},{0.791589,0},{0.218543,0},{0.84906,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Material Cutoff:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/HorizontalSlider" name="MaterialCutoff" >
+                <Property name="Area" value="{{0.225166,0},{0.791009,0},{0.591612,0},{0.851354,0}}" />
+                <Property name="CurrentValue" value="1" />
+                <Property name="MaximumValue" value="1000" />
+                <Property name="ClickStepSize" value="1" />
+                <Property name="VerticalSlider" value="false" />
+                <Property name="WantsMultiClickEvents" value="false" />
+                <Property name="MouseAutoRepeatEnabled" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Combobox" name="GuiScalingDropdown" >
+                <Property name="Area" value="{{0.757174,0},{0.242003,0},{0.99117,0},{0.604072,0}}" />
+                <Property name="ReadOnly" value="true" />
+                <Property name="SingleClickMode" value="true" />
+                <AutoWindow namePath="__auto_editbox__" >
+                    <Property name="ReadOnly" value="true" />
+                </AutoWindow>
+                <AutoWindow namePath="__auto_droplist__" >
+                    <AutoWindow namePath="__auto_hscrollbar__" >
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                    <AutoWindow namePath="__auto_vscrollbar__" >
+                        <Property name="VerticalScrollbar" value="true" />
+                        <AutoWindow namePath="__auto_incbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_decbtn__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                        </AutoWindow>
+                        <AutoWindow namePath="__auto_thumb__" >
+                            <Property name="RestoreOldCapture" value="true" />
+                            <Property name="MouseInputPropagationEnabled" value="true" />
+                        </AutoWindow>
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText32222223" >
+                <Property name="Area" value="{{0.790287,0},{0.173037,0},{0.953642,0},{0.230509,0}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Gui Scaling:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+        </Window>
+        <Window type="GWEN/Button" name="GraphicsButton" >
+            <Property name="Area" value="{{0.0375276,0},{0.0129199,0},{0.205298,0},{0.0904393,0}}" />
+            <Property name="Font" value="DejaVuSans-10-NoScale" />
+            <Property name="Text" value="Graphics" />
+        </Window>
+        <Window type="DefaultWindow" name="Controls" >
+            <Property name="Area" value="{{0,0},{0.1,0},{1,0},{0.999225,0}}" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="Visible" value="false" />
+            <Window type="GWEN/Checkbox" name="InvertMouseCheckbox" >
+                <Property name="Area" value="{{0.0220751,0},{0.0201149,0},{0.331126,0},{0.0948276,0}}" />
+                <Property name="Font" value="DejaVuSans-10-NoScale" />
+                <Property name="Text" value="Invert Mouse Y" />
+            </Window>
+            <Window type="GWEN/HorizontalSlider" name="MouseSlider" >
+                <Property name="Area" value="{{0.386313,18},{0.0321661,18},{0.752759,18},{0.0925109,18}}" />
+                <Property name="MaximumValue" value="300" />
+                <Property name="ClickStepSize" value="10" />
+                <Property name="VerticalSlider" value="false" />
+                <Property name="WantsMultiClickEvents" value="false" />
+                <Property name="MouseAutoRepeatEnabled" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="MouseText" >
+                <Property name="Area" value="{{0.772627,18},{0.0298717,18},{0.99117,1},{0.087343,18}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="100%" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/MultiColumnList" name="KeyBindsList" >
+                <Property name="Area" value="{{0,9},{0,59},{0,252},{0,303}}" />
+                <Property name="ForceVertScrollbar" value="true" />
+                <AutoWindow namePath="__auto_listheader__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText" >
+                <Property name="Area" value="{{0,83},{0,32},{0.5,-59},{0.5,-108}}" />
+                <Property name="Font" value="DejaVuSans-10-NoScale" />
+                <Property name="Text" value="Key Binds:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Button" name="BindKeyButton" >
+                <Property name="Area" value="{{0.803532,-354},{0.917313,-8},{0.986755,-354},{0.989664,-8}}" />
+                <Property name="Font" value="OpenSans-8" />
+                <Property name="Text" value="Rebind Key" />
+                <Property name="AlwaysOnTop" value="true" />
+            </Window>
+            <Window type="GWEN/StaticText" name="BindingText" >
+                <Property name="Area" value="{{0,98},{0,307},{0.5,118},{0.5,167}}" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText2" >
+                <Property name="Area" value="{{0,241},{0,-4},{0.5,157},{0.5,-144}}" />
+                <Property name="Font" value="DejaVuSans-10-NoScale" />
+                <Property name="Text" value="Mouse sensitivity:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/Button" name="LaptopBuild" >
+                <Property name="Area" value="{{0.565121,0},{0.807471,0},{0.995585,0},{0.87069,0}}" />
+                <Property name="Text" value="Building Laptop Defaults" />
+            </Window>
+            <Window type="GWEN/Button" name="NormalBuild" >
+                <Property name="Area" value="{{0.565121,0},{0.727012,0},{0.995585,0},{0.79023,0}}" />
+                <Property name="Text" value="Building Normal Defaults" />
+            </Window>
+        </Window>
+        <Window type="GWEN/Button" name="ControlsButton" >
+            <Property name="Area" value="{{0.247241,0},{0.0129199,0},{0.415011,0},{0.0904393,0}}" />
+            <Property name="Font" value="DejaVuSans-10-NoScale" />
+            <Property name="Text" value="Controls" />
+        </Window>
+        <Window type="GWEN/Button" name="ApplyButton" >
+            <Property name="Area" value="{{0.803532,0},{0.917313,0},{0.986755,0},{0.989664,0}}" />
+            <Property name="Font" value="OpenSans-8" />
+            <Property name="Text" value="Apply" />
+            <Property name="AlwaysOnTop" value="true" />
+        </Window>
+        <Window type="GWEN/Button" name="AudioButton" >
+            <Property name="Area" value="{{0.463577,0},{0.0129199,0},{0.631347,0},{0.0904393,0}}" />
+            <Property name="Font" value="DejaVuSans-10-NoScale" />
+            <Property name="Text" value="Audio" />
+        </Window>
+        <Window type="DefaultWindow" name="Audio" >
+            <Property name="Area" value="{{0,0},{0.0981912,0},{1,0},{0.904393,0}}" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="Visible" value="false" />
+            <Window type="GWEN/HorizontalSlider" name="MasterSlider" >
+                <Property name="Area" value="{{0.242826,0},{0.0218893,0},{0.984548,0},{0.0827867,0}}" />
+                <Property name="CurrentValue" value="1" />
+                <Property name="MaximumValue" value="100" />
+                <Property name="ClickStepSize" value="1" />
+                <Property name="VerticalSlider" value="false" />
+                <Property name="WantsMultiClickEvents" value="false" />
+                <Property name="MouseAutoRepeatEnabled" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/HorizontalSlider" name="MusicSlider" >
+                <Property name="Area" value="{{0.242826,0},{0.102018,0},{0.986756,0},{0.162915,0}}" />
+                <Property name="CurrentValue" value="1" />
+                <Property name="MaximumValue" value="100" />
+                <Property name="ClickStepSize" value="1" />
+                <Property name="VerticalSlider" value="false" />
+                <Property name="WantsMultiClickEvents" value="false" />
+                <Property name="MouseAutoRepeatEnabled" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText" >
+                <Property name="Area" value="{{-0.00220751,0},{0.0288462,0},{0.238411,0},{0.0801282,0}}" />
+                <Property name="Font" value="DejaVuSans-10-NoScale" />
+                <Property name="Text" value="Master Volume:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+            <Window type="GWEN/StaticText" name="StaticText2" >
+                <Property name="Area" value="{{0,0},{0.102564,0},{0.240618,0},{0.153846,0}}" />
+                <Property name="Font" value="DejaVuSans-10-NoScale" />
+                <Property name="Text" value="Music Volume:" />
+                <Property name="MaxSize" value="{{1,0},{1,0}}" />
+                <Property name="FrameEnabled" value="false" />
+                <Property name="BackgroundEnabled" value="true" />
+                <AutoWindow namePath="__auto_hscrollbar__" >
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+                <AutoWindow namePath="__auto_vscrollbar__" >
+                    <Property name="VerticalScrollbar" value="true" />
+                    <AutoWindow namePath="__auto_thumb__" >
+                        <Property name="MouseInputPropagationEnabled" value="true" />
+                    </AutoWindow>
+                </AutoWindow>
+            </Window>
+        </Window>
+    </Window>
+</GUILayout>

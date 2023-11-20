@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout version="4" >
+    <Window type="GWEN/FrameWindow" name="JoinServer" >
+        <Property name="Area" value="{{0.37375,0},{0.14125,0},{0.95,0},{0.80875,0}}" />
+        <Property name="Text" value="Main Menu" />
+        <Property name="CloseButtonEnabled" value="false" />
+        <Property name="AutoRenderingSurface" value="true" />
+        <AutoWindow namePath="__auto_titlebar__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="false" />
+        </AutoWindow>
+        <AutoWindow namePath="__auto_closebutton__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="true" />
+        </AutoWindow>
+        <Window type="GWEN/Editbox" name="UsernameBox" >
+            <Property name="Area" value="{{0.141227,0},{0.609468,0},{0.470146,0},{0.688363,0}}" />
+            <Property name="MaxTextLength" value="32" />
+        </Window>
+        <Window type="GWEN/Editbox" name="IPBox" >
+            <Property name="Area" value="{{0.313413,0},{0.42998,0},{0.726216,0},{0.508876,0}}" />
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText" >
+            <Property name="Area" value="{{0.00883002,0},{0.625247,0},{0.134658,0},{0.670611,0}}" />
+            <Property name="Text" value="Username:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText2" >
+            <Property name="Area" value="{{0.189845,0},{0.435897,0},{0.302428,0},{0.504931,0}}" />
+            <Property name="Text" value="Server IP:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/Button" name="ConnectButton" >
+            <Property name="Area" value="{{0.759382,0},{0.428008,0},{1,0},{0.510848,0}}" />
+            <Property name="Text" value="Join As Guest" />
+        </Window>
+        <Window type="GWEN/HorizontalSlider" name="RedSlider" >
+            <Property name="Area" value="{{0.169696,0},{0.806707,0},{0.823117,0},{0.846154,0}}" />
+            <Property name="MaximumValue" value="255" />
+            <Property name="ClickStepSize" value="1" />
+            <Property name="VerticalSlider" value="false" />
+            <Property name="WantsMultiClickEvents" value="false" />
+            <Property name="MouseAutoRepeatEnabled" value="true" />
+            <AutoWindow namePath="__auto_thumb__" >
+                <Property name="MouseInputPropagationEnabled" value="true" />
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText3" >
+            <Property name="Area" value="{{0.0198678,0},{0.804734,0},{0.0905079,0},{0.848126,0}}" />
+            <Property name="Text" value="Red:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText32" >
+            <Property name="Area" value="{{0.00882977,0},{0.854044,0},{0.116998,0},{0.897436,0}}" />
+            <Property name="Text" value="Green:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/HorizontalSlider" name="GreenSlider" >
+            <Property name="Area" value="{{0.169696,0},{0.856016,0},{0.823117,0},{0.895464,0}}" />
+            <Property name="MaximumValue" value="255" />
+            <Property name="ClickStepSize" value="1" />
+            <Property name="VerticalSlider" value="false" />
+            <Property name="WantsMultiClickEvents" value="false" />
+            <Property name="MouseAutoRepeatEnabled" value="true" />
+            <AutoWindow namePath="__auto_thumb__" >
+                <Property name="MouseInputPropagationEnabled" value="true" />
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText33" >
+            <Property name="Area" value="{{0.0198678,0},{0.897437,0},{0.0971305,0},{0.940829,0}}" />
+            <Property name="Text" value="Blue:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/HorizontalSlider" name="BlueSlider" >
+            <Property name="Area" value="{{0.169696,0},{0.899408,0},{0.823117,0},{0.938855,0}}" />
+            <Property name="MaximumValue" value="255" />
+            <Property name="ClickStepSize" value="1" />
+            <Property name="VerticalSlider" value="false" />
+            <Property name="WantsMultiClickEvents" value="false" />
+            <Property name="MouseAutoRepeatEnabled" value="true" />
+            <AutoWindow namePath="__auto_thumb__" >
+                <Property name="MouseInputPropagationEnabled" value="true" />
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/ProgressBar" name="ColorResult" >
+            <Property name="Area" value="{{0.0110375,0},{0.942801,0},{0.816777,0},{0.996055,0}}" />
+            <Property name="StepSize" value="0.01" />
+        </Window>
+        <Window type="GWEN/Button" name="OptionsButton" >
+            <Property name="Area" value="{{0.494481,0},{0.607495,0},{0.735099,0},{0.690335,0}}" />
+            <Property name="Text" value="Options" />
+        </Window>
+        <Window type="GWEN/StaticText" name="StatusText" >
+            <Property name="Area" value="{{0.00883002,0},{0.514793,0},{0.99117,0},{0.554241,0}}" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="HorzFormatting" value="CentreAligned" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/StaticText" name="UpdateText" >
+            <Property name="Area" value="{{0.00883002,0},{0.56213,0},{0.830022,0},{0.601578,0}}" />
+            <Property name="Font" value="DejaVuSans-10" />
+            <Property name="Text" value="[colour=&apos;FFFF0000&apos;]Could not retrieve version info!" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFFFFFFF br:FFFFFFFF" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="HorzFormatting" value="CentreAligned" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/Button" name="UpdateButton" >
+            <Property name="Area" value="{{0.847683,0},{0.558185,0},{0.997793,0},{0.607495,0}}" />
+            <Property name="Text" value="Updater" />
+        </Window>
+        <Window type="GWEN/Button" name="LoginButton" >
+            <Property name="Area" value="{{0.49448,0},{0.706114,0},{0.735099,0},{0.788954,0}}" />
+            <Property name="Text" value="Login" />
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText4" >
+            <Property name="Area" value="{{0.0132451,0},{0.72781,0},{0.13245,0},{0.761341,0}}" />
+            <Property name="Text" value="Password:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/MultiColumnList" name="ServerList" >
+            <Property name="Area" value="{{0,0},{0.00394477,0},{1,0},{0.424063,0}}" />
+            <AutoWindow namePath="__auto_listheader__" >
+                <Property name="MouseInputPropagationEnabled" value="true" />
+            </AutoWindow>
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/Button" name="Refresh" >
+            <Property name="Area" value="{{0.0264901,0},{0.445759,0},{0.163355,0},{0.491124,0}}" />
+            <Property name="Text" value="Refresh" />
+        </Window>
+        <Window type="GWEN/Editbox" name="PasswordBox" >
+            <Property name="Area" value="{{0.141227,0},{0.706114,0},{0.470146,0},{0.78501,0}}" />
+            <Property name="MaskText" value="true" />
+            <Property name="MaxTextLength" value="32" />
+        </Window>
+        <Window type="GWEN/Button" name="Exit" >
+            <Property name="Area" value="{{0.854303,0},{0.944773,0},{0.971301,0},{0.994082,0}}" />
+            <Property name="Text" value="Exit" />
+        </Window>
+    </Window>
+</GUILayout>

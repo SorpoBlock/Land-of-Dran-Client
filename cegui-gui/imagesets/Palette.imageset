@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<Imageset autoScaled="false" imagefile="palette.png" name="Palette"      nativeHorzRes="130" nativeVertRes="240" version="2">
+	<Image height="240" width="130" xPos="0" yPos="0" name="ColorPalette" />
+</Imageset>

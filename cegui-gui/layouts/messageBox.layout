@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout version="4" >
+    <Window type="GWEN/FrameWindow" name="MessageBox" >
+        <Property name="Area" value="{{0.31125,0},{0.2425,0},{0.69375,66},{0.41375,126}}" />
+        <Property name="Text" value="WindowName" />
+        <Property name="Visible" value="false" />
+        <Property name="AutoRenderingSurface" value="true" />
+        <AutoWindow namePath="__auto_titlebar__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="false" />
+        </AutoWindow>
+        <AutoWindow namePath="__auto_closebutton__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="true" />
+        </AutoWindow>
+        <Window type="GWEN/Button" name="MessageButton" >
+            <Property name="Area" value="{{0.326923,0},{0.822034,0},{0.662088,0},{0.995763,0}}" />
+            <Property name="Text" value="ButtonText" />
+        </Window>
+        <Window type="GWEN/StaticText" name="MessageText" >
+            <Property name="Area" value="{{-0.0033557,2},{0.0181818,0},{1.00671,-2},{0.6,45}}" />
+            <Property name="Text" value="Error Message Error Message Error Message Ouch Message Error Message Error Message Error Message Error Message Error Message Error Message " />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="HorzFormatting" value="WordWrapCentreAligned" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+    </Window>
+</GUILayout>

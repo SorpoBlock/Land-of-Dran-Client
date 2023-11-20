@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout version="4" >
+    <Window type="GWEN/FrameWindow" name="Updater" >
+        <Property name="Area" value="{{0.3175,0},{0.2475,0},{0.71375,0},{0.5125,61}}" />
+        <Property name="Text" value="Updating..." />
+        <Property name="AutoRenderingSurface" value="true" />
+        <AutoWindow namePath="__auto_titlebar__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="false" />
+        </AutoWindow>
+        <AutoWindow namePath="__auto_closebutton__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="true" />
+        </AutoWindow>
+        <Window type="GWEN/StaticText" name="StaticText" >
+            <Property name="Area" value="{{0.31068,0},{0.304266,0},{0.669903,0},{0.401827,0}}" />
+            <Property name="Text" value="Updating files 0 / 0" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="Visible" value="false" />
+            <Property name="FrameEnabled" value="true" />
+            <Property name="BackgroundEnabled" value="true" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/ProgressBar" name="ProgressBar" >
+            <Property name="Area" value="{{0,0},{0.172114,0},{0.996764,0},{0.29,0}}" />
+            <Property name="StepSize" value="0.01" />
+            <Property name="SwatchColour" value="FF999999" />
+            <Window type="GWEN/ProgressBar" name="ProgressBar" >
+                <Property name="Area" value="{{0,0},{0.08,0},{1,0},{0.907586,0}}" />
+                <Property name="StepSize" value="0.01" />
+                <Property name="SwatchColour" value="FF44CC44" />
+            </Window>
+        </Window>
+        <Window type="GWEN/Listbox" name="Listbox" >
+            <Property name="Area" value="{{0,0},{0.52332,0},{1,0},{0.990799,0}}" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/Button" name="Button" >
+            <Property name="Area" value="{{0.346278,0},{0.412283,0},{0.634304,0},{0.501714,0}}" />
+            <Property name="Text" value="Try Update" />
+        </Window>
+        <Window type="GWEN/ProgressBar" name="SubProgress" >
+            <Property name="Area" value="{{0,0},{0.0321138,0},{0.996764,0},{0.15,0}}" />
+            <Property name="StepSize" value="0.01" />
+            <Property name="SwatchColour" value="FF999999" />
+            <Window type="GWEN/ProgressBar" name="ProgressBar" >
+                <Property name="Area" value="{{0,0},{0.08,0},{1,0},{0.907586,0}}" />
+                <Property name="StepSize" value="0.01" />
+                <Property name="SwatchColour" value="FF44CC44" />
+            </Window>
+        </Window>
+    </Window>
+</GUILayout>

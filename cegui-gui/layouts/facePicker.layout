@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout version="4" >
+    <Window type="GWEN/FrameWindow" name="DecalPicker" >
+        <Property name="Area" value="{{0.24125,0},{0.1825,0},{0.615,0},{0.44625,0}}" />
+        <Property name="Text" value="Decal Picker" />
+        <Property name="CloseButtonEnabled" value="false" />
+        <Property name="AutoRenderingSurface" value="true" />
+        <AutoWindow namePath="__auto_titlebar__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="false" />
+        </AutoWindow>
+        <AutoWindow namePath="__auto_closebutton__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="true" />
+        </AutoWindow>
+        <Window type="GWEN/ScrollablePane" name="Decals" >
+            <Property name="Area" value="{{0,0},{0.0187095,0},{1.00344,0},{0.790449,0}}" />
+            <AutoWindow namePath="__auto_container__" >
+                <Property name="MouseInputPropagationEnabled" value="true" />
+            </AutoWindow>
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="NonClient" value="true" />
+                <Property name="AlwaysOnTop" value="true" />
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/ProgressBar" name="ProgressBar" >
+            <Property name="Area" value="{{0.00291775,0},{0.797699,0},{1.00292,0},{0.824873,0}}" />
+            <Property name="StepSize" value="0.01" />
+            <Property name="SwatchColour" value="FFAAAAAA" />
+        </Window>
+        <Window type="GWEN/Button" name="Cancel" >
+            <Property name="Area" value="{{0.378007,0},{0.842391,0},{0.608247,0},{0.994565,0}}" />
+            <Property name="Text" value="Cancel" />
+        </Window>
+    </Window>
+</GUILayout>

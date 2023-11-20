@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout version="4" >
+    <Window type="GWEN/FrameWindow" name="SaveLoad" >
+        <Property name="Area" value="{{0.17875,0},{0.11,0},{0.5825,109},{0.47,0}}" />
+        <Property name="Text" value="Save/Load" />
+        <Property name="AutoRenderingSurface" value="true" />
+        <AutoWindow namePath="__auto_titlebar__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="false" />
+        </AutoWindow>
+        <AutoWindow namePath="__auto_closebutton__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="true" />
+        </AutoWindow>
+        <Window type="GWEN/MultiColumnList" name="SavesList" >
+            <Property name="Area" value="{{0.00634921,0},{0.0344828,0},{0.533333,0},{0.89272,0}}" />
+            <AutoWindow namePath="__auto_listheader__" >
+                <Property name="MouseInputPropagationEnabled" value="true" />
+            </AutoWindow>
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/Button" name="Refresh" >
+            <Property name="Area" value="{{0.00952381,0},{0.911877,0},{0.533333,0},{0.992337,0}}" />
+            <Property name="Text" value="Refresh List" />
+        </Window>
+        <Window type="GWEN/Button" name="SaveCar" >
+            <Property name="Area" value="{{0.570755,0},{0.241379,0},{0.969339,0},{0.314176,0}}" />
+            <Property name="Text" value="Save Driven Vehicle" />
+        </Window>
+        <Window type="GWEN/Editbox" name="CarFilePath" >
+            <Property name="Area" value="{{0.570755,0},{0.130268,0},{0.966982,0},{0.218391,0}}" />
+        </Window>
+        <Window type="GWEN/Button" name="LoadVehicle" >
+            <Property name="Area" value="{{0.78066,0},{0.329502,0},{0.990566,0},{0.402299,0}}" />
+            <Property name="Text" value="Load as vehicle" />
+        </Window>
+        <Window type="GWEN/Button" name="LoadBricks" >
+            <Property name="Area" value="{{0.542453,0},{0.329502,0},{0.752358,0},{0.402299,0}}" />
+            <Property name="Text" value="Load as bricks" />
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText" >
+            <Property name="Area" value="{{0.627358,0},{0.0229885,0},{0.941038,0},{0.10728,0}}" />
+            <Property name="Text" value="Saving/Loading Vehicles:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="true" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/ProgressBar" name="ProgressBar" >
+            <Property name="Area" value="{{0.542453,0},{0.490421,0},{1,0},{0.51341,0}}" />
+            <Property name="StepSize" value="0.01" />
+            <Property name="SwatchColour" value="FF777777" />
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText2" >
+            <Property name="Area" value="{{0.626179,0},{0.595785,0},{0.939858,0},{0.680077,0}}" />
+            <Property name="Text" value="Saving/Loading Builds:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="true" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/Button" name="SaveBuild" >
+            <Property name="Area" value="{{0.567217,0},{0.814176,0},{0.758255,0},{0.886973,0}}" />
+            <Property name="Text" value="Save All Bricks" />
+        </Window>
+        <Window type="GWEN/Editbox" name="BuildFilePath" >
+            <Property name="Area" value="{{0.567217,0},{0.703065,0},{0.963444,0},{0.791188,0}}" />
+        </Window>
+        <Window type="GWEN/Button" name="LoadBuild" >
+            <Property name="Area" value="{{0.774764,0},{0.814176,0},{0.965802,0},{0.886973,0}}" />
+            <Property name="Text" value="Load File" />
+        </Window>
+    </Window>
+</GUILayout>

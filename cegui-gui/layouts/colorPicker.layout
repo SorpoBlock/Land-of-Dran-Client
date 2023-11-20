@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GUILayout version="4" >
+    <Window type="GWEN/FrameWindow" name="ColorPicker" >
+        <Property name="Area" value="{{0.135,0},{0.32625,0},{0.57,0},{0.47375,0}}" />
+        <Property name="Text" value="Color Picker" />
+        <Property name="CloseButtonEnabled" value="false" />
+        <Property name="AutoRenderingSurface" value="true" />
+        <AutoWindow namePath="__auto_titlebar__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="false" />
+        </AutoWindow>
+        <AutoWindow namePath="__auto_closebutton__" >
+            <Property name="NonClient" value="true" />
+            <Property name="AlwaysOnTop" value="true" />
+        </AutoWindow>
+        <Window type="GWEN/ProgressBar" name="Result" >
+            <Property name="Area" value="{{0,0},{0.032967,0},{0.25,0},{1,0}}" />
+            <Property name="StepSize" value="0.01" />
+        </Window>
+        <Window type="GWEN/HorizontalSlider" name="RedSlider" >
+            <Property name="Area" value="{{0.4,0},{0.032967,0},{0.991176,0},{0.241758,0}}" />
+            <Property name="VerticalSlider" value="false" />
+            <Property name="WantsMultiClickEvents" value="false" />
+            <Property name="MouseAutoRepeatEnabled" value="true" />
+            <AutoWindow namePath="__auto_thumb__" >
+                <Property name="MouseInputPropagationEnabled" value="true" />
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText" >
+            <Property name="Area" value="{{0.258824,0},{0.010989,0},{0.355882,0},{0.197802,0}}" />
+            <Property name="Text" value="Red:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/HorizontalSlider" name="GreenSlider" >
+            <Property name="Area" value="{{0.4,0},{0.274725,0},{0.994118,0},{0.483517,0}}" />
+            <Property name="VerticalSlider" value="false" />
+            <Property name="WantsMultiClickEvents" value="false" />
+            <Property name="MouseAutoRepeatEnabled" value="true" />
+            <AutoWindow namePath="__auto_thumb__" >
+                <Property name="MouseInputPropagationEnabled" value="true" />
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText2" >
+            <Property name="Area" value="{{0.255882,0},{0.252747,0},{0.402941,0},{0.43956,0}}" />
+            <Property name="Text" value="Green:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/HorizontalSlider" name="BlueSlider" >
+            <Property name="Area" value="{{0.4,0},{0.516484,0},{0.994118,0},{0.725275,0}}" />
+            <Property name="VerticalSlider" value="false" />
+            <Property name="WantsMultiClickEvents" value="false" />
+            <Property name="MouseAutoRepeatEnabled" value="true" />
+            <AutoWindow namePath="__auto_thumb__" >
+                <Property name="MouseInputPropagationEnabled" value="true" />
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/StaticText" name="StaticText22" >
+            <Property name="Area" value="{{0.255882,0},{0.494505,0},{0.370588,0},{0.681319,0}}" />
+            <Property name="Text" value="Blue:" />
+            <Property name="MaxSize" value="{{1,0},{1,0}}" />
+            <Property name="FrameEnabled" value="false" />
+            <Property name="BackgroundEnabled" value="false" />
+            <AutoWindow namePath="__auto_hscrollbar__" >
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+            <AutoWindow namePath="__auto_vscrollbar__" >
+                <Property name="VerticalScrollbar" value="true" />
+                <AutoWindow namePath="__auto_thumb__" >
+                    <Property name="MouseInputPropagationEnabled" value="true" />
+                </AutoWindow>
+            </AutoWindow>
+        </Window>
+        <Window type="GWEN/Button" name="Revert" >
+            <Property name="Area" value="{{0.314706,0},{0.747253,0},{0.5,0},{1,0}}" />
+            <Property name="Text" value="Revert" />
+        </Window>
+        <Window type="GWEN/Button" name="Accept" >
+            <Property name="Area" value="{{0.735294,0},{0.747253,0},{0.920588,0},{1,0}}" />
+            <Property name="Text" value="Accept" />
+        </Window>
+        <Window type="GWEN/Checkbox" name="Checkbox" >
+            <Property name="Area" value="{{0.541176,0},{0.760989,0},{0.694118,0},{0.980769,0}}" />
+            <Property name="Text" value="Retain" />
+        </Window>
+    </Window>
+</GUILayout>
