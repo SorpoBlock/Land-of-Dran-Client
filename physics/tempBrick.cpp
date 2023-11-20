@@ -1037,7 +1037,7 @@ namespace syj
         //position.y = floor(position.y*2.5)/2.5;*/
     }
 
-    void tempBrick::plant(newBrickRenderer &renderer,btDynamicsWorld *world,client *serverConnection)
+    void tempBrick::plant(newBrickRenderer &renderer,client *serverConnection)
     {
         if(!cart)
             return;

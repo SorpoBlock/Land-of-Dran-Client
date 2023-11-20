@@ -28,6 +28,16 @@ namespace syj
     {
         for(int a = 0; a<specialBrickTypes.size(); a++)
             delete specialBrickTypes[a];
+        for(int a = 0; a<printTypes.size(); a++)
+            delete printTypes[a];
+    }
+
+    specialBrickTypeInstanceHolder::~specialBrickTypeInstanceHolder()
+    {
+        glDeleteVertexArrays(1,&vao);
+        glDeleteBuffers(1,&buffers[positionMatBuffer]);
+        glDeleteBuffers(1,&buffers[rotationBuffer]);
+        glDeleteBuffers(1,&buffers[paintColorBuffer]);
     }
 
     specialBrickTypeInstanceHolder::specialBrickTypeInstanceHolder(specialBrickType *based) : type(based)

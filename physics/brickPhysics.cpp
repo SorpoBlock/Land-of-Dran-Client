@@ -56,7 +56,7 @@ namespace syj
         }
     }
 
-    void livingBrick::compile(btDynamicsWorld *world)
+    void livingBrick::compile()
     {
         float minX = 999999;
         float minY = 999999;
@@ -280,21 +280,6 @@ namespace syj
         btTransform startTrans = btTransform::getIdentity();
         startTrans.setOrigin(btVector3(midX,midY,midZ));
         btMotionState *ms = new btDefaultMotionState(startTrans);
-
-/*        body = new btRigidBody(mass,ms,tmp,inertia);
-        world->addRigidBody(body);
-        body->setUserIndex(userIndex_livingBrick);
-        body->setFriction(0.9);
-        body->setLinearVelocity(btVector3(0,20,0));
-
-        compiled = true;
-
-        vehicleRayCaster = new btDefaultVehicleRaycaster(world);
-        vehicle = new btRaycastVehicle(tuning,body,vehicleRayCaster);
-        vehicle->setCoordinateSystem(0,1,2);
-        body->setActivationState(DISABLE_DEACTIVATION);
-        world->addVehicle(vehicle);
-        addWheels(halfExtents);*/
     }
 
     glm::mat4 btScalar2mat4(btScalar* matrix) {

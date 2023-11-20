@@ -15,7 +15,6 @@ namespace syj
     void getImageDims(std::string filepath,int *x,int *y,int *c);
     bool isHDR(std::string filename);
     float *loadImageF(std::string filename,int &tWidth,int &tHeight,int &tChannels,int desiredChannels);
-    unsigned char *loadImageU(std::string filename,int &tWidth,int &tHeight,int &tChannels,int desiredChannels);
 
     enum channel
     {
@@ -30,7 +29,10 @@ namespace syj
         std::string fileName = "";
         int channels=0,width=0,height=0;
         unsigned char *data = 0;
+        unsigned int instances = 0;
     };
+
+    LDRtextureResourceDescriptor *loadImageU(std::string filename,int desiredChannels);
 
     class texture
     {
@@ -39,6 +41,7 @@ namespace syj
             static std::vector<LDRtextureResourceDescriptor*> allTextures;
             static LDRtextureResourceDescriptor *getTexture(std::string name);
 
+            std::vector<LDRtextureResourceDescriptor*> descriptors;
             bool created = false;
             bool mipMaps = true;
             bool isHdr = false;

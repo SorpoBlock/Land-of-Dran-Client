@@ -37,7 +37,12 @@ namespace syj
             {
                 //unsigned char *cdata = 0;
                 debug("File " + heightMapFilePath + " is not HDR");
-                data = loadImageU(heightMapFilePath.c_str(),tWidth,tHeight,tChannels,0);
+                //data = loadImageU(heightMapFilePath.c_str(),tWidth,tHeight,tChannels,0);
+                LDRtextureResourceDescriptor *res = loadImageU(heightMapFilePath.c_str(),0);
+                data = res->data;
+                tWidth = res->width;
+                tHeight = res->height;
+                tChannels = res->channels;
                 /*data = new float[tWidth*tHeight*tChannels];
                 for(int a = 0; a<tWidth*tHeight*tChannels; a++)
                     data[a] = cdata[a];

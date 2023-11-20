@@ -77,7 +77,7 @@ bool godRayButton(const CEGUI::EventArgs &e)
 
 enum gameState
 {
-    STATE_MAINMENU,STATE_CONNECTING,STATE_PLAYING,STATE_AVATARPICKER,STATE_QUITTING
+    STATE_MAINMENU,STATE_CONNECTING,STATE_PLAYING,STATE_AVATARPICKER,STATE_QUITTING,STATE_CLEANUP
 };
 
 int main(int argc, char *argv[])
@@ -346,9 +346,23 @@ int main(int argc, char *argv[])
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
     btGImpactCollisionAlgorithm::registerAlgorithm(dispatcher);
 
+    btDynamicsWorld *world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+
     btCollisionShape *plane = 0;
     btDefaultMotionState* planeState = 0;
     btRigidBody *groundPlane = 0;
+
+    btVector3 gravity = btVector3(0,-70,0);
+    world->setGravity(gravity);
+    world->setForceUpdateAllAabbs(false);
+
+    plane = new btStaticPlaneShape(btVector3(0,1,0),0);
+    planeState = new btDefaultMotionState();
+    btRigidBody::btRigidBodyConstructionInfo planeCon(0,planeState,plane);
+    groundPlane = new btRigidBody(planeCon);
+    groundPlane->setFriction(1.0);
+    //groundPlane->setUserIndex(bodyUserIndex_plane);
+    world->addRigidBody(groundPlane);
 
     CEGUI::Window *bounceText = addGUIFromFile("justText.layout");
     bounceText->setVisible(true);
@@ -397,6 +411,129 @@ int main(int argc, char *argv[])
             case STATE_AVATARPICKER:
             {
                 //TODO: To be moved from avatarPicker.cpp
+                break;
+            }
+            case STATE_CLEANUP:
+            {
+                serverStuff *serverData = clientEnvironment.serverData;
+
+                //Clear decal gui elements
+                CEGUI::ScrolledContainer *decalBox = (CEGUI::ScrolledContainer *)((CEGUI::ScrollablePane*)clientEnvironment.picker->decalPicker->getChild("Decals"))->getContentPane();
+                while(decalBox->getChildCount() > 0)
+                {
+                    if(CEGUI::ImageManager::getSingleton().isDefined(decalBox->getChildAtIdx(0)->getChild("Image")->getProperty("Image")))
+                    {
+                        if(decalBox->getChildAtIdx(0)->getUserData())
+                            delete decalBox->getChildAtIdx(0)->getUserData();
+                        std::string iconName = decalBox->getChildAtIdx(0)->getChild("Image")->getProperty("Image").c_str();
+                        CEGUI::ImageManager::getSingleton().destroy(iconName);
+                        CEGUI::System::getSingleton().getRenderer()->destroyTexture(iconName);
+                    }
+                    decalBox->removeChild(decalBox->getChildAtIdx(0));
+                }
+
+                for(int a = 0; a<clientEnvironment.picker->faceDecals.size(); a++)
+                    delete clientEnvironment.picker->faceDecals[a];
+                clientEnvironment.picker->faceDecals.clear();
+                clientEnvironment.picker->faceDecalFilepaths.clear();
+                //Decal gui elements clear
+
+                //Clear up brick type GUI elements
+
+                /*unsigned int beforeImages = 0;
+                auto imageIter = CEGUI::ImageManager::getSingleton().getIterator();
+                while(!imageIter.isAtEnd())
+                {
+                    //std::cout<<imageIter.getCurrentKey()<<" image\n";
+                    beforeImages++;
+                    ++imageIter;
+                }*/
+
+                CEGUI::Window *brickPopup = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("HUD")->getChild("BrickPopup");
+                for(int a = 1; a<=9; a++)
+                {
+                    CEGUI::Window *cart = clientEnvironment.brickSelector->getChild("Cart" + std::to_string(a));
+                    if(cart->getChild("BrickText")->getText() != "")
+                    {
+                        brickPopup->getChild("Cart" + std::to_string(a))->setProperty("Image","");
+                        cart->getChild("BrickImage")->setProperty("Image","");
+                        cart->getChild("BrickText")->setText("");
+                        cart->setUserData(0);
+                    }
+                }
+
+                CEGUI::ScrolledContainer *brickBox = (CEGUI::ScrolledContainer*)((CEGUI::ScrollablePane*)clientEnvironment.brickSelector->getChild("BasicBricks"))->getContentPane();
+                while(brickBox->getChildCount() > 0)
+                {
+                    if(CEGUI::ImageManager::getSingleton().isDefined(brickBox->getChildAtIdx(0)->getChild("BrickImage")->getProperty("Image")))
+                    {
+                        std::string iconName = brickBox->getChildAtIdx(0)->getChild("BrickImage")->getProperty("Image").c_str();
+                        CEGUI::ImageManager::getSingleton().destroy(iconName);
+                        CEGUI::System::getSingleton().getRenderer()->destroyTexture(iconName);
+                        if(brickBox->getChildAtIdx(0)->getUserData())
+                            delete brickBox->getChildAtIdx(0)->getUserData();
+                    }
+                    brickBox->removeChild(brickBox->getChildAtIdx(0));
+                }
+                brickBox = (CEGUI::ScrolledContainer*)((CEGUI::ScrollablePane*)clientEnvironment.brickSelector->getChild("SpecialBricks"))->getContentPane();
+                while(brickBox->getChildCount() > 0)
+                {
+                    if(CEGUI::ImageManager::getSingleton().isDefined(brickBox->getChildAtIdx(0)->getChild("BrickImage")->getProperty("Image")))
+                    {
+                        std::string iconName = brickBox->getChildAtIdx(0)->getChild("BrickImage")->getProperty("Image").c_str();
+                        CEGUI::ImageManager::getSingleton().destroy(iconName);
+                        CEGUI::System::getSingleton().getRenderer()->destroyTexture(iconName);
+                        if(brickBox->getChildAtIdx(0)->getUserData())
+                            delete brickBox->getChildAtIdx(0)->getUserData();
+                    }
+                    brickBox->removeChild(brickBox->getChildAtIdx(0));
+                }
+
+                /*unsigned int afterImages = 0;
+                auto imageIter2 = CEGUI::ImageManager::getSingleton().getIterator();
+                while(!imageIter2.isAtEnd())
+                {
+                    //std::cout<<imageIter2.getCurrentKey()<<" image\n";
+                    afterImages++;
+                    ++imageIter2;
+                }
+
+                std::cout<<"Before images: "<<beforeImages<<" after: "<<afterImages<<"\n";*/
+                //Brick type gui elements cleared
+
+                if(blocklandHolder)
+                    delete blocklandHolder;
+                blocklandHolder = 0;
+
+                CEGUI::ScrolledContainer *box = (CEGUI::ScrolledContainer *)((CEGUI::ScrollablePane*)clientEnvironment.picker->decalPicker->getChild("Decals"))->getContentPane();
+                while(box->getChildCount() > 0)
+                    box->removeChild(box->getChildAtIdx(0));
+
+                for(int a = 0; a<clientEnvironment.speaker->sounds.size(); a++)
+                    delete clientEnvironment.speaker->sounds[a];
+                clientEnvironment.speaker->sounds.clear();
+
+                context.setMouseLock(false);
+                clientEnvironment.waitingToPickServer = true;
+
+                bounceText->setVisible(true);
+                bounceText->moveToBack();
+
+                delete serverData;
+                serverData = 0;
+                clientEnvironment.serverData = 0;
+
+                if(waterDepth)
+                    delete waterDepth;
+                waterDepth=0;
+                if(waterReflection)
+                    delete waterReflection;
+                waterReflection = 0;
+                if(waterRefraction)
+                    delete waterRefraction;
+                waterRefraction = 0;
+
+                currentState = STATE_MAINMENU;
                 break;
             }
             case STATE_MAINMENU:
@@ -743,23 +880,7 @@ int main(int argc, char *argv[])
                             if(debugMode > 3)
                                 debugMode = 1;*/
 
-
-                            CEGUI::ScrolledContainer *box = (CEGUI::ScrolledContainer *)((CEGUI::ScrollablePane*)clientEnvironment.picker->decalPicker->getChild("Decals"))->getContentPane();
-                            while(box->getChildCount() > 0)
-                                box->removeChild(box->getChildAtIdx(0));
-
-                            for(int a = 0; a<clientEnvironment.speaker->sounds.size(); a++)
-                                delete clientEnvironment.speaker->sounds[a];
-                            clientEnvironment.speaker->sounds.clear();
-
-                            currentState = STATE_MAINMENU;
-                            context.setMouseLock(false);
-                            clientEnvironment.waitingToPickServer = true;
-                            bounceText->setVisible(true);
-                            bounceText->moveToBack();
-                            delete serverData;
-                            serverData = 0;
-                            clientEnvironment.serverData = 0;
+                            currentState = STATE_CLEANUP;
                             break;
                         }
 
@@ -1268,7 +1389,7 @@ int main(int argc, char *argv[])
                         serverData->box->currentPhase = selectionBox::selectionPhase::idle;
                     }
                     else
-                        serverData->ourTempBrick->plant(serverData->staticBricks,world,serverData->connection);
+                        serverData->ourTempBrick->plant(serverData->staticBricks,serverData->connection);
                 }
 
                 serverData->ourTempBrick->update(serverData->staticBricks,clientEnvironment.palette);
@@ -2123,6 +2244,7 @@ int main(int argc, char *argv[])
                     delete clientEnvironment.serverData;
                 clientEnvironment.serverData = new serverStuff;
                 serverStuff *serverData = clientEnvironment.serverData;
+                serverData->world = world;
 
                 networkingPreferences netPrefs;
                 netPrefs.timeoutMS = 1000;
@@ -2145,8 +2267,6 @@ int main(int argc, char *argv[])
                 else
                     connected = true;
 
-                if(blocklandHolder)
-                    delete blocklandHolder;
                 blocklandHolder = new blocklandCompatibility("assets/brick/types/test.cs",".\\assets\\brick\\types",clientEnvironment.brickSelector,true);
 
                 serverData->staticBricks.allocateVertBuffer();
@@ -2263,41 +2383,15 @@ int main(int argc, char *argv[])
                     waterReflectionSettings.clearColor = glm::vec4(0,0,0,0);
                     waterReflectionSettings.texWrapping = GL_REPEAT;
                     waterReflectionSettings.useColor = true;
-                    if(waterReflection)
-                        delete waterReflection;
                     waterReflection = new renderTarget(waterReflectionSettings);
-                    if(waterRefraction)
-                        delete waterRefraction;
                     waterRefraction = new renderTarget(waterReflectionSettings);
                     waterRefraction->settings.clearColor = glm::vec4(0.15,0.15,0.3,0.0);
                     renderTarget::renderTargetSettings waterDepthSettings;
                     waterDepthSettings.useDepth = true;
                     waterDepthSettings.resX = waterReflectionSettings.resX;
                     waterDepthSettings.resY = waterReflectionSettings.resY;
-                    if(waterDepth)
-                        delete waterDepth;
                     waterDepth = new renderTarget(waterDepthSettings);
                 }
-
-                btDynamicsWorld *world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
-                btVector3 gravity = btVector3(0,-70,0);
-                world->setGravity(gravity);
-                world->setForceUpdateAllAabbs(false);
-                serverData->world = world;
-
-                if(plane)
-                    delete plane;
-                plane = new btStaticPlaneShape(btVector3(0,1,0),0);
-                if(planeState)
-                    delete planeState;
-                planeState = new btDefaultMotionState();
-                btRigidBody::btRigidBodyConstructionInfo planeCon(0,planeState,plane);
-                if(groundPlane)
-                    delete groundPlane;
-                groundPlane = new btRigidBody(planeCon);
-                groundPlane->setFriction(1.0);
-                //groundPlane->setUserIndex(bodyUserIndex_plane);
-                world->addRigidBody(groundPlane);
 
                 serverData->box = new selectionBox(world,cubeVAO);
 

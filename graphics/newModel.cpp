@@ -31,8 +31,8 @@ namespace syj
         btTransform t;
         t.setIdentity();
         t.setOrigin(offset);
-        btBoxShape *box = new btBoxShape(extents);
-        shape->addChildShape(t,box);
+        boxShape = new btBoxShape(extents);
+        shape->addChildShape(t,boxShape);
 
         btScalar masses[1];
         masses[0] = 1.0;
@@ -80,6 +80,7 @@ namespace syj
             delete defaultMotionState;
             delete shape;
             delete body;
+            delete boxShape;
         }
 
         for(unsigned int a = 0; a<type->nonInstancedMeshes.size(); a++)

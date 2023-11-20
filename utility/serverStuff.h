@@ -271,7 +271,7 @@ namespace syj
             for(int a = 0; a<lights.size(); a++)
                 delete lights[a];
 
-            delete world;
+            //delete world;
 
             for(int a = 0; a<particleTypes.size(); a++)
                 delete particleTypes[a];

@@ -95,13 +95,7 @@ namespace syj
         int numCompiledInstances = 0;
         void recompileInstances();
 
-        ~specialBrickTypeInstanceHolder()
-        {
-            glDeleteVertexArrays(1,&vao);
-            glDeleteBuffers(1,&buffers[positionMatBuffer]);
-            glDeleteBuffers(1,&buffers[rotationBuffer]);
-            glDeleteBuffers(1,&buffers[paintColorBuffer]);
-        }
+        ~specialBrickTypeInstanceHolder();
     };
 
     struct blocklandCompatibility

@@ -184,13 +184,14 @@ namespace syj
 
     specialBrickType::~specialBrickType()
     {
-        if(customNormalBuffer)
+        delete shape;
+        if(buffers[customNormalBuffer])
             glDeleteBuffers(1,&buffers[customNormalBuffer]);
-        if(customUVBuffer)
+        if(buffers[customUVBuffer])
             glDeleteBuffers(1,&buffers[customUVBuffer]);
-        if(customVertexColorBuffer)
+        if(buffers[customVertexColorBuffer])
             glDeleteBuffers(1,&buffers[customVertexColorBuffer]);
-        if(customVertexBuffer)
+        if(buffers[customVertexBuffer])
             glDeleteBuffers(1,&buffers[customVertexBuffer]);
     }
 

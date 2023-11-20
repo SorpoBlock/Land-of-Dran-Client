@@ -48,13 +48,22 @@ namespace syj
 
     selectionBox::~selectionBox()
     {
+        world->removeRigidBody(leftPull);
+        world->removeRigidBody(rightPull);
+        world->removeRigidBody(downPull);
+        world->removeRigidBody(upPull);
+        world->removeRigidBody(forwardPull);
+        world->removeRigidBody(backwardPull);
+
         delete leftPull;
         delete rightPull;
         delete downPull;
         delete upPull;
         delete forwardPull;
         delete backwardPull;
+
         delete pullShape;
+        delete ms;
     }
 
             /*glm::vec3 up = middle + glm::vec3(0,1.0 + halfs.y,0);

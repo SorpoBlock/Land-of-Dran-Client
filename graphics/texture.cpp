@@ -44,17 +44,16 @@ namespace syj
         return stbi_loadf(filename.c_str(),&tWidth,&tHeight,&tChannels,desiredChannels);
     }
 
-    unsigned char *loadImageU(std::string filename,int &tWidth,int &tHeight,int &tChannels,int desiredChannels)
+    LDRtextureResourceDescriptor *loadImageU(std::string filename,int desiredChannels)
     {
         if(LDRtextureResourceDescriptor* tex = texture::getTexture(filename))
         {
-            tWidth = tex->width;
-            tHeight = tex->height;
-            tChannels = tex->channels;
-            return tex->data;
+            tex->instances++;
+            return tex;
         }
         else
         {
+            int tWidth,tHeight,tChannels;
             tex = new LDRtextureResourceDescriptor;
             tex->data = stbi_load(filename.c_str(),&tWidth,&tHeight,&tChannels,desiredChannels);
             tex->fileName = filename;
@@ -62,7 +61,8 @@ namespace syj
             tex->width = tWidth;
             tex->height = tHeight;
             texture::allTextures.push_back(tex);
-            return tex->data;
+            tex->instances++;
+            return tex;
         }
     }
 
@@ -204,11 +204,20 @@ namespace syj
                 hdrData[resX*resY*currentChannel + a] = data[a*tChannels + fileChannel];
 
             currentChannel++;
+
+            stbi_image_free(data);
+            data=0;
         }
         else
         {
             //unsigned char *data = stbi_load(fileName.c_str(),&tWidth,&tHeight,&tChannels,0);
-            unsigned char *data = loadImageU(fileName,tWidth,tHeight,tChannels,0);
+            //unsigned char *data = loadImageU(fileName,tWidth,tHeight,tChannels,0);
+            LDRtextureResourceDescriptor *res = loadImageU(fileName,0);
+            tWidth = res->width;
+            tHeight = res->height;
+            tChannels = res->channels;
+            unsigned char *data = res->data;
+
             if(tWidth == 0 || tHeight == 0)
             {
                 error("Could not find " + fileName);
@@ -228,6 +237,12 @@ namespace syj
                 ldrData[resX*resY*currentChannel + a] = data[a*tChannels + fileChannel];
 
             currentChannel++;
+
+            descriptors.push_back(res);
+
+            //stbi_image_free(data);
+            //data=0;
+            //Forgot that loadImageU actually stores it in a global vector...
         }
 
     }
@@ -461,8 +476,6 @@ namespace syj
         if(mipMaps)
             glGenerateMipmap(textureType);
 
-
-
         glBindTexture(textureType,0);
         stbi_image_free(data);
 
@@ -477,6 +490,34 @@ namespace syj
 
     texture::~texture()
     {
+        for(int a = 0; a<descriptors.size(); a++)
+        {
+            descriptors[a]->instances--;
+            if(descriptors[a]->instances == 0)
+            {
+                stbi_image_free(descriptors[a]->data);
+                descriptors[a]->data = 0;
+
+                int globalIter = -1;
+                for(int b = 0; b<texture::allTextures.size(); b++)
+                {
+                    if(texture::allTextures[b] == descriptors[a])
+                    {
+                        globalIter = b;
+                        break;
+                    }
+                }
+
+                if(globalIter == -1)
+                    error("Global LDRtextureReferenceDescriptor erased prematurely for " + descriptors[a]->fileName);
+                else
+                    texture::allTextures.erase(texture::allTextures.begin() + globalIter);
+
+                delete descriptors[a];
+                descriptors[a] = 0;
+            }
+        }
+
         if(ldrData)
         {
             delete ldrData;

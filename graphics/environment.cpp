@@ -86,6 +86,9 @@ namespace syj
         glDeleteVertexArrays(6,skyBoxFacesVAO);
         glDeleteBuffers(6,skyBoxVertBuffer);
         glDeleteBuffers(6,skyBoxUVBuffer);
+        delete shadowBuffer;
+        if(sun)
+            delete sun;
     }
 
     environment::environment(int resX,int resY)

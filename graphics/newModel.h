@@ -41,6 +41,7 @@ namespace syj
         int flingPreventionStartTime = 0;
         btRigidBody *body = 0;
         btCompoundShape *shape = 0;
+        btBoxShape *boxShape = 0;
         void createBoxBody(btDynamicsWorld *_world,btVector3 extents,btVector3 offset,btVector3 initPos);
         btVector3 finalOffset;
         btVector3 finalHalfExtents;
