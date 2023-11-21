@@ -559,7 +559,7 @@ namespace syj
     }
 
     //Sort a certain number of packets to their specific functions, true on success
-    bool client::processPackets(unsigned int numPackets)
+    bool client::processPackets(unsigned int numPackets,unsigned int rateLimit)
     {
         if(numPackets == 0)
             return true;
@@ -568,6 +568,10 @@ namespace syj
 
         if(numPackets > toProcess.size())
             numPackets = toProcess.size();
+
+        //TODO: rateLimit was meant to just be for incoming crit and normal packets
+        if(numPackets > rateLimit && rateLimit != 0)
+            numPackets = rateLimit;
 
         for(unsigned int a = 0; a<numPackets; a++)
         {
@@ -718,7 +722,7 @@ namespace syj
         return returnValue;
     }
 
-    bool client::run()
+    bool client::run(unsigned int rateLimit)
     {
         bool returnValue = true;
 
@@ -727,7 +731,7 @@ namespace syj
         if(!receivePackets())
             returnValue = false;
 
-        if(!processPackets(100))
+        if(!processPackets(100,rateLimit))
             returnValue = false;
 
         //Resize criticalPacket array to remove critical packets that were acknowledged in processPackets

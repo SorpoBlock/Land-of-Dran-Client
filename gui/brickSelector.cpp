@@ -93,7 +93,7 @@ namespace syj
         float column = numBricks % columns;
         float row = numBricks / columns;
 
-        std::string text = "brickIconBasic " + std::to_string(width) +"-"+ std::to_string(height) +"-"+ std::to_string(length);
+        std::string text = "Basic " + std::to_string(width) +"-"+ std::to_string(height) +"-"+ std::to_string(length);
         //std::cout<<text<<"  |  "<<imageFilePath<<"\n";
         if(!CEGUI::System::getSingleton().getRenderer()->isTextureDefined(text) && !CEGUI::ImageManager::getSingleton().isImageTypeAvailable(text) && !CEGUI::ImageManager::getSingleton().isDefined(text))
             CEGUI::ImageManager::getSingleton().addFromImageFile(text, imageFilePath,"brickIcon");
@@ -129,8 +129,6 @@ namespace syj
 
         //If you set this to 6 it crashes SMH
         const int columns = 7;
-
-        text = "brickIcon" + text;
 
         CEGUI::Window *button = brickSelector->getChild("BrickButton")->clone();
         CEGUI::ScrolledContainer *brickBox = (CEGUI::ScrolledContainer*)((CEGUI::ScrollablePane*)brickSelector->getChild("SpecialBricks"))->getContentPane();

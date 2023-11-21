@@ -60,7 +60,7 @@ namespace syj
         bool processClearPacket(packet *data);
 
         //Sort packets into their proper types and call specific functions
-        bool processPackets(unsigned int numPackets);
+        bool processPackets(unsigned int numPackets,unsigned int rateLimit = 0);
 
         //Packets to be processed
         std::vector<packet*> toProcess;
@@ -104,7 +104,7 @@ namespace syj
         bool send(packet *data,bool critical);
 
         //Checks for new packets, sends acks and clears, resends critical packets, etc. Returns false on error
-        bool run();
+        bool run(unsigned int rateLimit = 0);
 
         //No connection handle since if the server is created and lastError == syjError::noError that means you just connected
         std::function<void(client *theClient,unsigned int reason,void *userData)> kickHandle;

@@ -51,7 +51,8 @@ CEGUI::Window *initLoadCEGUISkin(std::string skinName,int resX,int resY)
 void textBoxAdd(CEGUI::Window *box,std::string text,int id,bool showSelect)
 {
     CEGUI::Listbox *castbox = (CEGUI::Listbox*)box;
-    CEGUI::ListboxTextItem *heh = new CEGUI::ListboxTextItem("[colour='FF000000']" + text,id,0,false,true);
+    char *msg = std::string("[colour='FF000000']" + text).data();
+    CEGUI::ListboxTextItem *heh = new CEGUI::ListboxTextItem((CEGUI::utf8*)msg,id,0,false,true);
     if(showSelect)
     {
         heh->setSelectionBrushImage("GWEN/Input.ListBox.EvenLineSelected");
@@ -217,7 +218,9 @@ void processEventsCEGUI(SDL_Event &event,const Uint8 *keystates)
     }
     if(event.type == SDL_TEXTINPUT)
     {
-        CEGUI::System::getSingleton().getDefaultGUIContext().injectChar(event.text.text[0]);
+        char *text = event.text.text;
+        CEGUI::String test((CEGUI::utf8*)text);
+        CEGUI::System::getSingleton().getDefaultGUIContext().injectChar(test[0]);
     }
     if(event.type == SDL_MOUSEMOTION)
         CEGUI::System::getSingleton().getDefaultGUIContext().injectMouseMove(event.motion.xrel,event.motion.yrel);
@@ -234,7 +237,7 @@ void processEventsCEGUI(SDL_Event &event,const Uint8 *keystates)
         }
         if(event.key.keysym.sym == SDLK_v && keystates[SDL_SCANCODE_LCTRL])
         {
-            CEGUI::System::getSingleton().getClipboard()->setText(CEGUI::String(SDL_GetClipboardText()));
+            CEGUI::System::getSingleton().getClipboard()->setText((CEGUI::utf8*)(SDL_GetClipboardText()));
             CEGUI::System::getSingleton().getDefaultGUIContext().injectPasteRequest();
         }
         if(event.key.keysym.sym == SDLK_c && keystates[SDL_SCANCODE_LCTRL])

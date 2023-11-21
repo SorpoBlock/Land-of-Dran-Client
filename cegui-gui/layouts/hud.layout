@@ -1388,7 +1388,7 @@
             </Window>
             <Window type="GWEN/TransEditbox" name="Editbox" >
                 <Property name="Area" value="{{0.00886263,0},{0.835821,0},{1.00443,0},{1.03358,0}}" />
-                <Property name="Font" value="OpenSans-20" />
+                <Property name="Font" value="DejaVuSans-12" />
                 <Property name="MaxTextLength" value="200" />
                 <Property name="NormalTextColour" value="FFFFFFFF" />
                 <Property name="RiseOnClickEnabled" value="false" />

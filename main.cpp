@@ -77,7 +77,7 @@ bool godRayButton(const CEGUI::EventArgs &e)
 
 enum gameState
 {
-    STATE_MAINMENU,STATE_CONNECTING,STATE_PLAYING,STATE_AVATARPICKER,STATE_QUITTING,STATE_CLEANUP
+    STATE_MAINMENU,STATE_CONNECTING,STATE_PLAYING,STATE_AVATARPICKER,STATE_QUITTING,STATE_CLEANUP,STATE_LOADING
 };
 
 int main(int argc, char *argv[])
@@ -2317,9 +2317,7 @@ int main(int argc, char *argv[])
                 requestName.writeFloat(clientEnvironment.wantedColor.b);
                 serverConnection->send(&requestName,true);
 
-                info("Connection established, requesting types...");
-
-                while(serverData->waitingForServerResponse)
+                /*while(serverData->waitingForServerResponse)
                 {
                     serverConnection->run();
                     if(serverData->kicked)
@@ -2331,7 +2329,7 @@ int main(int argc, char *argv[])
                         currentState = STATE_MAINMENU;
                         break;
                     }
-                }
+                }*/
 
                 int shadowRes = 1024;
                 switch(clientEnvironment.settings->shadowResolution)
@@ -2341,8 +2339,8 @@ int main(int argc, char *argv[])
                     case shadow4k: shadowRes = 4096; break;
                 }
 
-                glEnable(GL_DEPTH_TEST);
-                glEnable(GL_CULL_FACE);
+                //glEnable(GL_DEPTH_TEST);
+                //glEnable(GL_CULL_FACE);
 
                 serverData->env = new environment(shadowRes,shadowRes);
 
@@ -2406,23 +2404,75 @@ int main(int argc, char *argv[])
 
                 //terrain theMap("assets/heightmap2.png",world);
 
-                for(unsigned int a = 0; a<clientEnvironment.prints->names.size(); a++)
-                    serverData->staticBricks.allocatePerTexture(clientEnvironment.prints->textures[a],false,false,true);
-
                 //bool play = false;
 
                 serverData->bulletTrails = new bulletTrailsHolder;
-
-                serverData->ourTempBrick = new tempBrick(serverData->staticBricks);
 
                 //TODO: remove this, it's for debugging client physics:
                 //serverData->debugLocations.push_back(glm::vec3(0,0,0));
                 //serverData->debugColors.push_back(glm::vec3(1,1,1));
 
+                info("Connection established, requesting types...");
 
-                info("Starting main game loop!");
-                //TODO: Once again, this should be put to another function and multithreaded, and a simple loop would take its place here
-                currentState = STATE_PLAYING;
+                currentState = STATE_LOADING;
+                break;
+            }
+            case STATE_LOADING:
+            {
+                serverStuff *serverData = clientEnvironment.serverData;
+
+                serverConnection->run(1);
+                if(serverData->kicked)
+                {
+                    error("Kicked or server full or outdated client or malformed server response.");
+                    joinServer->getChild("StatusText")->setText("Kicked by server!");
+                    clientEnvironment.waitingToPickServer = true;
+                    serverData->kicked = false;
+                    currentState = STATE_MAINMENU;
+                    break;
+                }
+
+                if(!serverData->waitingForServerResponse)
+                {
+                    for(unsigned int a = 0; a<clientEnvironment.prints->names.size(); a++)
+                        serverData->staticBricks.allocatePerTexture(clientEnvironment.prints->textures[a],false,false,true);
+
+                    serverData->ourTempBrick = new tempBrick(serverData->staticBricks);
+
+                    info("Starting main game loop!");
+                    currentState = STATE_PLAYING;
+                    break;
+                }
+
+                const Uint8 *states = SDL_GetKeyboardState(NULL);
+                SDL_Event event;
+                while(SDL_PollEvent(&event))
+                {
+                    if(event.type == SDL_QUIT)
+                    {
+                        currentState = STATE_QUITTING;
+                        break;
+                    }
+
+                    processEventsCEGUI(event,states);
+
+                    if(event.type == SDL_WINDOWEVENT)
+                    {
+                        if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                        {
+                            context.setSize(event.window.data1,event.window.data2);
+                        }
+                    }
+                }
+
+                context.clear(0.5,0.5,1.0,1.0);
+                context.select();
+                CEGUI::System::getSingleton().getRenderer()->setDisplaySize(CEGUI::Size<float>(context.getResolution().x,context.getResolution().y));
+                glViewport(0,0,context.getResolution().x,context.getResolution().y);
+                glDisable(GL_DEPTH_TEST);
+                glActiveTexture(GL_TEXTURE0);
+                CEGUI::System::getSingleton().renderAllGUIContexts();
+                context.swap();
 
                 break;
             }
