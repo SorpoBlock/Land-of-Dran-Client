@@ -2,7 +2,7 @@
 
 <GUILayout version="4" >
     <Window type="GWEN/FrameWindow" name="EscapeMenu" >
-        <Property name="Area" value="{{0.3325,0},{0.11,0},{0.3325,250},{0.11,404}}" />
+        <Property name="Area" value="{{0.3325,0},{0.11,0},{0.3325,250},{0.11,415}}" />
         <Property name="Text" value="Escape Menu" />
         <Property name="AutoRenderingSurface" value="true" />
         <AutoWindow namePath="__auto_titlebar__" >
@@ -14,15 +14,15 @@
             <Property name="AlwaysOnTop" value="true" />
         </AutoWindow>
         <Window type="GWEN/ProgressBar" name="ExitToWindows" >
-            <Property name="Area" value="{{0,0},{0.87,0},{1,0},{0.989363,0}}" />
+            <Property name="Area" value="{{0,0},{0.873686,0},{1,0},{0.989665,0}}" />
             <Property name="StepSize" value="0.01" />
             <Window type="GWEN/Button" name="Button" >
-                <Property name="Area" value="{{0.00826446,0},{0.0681818,0},{0.987603,0},{0.931818,0}}" />
+                <Property name="Area" value="{{0.00826446,1},{0.0681818,0},{0.987603,1},{0.931818,0}}" />
                 <Property name="Text" value="Exit to Windows" />
             </Window>
         </Window>
         <Window type="GWEN/ProgressBar" name="Options" >
-            <Property name="Area" value="{{0,0},{0.135279,0},{1,0},{0.25199,0}}" />
+            <Property name="Area" value="{{0,0},{0.131444,0},{1,0},{0.244846,0}}" />
             <Property name="StepSize" value="0.01" />
             <Property name="SwatchColour" value="FF00FF00" />
             <Window type="GWEN/Button" name="Button" >
@@ -31,7 +31,7 @@
             </Window>
         </Window>
         <Window type="GWEN/ProgressBar" name="Admin" >
-            <Property name="Area" value="{{0,0},{0.00795761,0},{1,0},{0.124668,0}}" />
+            <Property name="Area" value="{{0,0},{0.00773201,0},{1,0},{0.121134,0}}" />
             <Property name="StepSize" value="0.01" />
             <Property name="SwatchColour" value="FF0000FF" />
             <Window type="GWEN/Button" name="Button" >
@@ -40,7 +40,7 @@
             </Window>
         </Window>
         <Window type="GWEN/ProgressBar" name="Brick" >
-            <Property name="Area" value="{{0,0},{0.259947,0},{1,0},{0.376657,0}}" />
+            <Property name="Area" value="{{0,0},{0.252577,0},{1,0},{0.365979,0}}" />
             <Property name="StepSize" value="0.01" />
             <Property name="SwatchColour" value="FFFFFF00" />
             <Window type="GWEN/Button" name="Button" >
@@ -49,7 +49,7 @@
             </Window>
         </Window>
         <Window type="GWEN/ProgressBar" name="SaveLoad" >
-            <Property name="Area" value="{{0,0},{0.387268,0},{1,0},{0.503979,0}}" />
+            <Property name="Area" value="{{0,0},{0.376289,0},{1,0},{0.489691,0}}" />
             <Property name="StepSize" value="0.01" />
             <Property name="SwatchColour" value="FFFF00FF" />
             <Window type="GWEN/Button" name="Button" >
@@ -58,7 +58,7 @@
             </Window>
         </Window>
         <Window type="GWEN/ProgressBar" name="AvatarPrefs" >
-            <Property name="Area" value="{{0,0},{0.514589,0},{1,0},{0.6313,0}}" />
+            <Property name="Area" value="{{0,0},{0.5,0},{1,0},{0.613402,0}}" />
             <Property name="StepSize" value="0.01" />
             <Property name="SwatchColour" value="FF00FFFF" />
             <Window type="GWEN/Button" name="Button" >
@@ -67,12 +67,21 @@
             </Window>
         </Window>
         <Window type="GWEN/ProgressBar" name="PlayerList" >
-            <Property name="Area" value="{{0,0},{0.641114,0},{1,0},{0.757825,0}}" />
+            <Property name="Area" value="{{0,0},{0.622938,0},{1,0},{0.73634,0}}" />
             <Property name="StepSize" value="0.01" />
             <Property name="SwatchColour" value="FF000000" />
             <Window type="GWEN/Button" name="Button" >
                 <Property name="Area" value="{{0.0123967,0},{0.0681818,0},{0.991736,0},{0.931818,0}}" />
                 <Property name="Text" value="Player List" />
+            </Window>
+        </Window>
+        <Window type="GWEN/ProgressBar" name="ExitToMenu" >
+            <Property name="Area" value="{{0,0},{0.747397,0},{1,0},{0.863376,0}}" />
+            <Property name="StepSize" value="0.01" />
+            <Property name="SwatchColour" value="FFFF9900" />
+            <Window type="GWEN/Button" name="Button" >
+                <Property name="Area" value="{{0.00826446,1},{0.0681818,0},{0.987603,1},{0.931818,0}}" />
+                <Property name="Text" value="Exit to Menu" />
             </Window>
         </Window>
     </Window>

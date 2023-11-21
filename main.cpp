@@ -417,19 +417,29 @@ int main(int argc, char *argv[])
             {
                 serverStuff *serverData = clientEnvironment.serverData;
 
+                //Clear chats:
+                CEGUI::Listbox* chat = (CEGUI::Listbox*)clientEnvironment.chat;
+                chat->resetList();
+
+                //Clear player list:
+                CEGUI::MultiColumnList *playerList = (CEGUI::MultiColumnList*)clientEnvironment.playerList->getChild("List");
+                playerList->resetList();
+
                 //Clear decal gui elements
                 CEGUI::ScrolledContainer *decalBox = (CEGUI::ScrolledContainer *)((CEGUI::ScrollablePane*)clientEnvironment.picker->decalPicker->getChild("Decals"))->getContentPane();
                 while(decalBox->getChildCount() > 0)
                 {
-                    if(CEGUI::ImageManager::getSingleton().isDefined(decalBox->getChildAtIdx(0)->getChild("Image")->getProperty("Image")))
+                    CEGUI::Window *child = decalBox->getChildAtIdx(0);
+                    if(CEGUI::ImageManager::getSingleton().isDefined(child->getChild("Image")->getProperty("Image")))
                     {
-                        if(decalBox->getChildAtIdx(0)->getUserData())
-                            delete decalBox->getChildAtIdx(0)->getUserData();
-                        std::string iconName = decalBox->getChildAtIdx(0)->getChild("Image")->getProperty("Image").c_str();
+                        if(child->getUserData())
+                            delete child->getUserData();
+                        std::string iconName = child->getChild("Image")->getProperty("Image").c_str();
                         CEGUI::ImageManager::getSingleton().destroy(iconName);
                         CEGUI::System::getSingleton().getRenderer()->destroyTexture(iconName);
                     }
-                    decalBox->removeChild(decalBox->getChildAtIdx(0));
+                    decalBox->removeChild(child);
+                    CEGUI::WindowManager::getSingleton().destroyWindow(child);
                 }
 
                 for(int a = 0; a<clientEnvironment.picker->faceDecals.size(); a++)
@@ -439,15 +449,6 @@ int main(int argc, char *argv[])
                 //Decal gui elements clear
 
                 //Clear up brick type GUI elements
-
-                /*unsigned int beforeImages = 0;
-                auto imageIter = CEGUI::ImageManager::getSingleton().getIterator();
-                while(!imageIter.isAtEnd())
-                {
-                    //std::cout<<imageIter.getCurrentKey()<<" image\n";
-                    beforeImages++;
-                    ++imageIter;
-                }*/
 
                 CEGUI::Window *brickPopup = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("HUD")->getChild("BrickPopup");
                 for(int a = 1; a<=9; a++)
@@ -465,40 +466,34 @@ int main(int argc, char *argv[])
                 CEGUI::ScrolledContainer *brickBox = (CEGUI::ScrolledContainer*)((CEGUI::ScrollablePane*)clientEnvironment.brickSelector->getChild("BasicBricks"))->getContentPane();
                 while(brickBox->getChildCount() > 0)
                 {
-                    if(CEGUI::ImageManager::getSingleton().isDefined(brickBox->getChildAtIdx(0)->getChild("BrickImage")->getProperty("Image")))
+                    CEGUI::Window *child = brickBox->getChildAtIdx(0);
+                    if(CEGUI::ImageManager::getSingleton().isDefined(child->getChild("BrickImage")->getProperty("Image")))
                     {
-                        std::string iconName = brickBox->getChildAtIdx(0)->getChild("BrickImage")->getProperty("Image").c_str();
+                        std::string iconName = child->getChild("BrickImage")->getProperty("Image").c_str();
                         CEGUI::ImageManager::getSingleton().destroy(iconName);
                         CEGUI::System::getSingleton().getRenderer()->destroyTexture(iconName);
-                        if(brickBox->getChildAtIdx(0)->getUserData())
-                            delete brickBox->getChildAtIdx(0)->getUserData();
+                        if(child->getUserData())
+                            delete child->getUserData();
                     }
-                    brickBox->removeChild(brickBox->getChildAtIdx(0));
+                    brickBox->removeChild(child);
+                    CEGUI::WindowManager::getSingleton().destroyWindow(child);
                 }
                 brickBox = (CEGUI::ScrolledContainer*)((CEGUI::ScrollablePane*)clientEnvironment.brickSelector->getChild("SpecialBricks"))->getContentPane();
                 while(brickBox->getChildCount() > 0)
                 {
-                    if(CEGUI::ImageManager::getSingleton().isDefined(brickBox->getChildAtIdx(0)->getChild("BrickImage")->getProperty("Image")))
+                    CEGUI::Window *child = brickBox->getChildAtIdx(0);
+                    if(CEGUI::ImageManager::getSingleton().isDefined(child->getChild("BrickImage")->getProperty("Image")))
                     {
-                        std::string iconName = brickBox->getChildAtIdx(0)->getChild("BrickImage")->getProperty("Image").c_str();
+                        std::string iconName = child->getChild("BrickImage")->getProperty("Image").c_str();
                         CEGUI::ImageManager::getSingleton().destroy(iconName);
                         CEGUI::System::getSingleton().getRenderer()->destroyTexture(iconName);
-                        if(brickBox->getChildAtIdx(0)->getUserData())
-                            delete brickBox->getChildAtIdx(0)->getUserData();
+                        if(child->getUserData())
+                            delete child->getUserData();
                     }
-                    brickBox->removeChild(brickBox->getChildAtIdx(0));
+                    brickBox->removeChild(child);
+                    CEGUI::WindowManager::getSingleton().destroyWindow(child);
                 }
 
-                /*unsigned int afterImages = 0;
-                auto imageIter2 = CEGUI::ImageManager::getSingleton().getIterator();
-                while(!imageIter2.isAtEnd())
-                {
-                    //std::cout<<imageIter2.getCurrentKey()<<" image\n";
-                    afterImages++;
-                    ++imageIter2;
-                }
-
-                std::cout<<"Before images: "<<beforeImages<<" after: "<<afterImages<<"\n";*/
                 //Brick type gui elements cleared
 
                 if(blocklandHolder)
@@ -509,9 +504,18 @@ int main(int argc, char *argv[])
                 while(box->getChildCount() > 0)
                     box->removeChild(box->getChildAtIdx(0));
 
+                //Audio clean-up
+                while(clientEnvironment.speaker->allLoops.size() > 0)
+                    clientEnvironment.speaker->removeLoop(clientEnvironment.speaker->allLoops[0].serverId);
+                for(int a = 0; a<32; a++)
+                {
+                    alSourcei( clientEnvironment.speaker->generalSounds[a], AL_BUFFER, 0);
+                    alSourceStop(clientEnvironment.speaker->generalSounds[a]);
+                }
                 for(int a = 0; a<clientEnvironment.speaker->sounds.size(); a++)
                     delete clientEnvironment.speaker->sounds[a];
                 clientEnvironment.speaker->sounds.clear();
+                //Finish audio clean-up
 
                 context.setMouseLock(false);
                 clientEnvironment.waitingToPickServer = true;
@@ -634,6 +638,14 @@ int main(int argc, char *argv[])
 
                 serverStuff *serverData = clientEnvironment.serverData;
                 btDynamicsWorld *world = serverData->world;
+
+                if(clientEnvironment.exitToMenu)
+                {
+                    clientEnvironment.exitToMenu = false;
+                    clientEnvironment.waitingToPickServer = true;
+                    currentState = STATE_CLEANUP;
+                    break;
+                }
 
                 if(clientEnvironment.exitToWindows)
                 {
@@ -876,12 +888,9 @@ int main(int argc, char *argv[])
                     {
                         if(event.key.keysym.sym == SDLK_BACKQUOTE)
                         {
-                            /*debugMode++;
+                            debugMode++;
                             if(debugMode > 3)
-                                debugMode = 1;*/
-
-                            currentState = STATE_CLEANUP;
-                            break;
+                                debugMode = 1;
                         }
 
                         if(event.key.keysym.sym == SDLK_PAGEUP)

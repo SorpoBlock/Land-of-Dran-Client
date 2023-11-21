@@ -58,6 +58,7 @@ namespace syj
         std::string sessionToken = "";
 
         bool exitToWindows = false;
+        bool exitToMenu = false;
         bool waitingToPickServer = true;
         bool clickedMainMenuExit = false;
 

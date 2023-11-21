@@ -19,6 +19,17 @@ namespace syj
         return true;
     }
 
+    bool exitToMenuButton(const CEGUI::EventArgs &e)
+    {
+        CEGUI::Window *escapeMenu = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("EscapeMenu");
+        clientStuff *clientEnvironment = (clientStuff*)escapeMenu->getUserData();
+        clientEnvironment->exitToMenu = true;
+
+        escapeMenu->setVisible(false);
+
+        return true;
+    }
+
     bool playerListButton(const CEGUI::EventArgs &e)
     {
         CEGUI::Window *escapeMenu = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("EscapeMenu");
@@ -118,6 +129,7 @@ namespace syj
         escapeMenu->setUserData(clientEnvironment);
         escapeMenu->subscribeEvent(CEGUI::FrameWindow::EventCloseClicked,CEGUI::Event::Subscriber(&closeEscapeMenu));
 
+        escapeMenu->getChild("ExitToMenu/Button")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&exitToMenuButton));
         escapeMenu->getChild("ExitToWindows/Button")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&exitToWindowsButton));
         escapeMenu->getChild("Options/Button")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&escapeOptionsButton));
         escapeMenu->getChild("Admin/Button")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&escapeAdminButton));
