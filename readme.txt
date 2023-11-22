@@ -1,6 +1,6 @@
 This is the client for the game Land of Dran.
 
-###Linked Dependencies:
+### Linked Dependencies:
 
 The bullet physics library:
 https://github.com/bulletphysics/bullet3
@@ -34,7 +34,7 @@ https://freetype.org/
 
 OpenGl, Glew
 
-###Header only libraries:
+### Header only libraries:
 
 CRC++:
 https://github.com/d-bahr/CRCpp/tree/master
