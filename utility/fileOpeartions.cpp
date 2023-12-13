@@ -1,5 +1,59 @@
 #include "code/utility/fileOpeartions.h"
 
+bool okayFilePath(std::string path)
+{
+    //Greater than 2 characters
+    //Not start with a . or /
+    //Can only contain a-z A-Z 0-9 _ . /
+    //Can not have a . or / as the first character
+    //Can only have one .
+    //Can not be longer than 48 characters
+    //Will have assets/ prepended to the path
+
+    if(path.length() < 2)
+        return false;
+
+    if(path.length() > 48)
+        return false;
+
+    if(path[0] == '.')
+        return false;
+
+    if(path[0] == '/')
+        return false;
+
+    if(path[0] == '\\')
+        return false;
+
+    bool onePeriod = false;
+
+    for(int i = 0; path[i]; i++)
+    {
+        if(path[i] >= 'a' && path[i] <= 'z')
+            continue;
+        if(path[i] >= 'A' && path[i] <= 'Z')
+            continue;
+        if(path[i] >= '0' && path[i] <= '9')
+            continue;
+        if(path[i] == '/' || path[i] == '_')
+            continue;
+        if(path[i] == '.')
+        {
+            if(onePeriod)
+                return false;
+            else
+            {
+                onePeriod = true;
+                continue;
+            }
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
 bool updateableFile(std::string path)
 {
     if(path.length() < 3)

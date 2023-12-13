@@ -2,6 +2,7 @@
 #define RECV_H_INCLUDED
 
 #include "code/utility/clientStuff.h"
+#include "code/utility/rectToCube.h"
 
 #define clientPacketType_requestName 0
 #define clientPacketType_startLoadingStageTwo 1

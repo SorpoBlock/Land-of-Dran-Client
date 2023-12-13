@@ -12,6 +12,8 @@
 #include <sys/stat.h>
 #include "code/external/crc.h"
 
+bool okayFilePath(std::string path);
+
 bool updateableFile(std::string path);
 unsigned int getFileChecksum(const char *filePath);
 

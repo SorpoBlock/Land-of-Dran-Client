@@ -424,6 +424,8 @@ namespace syj
                                          std::vector<glm::vec3> &uvsAndTex,
                                          std::vector<glm::vec4> &vertColors)
     {
+        glBindVertexArray(0);
+
         //Dimension and direction are used for drawing basic bricks dynamically, they are not relevant here
         //Per vertex buffers:
         glGenBuffers(1,&buffers[customNormalBuffer]);
@@ -461,5 +463,7 @@ namespace syj
         glVertexAttrib4f(BRICKLAYOUT_VERTEXCOLOR,0,0,0,0);              //Sets default color if we don't have any
 
         vertexCount = vertPositions.size();
+
+        glBindBuffer(GL_ARRAY_BUFFER,0);
     }
 }

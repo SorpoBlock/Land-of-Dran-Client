@@ -22,7 +22,7 @@ namespace syj
         //I'd use an enum, but really we only use them in their interpolated form so why bother
         glm::vec3 dncSkyColors[4];
         glm::vec3 dncFogColors[4];
-        glm::vec3 dncSunColors[4];
+        glm::vec4 dncSunColors[4];
 
         //time = 0.0;
         //+/-1 = midnight
@@ -33,26 +33,19 @@ namespace syj
 
         dayNightCycle()
         {
-            //dncSunAmbientColors[0] = glm::vec3(0.0 ,0.0 ,0.0);
-            dncSunColors[0]        = glm::vec3(0.06,0.06,0.1);
+            dncSunColors[0]        = glm::vec4(0.06,0.06,0.1,0);
             dncFogColors[0]        = glm::vec3(0.06,0.06,0.1);
             dncSkyColors[0]        = glm::vec3(1.0,1.0,1.0);
 
-            //dncSunAmbientColors[1] = glm::vec3(0.215,0.172,0.141);
-            //dncSunColors[1]        = glm::vec3(1.0  ,0.77 ,0.541);
-            dncSunColors[1]        = glm::vec3(235,116,26) / glm::vec3(256,256,256);
+            dncSunColors[1]        = glm::vec4(235,116,26,255) / glm::vec4(256,256,256,255);
             dncFogColors[1]        = glm::vec3(21.0/255.0,26.0/255.0,29.0/255.0);
             dncSkyColors[1]        = glm::vec3(1.0  ,0.77 ,0.541);
 
-            //dncSunAmbientColors[2] = glm::vec3(0.3,0.3,0.3);
-            //dncSunColors[2]        = (glm::vec3(242,252,255) / glm::vec3(256,256,256)) * glm::vec3(4,4,4);
-            dncSunColors[2]        = glm::vec3(0.7,0.6,0.5) * glm::vec3(30.0);
+            dncSunColors[2]        = glm::vec4(0.7,0.6,0.5,1.0/30.0) * glm::vec4(30.0);
             dncFogColors[2]        = glm::vec3(109.0/255.0,130.0/255.0,132.0/255.0);
             dncSkyColors[2]        = glm::vec3(1.0,1.0,1.0);
 
-            //dncSunAmbientColors[3] = glm::vec3(0.215,0.172,0.141);
-            //dncSunColors[3]        = glm::vec3(1.0  ,0.77 ,0.541);
-            dncSunColors[3]        = (glm::vec3(235,116,26) / glm::vec3(256,256,256)) * glm::vec3(1.2,1.2,1.2);
+            dncSunColors[3]        = (glm::vec4(235,116,26,255) / glm::vec4(256,256,256,255)) * glm::vec4(1.2,1.2,1.2,1.0);
             dncFogColors[3]        = glm::vec3(74.0/255.0  ,71.0/255.0 ,56.0/255.0);
             dncSkyColors[3]        = glm::vec3(1.0  ,0.77 ,0.541);
         }
@@ -60,6 +53,15 @@ namespace syj
 
     struct environment
     {
+        //Image based lighting stuff:
+        bool useIBL = false;
+
+        GLuint IBL;
+        GLuint IBLRad;
+        GLuint IBLIrr;
+        //End IBL stuff
+
+
         GLuint skyBoxVertBuffer[6];
         GLuint skyBoxUVBuffer[6];
 
@@ -89,7 +91,7 @@ namespace syj
         //The *current* post-interpolation values for all this stuff:
         glm::vec3 skyColor;
         glm::vec3 fogColor;
-        glm::vec3 sunColor;
+        glm::vec4 sunColor;
         glm::vec3 sunDirection;
 
         //Configuration for crepuscular rays
@@ -97,7 +99,7 @@ namespace syj
         float godRayDensity = 1.0;
         float godRayWeight = 6.0;
         float godRayExposure = 0.004;
-        //int numGodRaySamples = 64;
+        float sunDistance = 1.0;
 
         //Fog start and end distances, TODO: maybe let you set the fog function too? Like linear or logarithmic.
         float fogDistanceMin = 500;
@@ -112,8 +114,8 @@ namespace syj
         texture skyTexturesSideDay[5];
         texture skyTexturesSideNight[5];
 
-        void iblShadowsCalc(perspectiveCamera *playerCamera,glm::vec3 shadowDir);
-        void calc(float deltaMS,glm::vec3 cameraPosition);
+        void shadowsCalc(perspectiveCamera *playerCamera,glm::vec3 shadowDir);
+        void calc(float deltaMS,perspectiveCamera *playerCamera);
         void passUniforms(uniformsHolder *uniforms,bool forgoShadowMaps = false);
         bool loadDaySkyBox(std::string path);
         bool loadNightSkyBox(std::string path);

@@ -66,6 +66,7 @@ namespace syj
         std::string wantedIP = "127.0.0.1";
         glm::vec3 wantedColor = glm::vec3(1,1,1);
 
+        uniformsHolder *rectToCubeUnis = 0;
         uniformsHolder *instancedShader = 0;
         uniformsHolder *nonInstancedShader = 0;
 
@@ -80,6 +81,8 @@ namespace syj
 
         glm::vec3 vignetteColor = glm::vec3(1,0,0);
         float vignetteStrength = 0.0;
+
+        GLuint cubeVAO;
     };
 
 }

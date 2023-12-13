@@ -400,7 +400,7 @@ namespace syj
 
     void newBrickRenderer::renderEverything(uniformsHolder *unis,bool skipMats,material *specialPrintBrickMaterial,float deltaT)
     {
-        glEnable(GL_CULL_FACE);
+        //glEnable(GL_CULL_FACE);
 
         glUniform1f(unis->target->getUniformLocation("deltaT"),deltaT);
 

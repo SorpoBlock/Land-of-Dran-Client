@@ -25,7 +25,6 @@
 #include "code/gui/palette.h"
 #include "code/physics/tempBrick.h"
 #include "code/utility/brdfLookup.h"
-#include "code/utility/rectToCube.h"
 #include "code/networking/common.h"
 #include "code/networking/client.h"
 #include "code/networking/recv.h"
@@ -73,6 +72,7 @@ bool godRayButton(const CEGUI::EventArgs &e)
     clientEnvironment->serverData->env->godRayDensity = atof(godRayWindow->getChild("Density")->getText().c_str());
     clientEnvironment->serverData->env->godRayExposure = atof(godRayWindow->getChild("Exposure")->getText().c_str());
     clientEnvironment->serverData->env->godRayWeight = atof(godRayWindow->getChild("Weight")->getText().c_str());
+    clientEnvironment->serverData->env->sunDistance = atof(godRayWindow->getChild("Distance")->getText().c_str());
 }
 
 enum gameState
@@ -254,7 +254,8 @@ int main(int argc, char *argv[])
                     *emitterUnis=0,*fontUnis=0,*godPrePassBrickUnis=0,
                     *godPrePassSunUnis=0,*modelUnis=0,*modelShadowUnis=0,
                     *oldModelUnis=0,*rectToCubeUnis=0,*screenOverlaysUnis=0,
-                    *shadowBrickUnis=0,*simpleBrickUnis=0,*waterUnis=0;
+                    *shadowBrickUnis=0,*simpleBrickUnis=0,*waterUnis=0,
+                    *brickDNCUnis=0,*modelDNCUnis=0;
 
     info(std::to_string(programUnis.size()) + " shaders loaded.");
     for(int a = 0; a<programUnis.size(); a++)
@@ -290,6 +291,10 @@ int main(int argc, char *argv[])
             simpleBrickUnis = programUnis[a];
         else if(programName == "water")
             waterUnis = programUnis[a];
+        else if(programName == "brickDNC")
+            brickDNCUnis = programUnis[a];
+        else if(programName == "modelDNC")
+            modelDNCUnis = programUnis[a];
         else
         {
             error("Invalid program: " + programName);
@@ -300,6 +305,7 @@ int main(int argc, char *argv[])
     CEGUI::Window *escapeMenu = addEscapeMenu(&clientEnvironment,modelUnis);
     clientEnvironment.nonInstancedShader = oldModelUnis;
     clientEnvironment.instancedShader = modelUnis;
+    clientEnvironment.rectToCubeUnis = rectToCubeUnis;
 
     clientEnvironment.brickMat = new material("assets/brick/otherBrickMat.txt");
     clientEnvironment.brickMatSide = new material("assets/brick/sideBrickMat.txt");
@@ -309,21 +315,10 @@ int main(int argc, char *argv[])
     GLuint quadVAO = createQuadVAO();
     GLuint cubeVAO = createCubeVAO();
     clientEnvironment.prints = new printLoader(".\\assets\\brick\\prints");
+    clientEnvironment.cubeVAO = cubeVAO;
     texture *bdrf = generateBDRF(quadVAO);
     material grass("assets/ground/grass1/grass.txt");
     clientEnvironment.newWheelModel = new newModel("assets/ball/ball.txt");
-
-    //std::string iblName = "mountain";
-    //std::string iblName = "MoonlessGolf";
-    //std::string iblName = "sunset";
-    //std::string iblName = "shanghai";
-    //std::string iblName = "alexs_apartment";
-    //std::string iblName = "field";
-    //std::string iblName = "Zollhoff";
-    std::string iblName = "road";
-    GLuint IBL = processEquirectangularMap(rectToCubeUnis->target,cubeVAO,"assets/"+iblName+"/main.hdr");
-    GLuint IBLRad = processEquirectangularMap(rectToCubeUnis->target,cubeVAO,"assets/"+iblName+"/mainRad.hdr",true);
-    GLuint IBLIrr = processEquirectangularMap(rectToCubeUnis->target,cubeVAO,"assets/"+iblName+"/mainIrr.hdr",true);
 
     renderTarget *waterReflection = 0;
     renderTarget *waterRefraction = 0;
@@ -354,7 +349,7 @@ int main(int argc, char *argv[])
 
     btVector3 gravity = btVector3(0,-70,0);
     world->setGravity(gravity);
-    world->setForceUpdateAllAabbs(false);
+    world->setForceUpdateAllAabbs(false); //Remove this and static bricks will lag the physics implementation a ton
 
     plane = new btStaticPlaneShape(btVector3(0,1,0),0);
     planeState = new btDefaultMotionState();
@@ -1810,20 +1805,19 @@ int main(int argc, char *argv[])
 
                 //Graphics:
                 //Sun direction sundirection
-                //serverData->env->iblShadowsCalc(serverData->playerCamera,glm::vec3(0.496595,0.50,0.856871));
-                serverData->env->iblShadowsCalc(serverData->playerCamera,glm::vec3(0.540455,0.742971,0.394844));
 
-                glActiveTexture(GL_TEXTURE0 + cubeMapRadiance);
-                glBindTexture(GL_TEXTURE_CUBE_MAP,IBLRad);
-                glActiveTexture(GL_TEXTURE0 + cubeMapIrradiance);
-                glBindTexture(GL_TEXTURE_CUBE_MAP,IBLIrr);
+                uniformsHolder *whichBrickUnis = serverData->env->useIBL ? brickUnis : brickDNCUnis;
+                uniformsHolder *whichModelUnis = serverData->env->useIBL ? modelUnis : modelDNCUnis;
+
+                serverData->env->calc(deltaT*10.0,serverData->playerCamera);
+
                 bdrf->bind(brdf);
 
                 std::string oldName = "";
 
                 serverData->env->godRayPass->bind();
-                if(clientEnvironment.settings->godRayQuality != godRaysOff)
-                {
+                //if(clientEnvironment.settings->godRayQuality != godRaysOff)
+                //{
                     godPrePassSunUnis->use();
 
                         glUniform1i(godPrePassSunUnis->doingGodRayPass,true);
@@ -1843,7 +1837,7 @@ int main(int argc, char *argv[])
                         for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
                             serverData->livingBricks[a]->renderAlive(godPrePassBrickUnis,true,SDL_GetTicks()/25);
                         glUniform1i(godPrePassBrickUnis->doingGodRayPass,false);
-                }
+                //}
                 serverData->env->godRayPass->unbind();
 
                 //Begin drawing to water textures
@@ -1863,21 +1857,19 @@ int main(int argc, char *argv[])
                                 serverData->playerCamera->renderReflection(oldModelUnis,serverData->waterLevel);
                                 serverData->env->passUniforms(oldModelUnis);
                                 clientEnvironment.settings->render(oldModelUnis);
-                                glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
-                                glBindTexture(GL_TEXTURE_CUBE_MAP,IBL);
                                 serverData->env->drawSky(oldModelUnis);
 
                                 glEnable(GL_CLIP_DISTANCE0);
 
-                            modelUnis->use();
-                                glUniform1f(modelUnis->clipHeight,serverData->waterLevel);
-                                clientEnvironment.settings->render(modelUnis);
-                                serverData->playerCamera->renderReflection(modelUnis,serverData->waterLevel);
-                                serverData->env->passUniforms(modelUnis);
+                            whichModelUnis->use();
+                                glUniform1f(whichModelUnis->clipHeight,serverData->waterLevel);
+                                clientEnvironment.settings->render(whichModelUnis);
+                                serverData->playerCamera->renderReflection(whichModelUnis,serverData->waterLevel);
+                                serverData->env->passUniforms(whichModelUnis);
                                 for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
-                                    serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
+                                    serverData->newDynamicTypes[a]->renderInstanced(whichModelUnis);
 
-                                clientEnvironment.newWheelModel->renderInstanced(modelUnis);
+                                clientEnvironment.newWheelModel->renderInstanced(whichModelUnis);
 
 
                                 /*for(unsigned int a = 0; a<serverData->dynamics.size(); a++)
@@ -1890,19 +1882,19 @@ int main(int argc, char *argv[])
                                 grass.use(tess);
                                 theMap.render(tess);*/
 
-                            simpleBrickUnis->use();
-                                glUniform1i(simpleBrickUnis->target->getUniformLocation("debugMode"),debugMode);
+                            whichBrickUnis->use();
+                                glUniform1i(whichBrickUnis->target->getUniformLocation("debugMode"),debugMode);
 
-                                glUniform1f(simpleBrickUnis->clipHeight,serverData->waterLevel);
-                                serverData->playerCamera->renderReflection(simpleBrickUnis,serverData->waterLevel);
-                                serverData->env->passUniforms(simpleBrickUnis);
-                                clientEnvironment.settings->render(simpleBrickUnis);
+                                glUniform1f(whichBrickUnis->clipHeight,serverData->waterLevel);
+                                serverData->playerCamera->renderReflection(whichBrickUnis,serverData->waterLevel);
+                                serverData->env->passUniforms(whichBrickUnis);
+                                clientEnvironment.settings->render(whichBrickUnis);
 
                                 glEnable(GL_BLEND);
                                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                                serverData->staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
+                                serverData->staticBricks.renderEverything(whichBrickUnis,false,&grass,SDL_GetTicks()/25);
                                 for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
-                                    serverData->livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
+                                    serverData->livingBricks[a]->renderAlive(whichBrickUnis,false,SDL_GetTicks()/25);
                                 glDisable(GL_BLEND);
 
                         waterReflection->unbind();
@@ -1912,15 +1904,15 @@ int main(int argc, char *argv[])
                         glEnable(GL_CLIP_DISTANCE0);
                         waterRefraction->bind();
 
-                            modelUnis->use();
-                                glUniform1f(modelUnis->clipHeight,-serverData->waterLevel);
-                                clientEnvironment.settings->render(modelUnis);
-                                serverData->playerCamera->render(modelUnis);
-                                serverData->env->passUniforms(modelUnis);
+                            whichModelUnis->use();
+                                glUniform1f(whichModelUnis->clipHeight,-serverData->waterLevel);
+                                clientEnvironment.settings->render(whichModelUnis);
+                                serverData->playerCamera->render(whichModelUnis);
+                                serverData->env->passUniforms(whichModelUnis);
                                 for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
-                                    serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
+                                    serverData->newDynamicTypes[a]->renderInstanced(whichModelUnis);
 
-                                clientEnvironment.newWheelModel->renderInstanced(modelUnis);
+                                clientEnvironment.newWheelModel->renderInstanced(whichModelUnis);
 
                             oldModelUnis->use();
                                 glUniform1f(oldModelUnis->clipHeight,-serverData->waterLevel);
@@ -1934,17 +1926,17 @@ int main(int argc, char *argv[])
                                 grass.use(tess);
                                 theMap.render(tess);*/
 
-                            simpleBrickUnis->use();
-                            glUniform1i(simpleBrickUnis->target->getUniformLocation("debugMode"),debugMode);
-                            serverData->env->passUniforms(simpleBrickUnis);
-                            clientEnvironment.settings->render(simpleBrickUnis);
-                                glUniform1f(simpleBrickUnis->clipHeight,-serverData->waterLevel);
-                                serverData->playerCamera->render(simpleBrickUnis);
+                            whichBrickUnis->use();
+                            glUniform1i(whichBrickUnis->target->getUniformLocation("debugMode"),debugMode);
+                            serverData->env->passUniforms(whichBrickUnis);
+                            clientEnvironment.settings->render(whichBrickUnis);
+                                glUniform1f(whichBrickUnis->clipHeight,-serverData->waterLevel);
+                                serverData->playerCamera->render(whichBrickUnis);
                                 glEnable(GL_BLEND);
                                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                                serverData->staticBricks.renderEverything(simpleBrickUnis,false,&grass,SDL_GetTicks()/25);
+                                serverData->staticBricks.renderEverything(whichBrickUnis,false,&grass,SDL_GetTicks()/25);
                                 for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
-                                    serverData->livingBricks[a]->renderAlive(simpleBrickUnis,false,SDL_GetTicks()/25);
+                                    serverData->livingBricks[a]->renderAlive(whichBrickUnis,false,SDL_GetTicks()/25);
                                 glDisable(GL_BLEND);
 
 
@@ -1986,11 +1978,15 @@ int main(int argc, char *argv[])
                                 serverData->newDynamicTypes[a]->renderInstancedWithoutMaterials();
 
 
+                        glDisable(GL_CULL_FACE);
+
                         shadowBrickUnis->use();
                                 serverData->env->passLightMatricies(shadowBrickUnis);
                                 serverData->staticBricks.renderEverything(shadowBrickUnis,true,0,SDL_GetTicks()/25);
                                 for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
                                     serverData->livingBricks[a]->renderAlive(shadowBrickUnis,true,SDL_GetTicks()/25);
+
+                        glEnable(GL_CULL_FACE);
 
                     serverData->env->shadowBuffer->unbind();
 
@@ -2009,9 +2005,6 @@ int main(int argc, char *argv[])
                         serverData->playerCamera->render(oldModelUnis); //change
                         serverData->env->passUniforms(oldModelUnis);
                         renderLights(oldModelUnis,serverData->lights);
-
-                        glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
-                        glBindTexture(GL_TEXTURE_CUBE_MAP,IBL);
 
                         serverData->env->drawSky(oldModelUnis);
 
@@ -2110,30 +2103,30 @@ int main(int argc, char *argv[])
         //                grass.use(tess);
          //               theMap.render(tess);
 
-                        modelUnis->use();
-                            clientEnvironment.settings->render(modelUnis);
-                            serverData->playerCamera->render(modelUnis);
-                            serverData->env->passUniforms(modelUnis);
-                            renderLights(modelUnis,serverData->lights);
+                        whichModelUnis->use();
+                            clientEnvironment.settings->render(whichModelUnis);
+                            serverData->playerCamera->render(whichModelUnis);
+                            serverData->env->passUniforms(whichModelUnis);
+                            renderLights(whichModelUnis,serverData->lights);
                             for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
-                                serverData->newDynamicTypes[a]->renderInstanced(modelUnis);
+                                serverData->newDynamicTypes[a]->renderInstanced(whichModelUnis);
 
-                        clientEnvironment.newWheelModel->renderInstanced(modelUnis);
+                        clientEnvironment.newWheelModel->renderInstanced(whichModelUnis);
 
-                    brickUnis->use();
-                        serverData->playerCamera->render(brickUnis);
-                        serverData->env->passUniforms(brickUnis);
-                        clientEnvironment.settings->render(brickUnis);
-                        renderLights(brickUnis,serverData->lights);
-                        glUniform1i(brickUnis->target->getUniformLocation("debugMode"),debugMode);
+                    whichBrickUnis->use();
+                        serverData->playerCamera->render(whichBrickUnis);
+                        serverData->env->passUniforms(whichBrickUnis);
+                        clientEnvironment.settings->render(whichBrickUnis);
+                        renderLights(whichBrickUnis,serverData->lights);
+                        glUniform1i(whichBrickUnis->target->getUniformLocation("debugMode"),debugMode);
 
                         glEnable(GL_BLEND);
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                        serverData->staticBricks.renderEverything(brickUnis,false,&grass,SDL_GetTicks()/25);
+                        serverData->staticBricks.renderEverything(whichBrickUnis,false,&grass,SDL_GetTicks()/25);
                         for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
-                            serverData->livingBricks[a]->renderAlive(brickUnis,false,SDL_GetTicks()/25);
+                            serverData->livingBricks[a]->renderAlive(whichBrickUnis,false,SDL_GetTicks()/25);
                         if(serverData->ghostCar)
-                            serverData->ghostCar->renderAlive(brickUnis,false,SDL_GetTicks()/25);
+                            serverData->ghostCar->renderAlive(whichBrickUnis,false,SDL_GetTicks()/25);
                         glDisable(GL_BLEND);
 
                         glEnable(GL_BLEND);
@@ -2348,9 +2341,10 @@ int main(int argc, char *argv[])
                 godRayDebug->getChild("Density")->setText(std::to_string(serverData->env->godRayDensity));
                 godRayDebug->getChild("Exposure")->setText(std::to_string(serverData->env->godRayExposure));
                 godRayDebug->getChild("Weight")->setText(std::to_string(serverData->env->godRayWeight));
+                godRayDebug->getChild("Distance")->setText(std::to_string(serverData->env->sunDistance));
 
-                /*serverData->env->loadDaySkyBox("assets/sky/bluecloud_");
-                serverData->env->loadNightSkyBox("assets/sky/space_");*/
+                serverData->env->loadDaySkyBox("assets/sky/bluecloud_");
+                serverData->env->loadNightSkyBox("assets/sky/space_");
                 serverData->env->loadSunModel("assets/sky/sun.txt");
 
                 serverData->playerCamera = new perspectiveCamera;;
@@ -2438,6 +2432,10 @@ int main(int argc, char *argv[])
                         serverData->staticBricks.allocatePerTexture(clientEnvironment.prints->textures[a],false,false,true);
 
                     serverData->ourTempBrick = new tempBrick(serverData->staticBricks);
+
+                    std::ofstream testdnc("dnc.bin",std::ios::binary);
+                    testdnc.write((char*)&serverData->env->cycle,sizeof(dayNightCycle));
+                    testdnc.close();
 
                     info("Starting main game loop!");
                     currentState = STATE_PLAYING;

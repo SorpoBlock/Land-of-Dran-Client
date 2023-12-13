@@ -69,6 +69,7 @@ namespace syj
          //Environment:
 
          GLint sunDirection = -1;
+         GLint sunDistance = -1;
          GLint sunColor = -1;
          GLint skyColor = -1;
          GLint fogMaxDist = -1;
@@ -83,6 +84,7 @@ namespace syj
          GLint renderingSun = -1;
          GLint renderingSky = -1;
          GLint renderingRays = -1;
+         GLint useIBL = -1;
 
          //Emitter:
 

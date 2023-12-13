@@ -36,6 +36,12 @@ namespace syj
 
     void environment::drawSky(uniformsHolder *uniforms)
     {
+        if(useIBL)
+        {
+            glActiveTexture(GL_TEXTURE0 + cubeMapEnvironment);
+            glBindTexture(GL_TEXTURE_CUBE_MAP,IBL);
+        }
+
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
         uniforms->setModelMatrix(glm::mat4(1.0));
@@ -45,8 +51,11 @@ namespace syj
         for(int a = 0; a<6; a++)
         {
             //For some reason I made it just reuse the top texture for the bottom texture idk lol
-            /*skyTexturesSideDay[a!=5 ? a : 0].bind(albedo);
-            skyTexturesSideNight[a!=5 ? a : 0].bind(normal);*/
+            if(!useIBL)
+            {
+                skyTexturesSideDay[a!=5 ? a : 0].bind(albedo);
+                skyTexturesSideNight[a!=5 ? a : 0].bind(normal);
+            }
             glBindVertexArray(skyBoxFacesVAO[a]);
             glDrawArrays(GL_TRIANGLES,0,6);
             glBindVertexArray(0);
@@ -96,7 +105,7 @@ namespace syj
         lightSpaceMatricies = new glm::mat4[numShadowLayers];
 
         sunDirection = glm::vec3(0.235702,0.942809,0.235702);
-        sunColor = glm::vec3(0.7,0.6,0.5) * glm::vec3(30.0);
+        sunColor = glm::vec4(0.7,0.6,0.5,1.0/30.0) * glm::vec4(30.0);
 
         /*shadowNearCamera.name = "ShadowNear";
         //shadowNearCamera.orthoBoundNear = glm::vec3(-200,-200,-300);
@@ -270,13 +279,10 @@ namespace syj
         return frustumCorners;
     }
 
-    void environment::iblShadowsCalc(perspectiveCamera *playerCamera,glm::vec3 shadowDir)
+    void environment::shadowsCalc(perspectiveCamera *playerCamera,glm::vec3 shadowDir)
     {
-        sunDirection = shadowDir;
-        sunDirection = glm::normalize(sunDirection);
-        solarElevation = 10.0;
-
-        //float frac = 1.0 / ((float)numShadowLayers);  //i.e. 0.33333
+        if(useIBL)
+            solarElevation = 10.0;
 
         float manualFracs[4] = {0,0.05,0.3,1};
         float manualZMults[3] = {20,10,7};
@@ -296,7 +302,7 @@ namespace syj
             for (const auto& v : frustumCorners)
                 playerViewCenter += glm::vec3(v);
             playerViewCenter /= frustumCorners.size();
-            glm::mat4 lightView = glm::lookAt(playerViewCenter + sunDirection,playerViewCenter,glm::vec3(0,1,0));
+            glm::mat4 lightView = glm::lookAt(playerViewCenter + shadowDir,playerViewCenter,glm::vec3(0,1,0));
             float minX = std::numeric_limits<float>::max();
             float maxX = std::numeric_limits<float>::lowest();
             float minY = std::numeric_limits<float>::max();
@@ -336,8 +342,19 @@ namespace syj
         }
     }
 
-    void environment::calc(float deltaMS,glm::vec3 cameraPosition)
+    void environment::calc(float deltaMS,perspectiveCamera *playerCamera)
     {
+        if(useIBL)
+        {
+            shadowsCalc(playerCamera,sunDirection);
+            glActiveTexture(GL_TEXTURE0 + cubeMapRadiance);
+            glBindTexture(GL_TEXTURE_CUBE_MAP,IBLRad);
+            glActiveTexture(GL_TEXTURE0 + cubeMapIrradiance);
+            glBindTexture(GL_TEXTURE_CUBE_MAP,IBLIrr);
+
+            return;
+        }
+
         //time = 0.0;
         //+/-1 = midnight
         //-0.5 = dawn
@@ -446,10 +463,7 @@ namespace syj
         sunDirection = glm::vec3(cos(azimuth) * cos(solarElevation),sin(solarElevation),sin(azimuth) * cos(solarElevation));
         sunDirection = glm::normalize(sunDirection);
 
-        /*shadowFarCamera.setPosition(cameraPosition);
-        shadowNearCamera.setPosition(cameraPosition);
-        shadowFarCamera.setDirection(sunDirection);
-        shadowNearCamera.setDirection(sunDirection);*/
+        shadowsCalc(playerCamera,sunDirection);
     }
 
     void environment::passLightMatricies(uniformsHolder *uniforms)
@@ -473,8 +487,10 @@ namespace syj
             passLightMatricies(uniforms);
         }
 
-        glUniform3vec(uniforms->sunColor,sunColor);
+        glUniform1i(uniforms->useIBL,useIBL);
+        glUniform4vec(uniforms->sunColor,sunColor);
         glUniform3vec(uniforms->sunDirection,sunDirection);
+        glUniform1f(uniforms->sunDistance,sunDistance);
         glUniform3vec(uniforms->skyColor,skyColor);
         glUniform3vec(uniforms->fogColor,fogColor);
         glUniform1f(uniforms->fogMaxDist,fogDistanceMax);

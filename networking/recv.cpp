@@ -158,6 +158,73 @@ void processCommand(clientStuff *clientEnvironment,std::string commandType,packe
 
         return;
     }
+    else if(commandType == "environment")
+    {
+        serverData->env->useIBL = data->readBit();
+
+        if(serverData->env->useIBL)
+        {
+            std::string skyBox = data->readString();
+            std::string radianceMap = data->readString();
+            std::string irradianceMap = data->readString();
+
+            if(!okayFilePath(skyBox))
+            {
+                error("Invalid file path for skybox: " + skyBox);
+                return;
+            }
+
+            if(!okayFilePath(radianceMap))
+            {
+                error("Invalid file path for radiance map: " + radianceMap);
+                return;
+            }
+
+            if(!okayFilePath(irradianceMap))
+            {
+                error("Invalid file path for irradiance map: " + irradianceMap);
+                return;
+            }
+
+            serverData->env->IBL = processEquirectangularMap(clientEnvironment->rectToCubeUnis->target,clientEnvironment->cubeVAO,"assets/"+skyBox,true);
+            serverData->env->IBLRad = processEquirectangularMap(clientEnvironment->rectToCubeUnis->target,clientEnvironment->cubeVAO,"assets/"+radianceMap,true);
+            serverData->env->IBLIrr = processEquirectangularMap(clientEnvironment->rectToCubeUnis->target,clientEnvironment->cubeVAO,"assets/"+irradianceMap,true);
+
+            serverData->env->sunDirection.x = data->readFloat();
+            serverData->env->sunDirection.y = data->readFloat();
+            serverData->env->sunDirection.z = data->readFloat();
+        }
+        else
+        {
+            serverData->env->cycle.dawnStart = data->readFloat();
+            serverData->env->cycle.dawnEnd = data->readFloat();
+            serverData->env->cycle.duskStart = data->readFloat();
+            serverData->env->cycle.duskEnd = data->readFloat();
+            serverData->env->cycle.secondsInDay = data->readFloat();
+
+            for(int a = 0; a<4; a++)
+            {
+                serverData->env->cycle.dncSkyColors[a].r = data->readFloat();
+                serverData->env->cycle.dncSkyColors[a].g = data->readFloat();
+                serverData->env->cycle.dncSkyColors[a].b = data->readFloat();
+
+                serverData->env->cycle.dncFogColors[a].r = data->readFloat();
+                serverData->env->cycle.dncFogColors[a].g = data->readFloat();
+                serverData->env->cycle.dncFogColors[a].b = data->readFloat();
+
+                serverData->env->cycle.dncSunColors[a].r = data->readFloat();
+                serverData->env->cycle.dncSunColors[a].g = data->readFloat();
+                serverData->env->cycle.dncSunColors[a].b = data->readFloat();
+                serverData->env->cycle.dncSunColors[a].a = data->readFloat();
+            }
+
+            /*lengthPrefixedString cycleBinaryData = data->readString();
+            for(int a = 0; a<sizeof(dayNightCycle); a++)
+                std::cout<<(int)cycleBinaryData.data[a]<<"\n";
+            memcpy(&serverData->env->cycle,cycleBinaryData.data,sizeof(dayNightCycle));*/
+
+        }
+    }
     else if(commandType == "skipBricksCompile")
     {
         serverData->skippingCompileNextBricks = data->readUInt(24);

@@ -174,6 +174,7 @@ namespace syj
          //Environment:
 
         sunDirection            = toAdd.registerUniformVec3("sunDirection"      ,false);
+        sunDistance             = toAdd.registerUniformFloat("sunDistance"      ,false);
         sunColor                = toAdd.registerUniformVec3("sunColor"          ,false);
         skyColor                = toAdd.registerUniformVec3("skyColor"          ,false);
         fogMaxDist              = toAdd.registerUniformFloat("fogMaxDist"          ,false);
@@ -190,6 +191,7 @@ namespace syj
         sunAboveHorizon         = toAdd.registerUniformBool("sunAboveHorizon"       ,false);
         renderingRays           = toAdd.registerUniformBool("renderingRays"         ,false);
         doingGodRayPass         = toAdd.registerUniformBool("doingGodRayPass"       ,false);
+        useIBL                  = toAdd.registerUniformBool("useIBL"                ,false);
 
         //Lighting:
 
