@@ -158,6 +158,14 @@ void processCommand(clientStuff *clientEnvironment,std::string commandType,packe
 
         return;
     }
+    else if(commandType == "dncTime")
+    {
+        serverData->env->currentTime = data->readFloat();
+    }
+    else if(commandType == "dncSpeed")
+    {
+        serverData->env->cycle.secondsInDay = data->readFloat();
+    }
     else if(commandType == "environment")
     {
         serverData->env->useIBL = data->readBit();
