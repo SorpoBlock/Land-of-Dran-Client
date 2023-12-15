@@ -1,9 +1,9 @@
 #ifndef CLIENT_H_INCLUDED
 #define CLIENT_H_INCLUDED
 
-#include "C:\Users\Syerjchep\Documents\ProgrammingProjects\syjNet\common.h"
-#include "C:\Users\Syerjchep\Documents\ProgrammingProjects\syjNet\packet.h"
-#include "C:\Users\Syerjchep\Documents\ProgrammingProjects\syjNet\errors.h"
+#include "code/networking/common.h"
+#include "code/networking/packet.h"
+#include "code/networking/errors.h"
 
 namespace syj
 {
