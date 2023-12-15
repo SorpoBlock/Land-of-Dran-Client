@@ -19,7 +19,7 @@ CEGUI::Window *initLoadCEGUISkin(std::string skinName,int resX,int resY)
 {
     if (!CEGUI::Logger::getSingletonPtr())
         new CEGUI::DefaultLogger();
-    CEGUI::Logger::getSingleton().setLogFilename("Logs/CEGUI.txt");
+    CEGUI::Logger::getSingleton().setLogFilename("logs/CEGUI.txt");
 
     CEGUI::OpenGL3Renderer &myRenderer = CEGUI::OpenGL3Renderer::create(CEGUI::Sizef(resX,resY));
     CEGUI::System::create( myRenderer );

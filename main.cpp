@@ -41,7 +41,7 @@
 #include "code/graphics/emitter.h"
 #include <chrono>
 #include "code/physics/selectionBox.h"
-#include <CURL/curl.h>
+#include <curl/curl.h>
 #include "code/gui/updater.h"
 #include <bearssl/bearssl_hash.h>
 #include "code/graphics/bulletTrails.h"
@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
 
     GLuint quadVAO = createQuadVAO();
     GLuint cubeVAO = createCubeVAO();
-    clientEnvironment.prints = new printLoader(".\\assets\\brick\\prints");
+    clientEnvironment.prints = new printLoader("./assets/brick/prints");
     clientEnvironment.cubeVAO = cubeVAO;
     texture *bdrf = generateBDRF(quadVAO);
     material grass("assets/ground/grass1/grass.txt");
@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
     dudvTexture->createFromFile("assets/dudv.png");
     tessellation water(0);
 
-    //blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",clientEnvironment.brickSelector,true);
+    //blocklandCompatibility blocklandHolder("assets/brick/types/test.cs","./assets/brick/types",clientEnvironment.brickSelector,true);
     blocklandCompatibility *blocklandHolder = 0;
 
     CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
@@ -2269,7 +2269,7 @@ int main(int argc, char *argv[])
                 else
                     connected = true;
 
-                blocklandHolder = new blocklandCompatibility("assets/brick/types/test.cs",".\\assets\\brick\\types",clientEnvironment.brickSelector,true);
+                blocklandHolder = new blocklandCompatibility("assets/brick/types/test.cs","./assets/brick/types",clientEnvironment.brickSelector,true);
 
                 serverData->staticBricks.allocateVertBuffer();
                 serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMat);

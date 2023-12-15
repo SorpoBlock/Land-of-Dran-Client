@@ -8,7 +8,7 @@
 //Function handles for users to listen to connections, disconnections, data received etc.
 #include <functional>
 //These strings are good for putting into our packets
-#include "lengthPrefixedString.h"
+#include "code/networking/lengthPrefixedString.h"
 //A nice lightweight and cross-platform networking library
 #include <SDL2/SDL_net.h>
 //Helpful error struct
