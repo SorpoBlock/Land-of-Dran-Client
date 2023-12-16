@@ -21,9 +21,23 @@
 //#include "server.h"
 
 //A custom getline for Linux Compatibility
-#ifdef __linux__ 
-    std::istream& lodGetLine(std::istream& is, std::string& t);
-#elif _WIN32
+#ifdef __linux__
+    std::istream& lodGetLine(std::istream& is, std::string& t)
+    {
+        t.clear();
+        std::istream::sentry se(is, true);
+        std::streambuf* sb = is.rdbuf();
+        for(;;) {
+            int c = sb->sbumpc();
+            switch (c) {
+                case '\n': return is;
+                case '\r': if(sb->sgetc() == '\n') { sb->sbumpc(); } return is;
+                case std::streambuf::traits_type::eof(): if(t.empty()) { is.setstate(std::ios::eofbit); } return is;
+                default: t += (char)c;
+            }
+        }
+    }
+#else
     #define lodGetLine(file, line) std::getline(file, line)
 #endif
 
