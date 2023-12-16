@@ -20,6 +20,13 @@
 //Code for the server
 //#include "server.h"
 
+//A custom getline for Linux Compatibility
+#ifdef __linux__ 
+    std::istream& lodGetLine(std::istream& is, std::string& t);
+#elif _WIN32
+    #define lodGetLine(file, line) std::getline(file, line)
+#endif
+
 //How much data do we allocate at a time for our packets
 #define syjNET_PacketChunkSize      200
 //How many chunks can a packet allocate in one write operation

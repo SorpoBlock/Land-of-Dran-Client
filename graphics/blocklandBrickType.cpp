@@ -3,9 +3,9 @@
 glm::vec4 readNextVec4(std::fstream &file)
 {
     std::string line = "";
-    getline(file,line);
+    lodGetLine(file,line);
     if(line == "")
-        getline(file,line);
+        lodGetLine(file,line);
     std::vector<std::string> words;
     split(line,words);
     if(words.size() < 4)
@@ -16,9 +16,9 @@ glm::vec4 readNextVec4(std::fstream &file)
 glm::vec3 readNextVec3(std::fstream &file)
 {
     std::string line = "";
-    getline(file,line);
+    lodGetLine(file,line);
     if(line == "")
-        getline(file,line);
+        lodGetLine(file,line);
     std::vector<std::string> words;
     split(line,words);
     if(words.size() < 3)
@@ -29,9 +29,9 @@ glm::vec3 readNextVec3(std::fstream &file)
 glm::vec2 readNextVec2(std::fstream &file)
 {
     std::string line = "";
-    getline(file,line);
+    lodGetLine(file,line);
     if(line == "")
-        getline(file,line);
+        lodGetLine(file,line);
     std::vector<std::string> words;
     split(line,words);
     if(words.size() < 2)
@@ -42,9 +42,9 @@ glm::vec2 readNextVec2(std::fstream &file)
 glm::vec3 readNextVec2Tex(std::fstream &file,syj::defaultBrickTextures tex)
 {
     std::string line = "";
-    getline(file,line);
+    lodGetLine(file,line);
     if(line == "")
-        getline(file,line);
+        lodGetLine(file,line);
     std::vector<std::string> words;
     split(line,words);
     if(words.size() < 2)
@@ -78,7 +78,7 @@ namespace syj
         int vertsReadSincePositionLine = 0;
         while(!file.eof())
         {
-            getline(file,line);
+            lodGetLine(file,line);
 
             if(!readingVerts)
             {
@@ -209,7 +209,7 @@ namespace syj
         fileName = lowercase(getFileFromPath(blbFile));
 
         std::string line = "";
-        getline(theFile,line);
+        lodGetLine(theFile,line);
         std::vector<std::string> words;
         split(line,words);
 
@@ -234,7 +234,7 @@ namespace syj
 
         while(!theFile.eof())
         {
-            getline(theFile,line);
+            lodGetLine(theFile,line);
             std::transform(line.begin(), line.end(), line.begin(), ::tolower);
 
             if(line.find("quads") != std::string::npos)
@@ -255,7 +255,7 @@ namespace syj
                 if(line.find("omni") != std::string::npos)
                     side = FACE_OMNI;
 
-                getline(theFile,line);
+                lodGetLine(theFile,line);
                 unsigned int numQuads = atoi(line.c_str());
                 if(numQuads > 1000)
                 {
@@ -271,9 +271,9 @@ namespace syj
 
                 for(unsigned int a = 0; a<numQuads; a++)
                 {
-                    getline(theFile,line);
+                    lodGetLine(theFile,line);
                     while(line.find("TEX") == std::string::npos)
-                        getline(theFile,line);
+                        lodGetLine(theFile,line);
 
                     if(line == "TEX:RAMP")
                         current = BRICKTEX_RAMP;
@@ -293,9 +293,9 @@ namespace syj
                     else
                         error("Expected texture for brick face, got instead: "+line + " " + blbFile);
 
-                    getline(theFile,line);
+                    lodGetLine(theFile,line);
                     while(line.find("POSITION") == std::string::npos)
-                        getline(theFile,line);
+                        lodGetLine(theFile,line);
 
                     if(line.find("POSITION:") == std::string::npos)
                         error("Expected position, got instead: "+line + " " + blbFile);
@@ -312,9 +312,9 @@ namespace syj
                     verts.push_back(posC);
                     verts.push_back(posD);
 
-                    getline(theFile,line);
+                    lodGetLine(theFile,line);
                     while(line.find("UV COORDS") == std::string::npos)
-                        getline(theFile,line);
+                        lodGetLine(theFile,line);
                     if(line.find("UV COORDS") == std::string::npos)
                         error("Expected uv, got instead: " + line + " " + blbFile);
 
@@ -340,9 +340,9 @@ namespace syj
                     uvsAndTex.push_back(uvC);
                     uvsAndTex.push_back(uvD);
 
-                    getline(theFile,line);
+                    lodGetLine(theFile,line);
                     while(line.find("COLOR") == std::string::npos && line.find("NORMAL") == std::string::npos)
-                        getline(theFile,line);
+                        lodGetLine(theFile,line);
 
                     if(line == "COLORS:")
                     {
@@ -358,7 +358,7 @@ namespace syj
                         blbColor.push_back(colorC);
                         blbColor.push_back(colorD);
 
-                        getline(theFile,line);
+                        lodGetLine(theFile,line);
                         if(line != "NORMALS:")
                         {
                             error("Expected normals for brick but no NORMALS: line after colors " + blbFile);

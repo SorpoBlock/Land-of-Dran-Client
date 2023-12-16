@@ -1,6 +1,7 @@
 #ifndef UNIFORMSBASIC_H_INCLUDED
 #define UNIFORMSBASIC_H_INCLUDED
 
+#include "code/networking/common.h"
 #include "code/graphics/program.h"
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/matrix_decompose.hpp>

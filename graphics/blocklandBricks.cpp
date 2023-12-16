@@ -202,7 +202,7 @@ namespace syj
         std::string line = "";
         while(!f.eof())
         {
-            getline(f,line);
+            lodGetLine(f,line);
             int barPos = line.find("|");
             if(barPos == std::string::npos)
                 continue;
@@ -229,10 +229,10 @@ namespace syj
                         continue;
                     }
                     std::string dims = "";
-                    getline(blb,dims);
+                    lodGetLine(blb,dims);
                     std::vector<std::string> words;
                     split(dims,words);
-                    getline(blb,dims);
+                    lodGetLine(blb,dims);
                     blb.close();
 
                     std::string fname = lowercase(i->path().stem().string());
