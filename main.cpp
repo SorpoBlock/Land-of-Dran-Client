@@ -99,8 +99,8 @@ int main(int argc, char *argv[])
     if(prefs.getPreference("IP"))
         ip = prefs.getPreference("IP")->toString();
 
-    logger::setErrorFile("logs/error.txt");
-    logger::setInfoFile("logs/log.txt");
+    logger::setErrorFile("Logs/error.txt");
+    logger::setInfoFile("Logs/log.txt");
     syj::log().setDebug(false);
     scope("Main");
     info("Starting up!");

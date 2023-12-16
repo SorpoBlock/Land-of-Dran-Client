@@ -164,7 +164,7 @@ namespace syj
                 error("Could not get error log for program compilation.");
             else
             {
-                std::ofstream programLog("logs/shaderProgram.log");
+                std::ofstream programLog("Logs/shaderProgram.log");
 
                 if(programLog.is_open())
                 {
@@ -173,7 +173,7 @@ namespace syj
                     programLog.close();
                 }
                 else
-                    error("Could not open logs/shaderProgram.log for write!");
+                    error("Could not open Logs/shaderProgram.log for write!");
             }
 
             delete data;

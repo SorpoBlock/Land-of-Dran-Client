@@ -59,7 +59,7 @@ namespace syj
             else
             {
                 error("Error while compiling " + filePath + " see associated error file for more info!");
-                std::string logPath = "logs/ " + getFileFromPath(filePath) + ".log";
+                std::string logPath = "Logs/ " + getFileFromPath(filePath) + ".log";
                 std::ofstream shaderLog(logPath);
                 if(shaderLog.is_open())
                 {
