@@ -235,7 +235,9 @@ namespace syj
 
             int firstTab = line.find("\t");
             std::string fileName = line.substr(0,firstTab);
+#ifndef __linux__ 
             replaceAll(fileName,"\\","/");
+#endif
             std::string afterFirstTab = line.substr(firstTab+1,line.length()-(firstTab+1));
 
             if(afterFirstTab.find("\t") == std::string::npos)

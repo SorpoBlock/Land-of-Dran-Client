@@ -2,7 +2,9 @@
 #define QUATERNION_H_INCLUDED
 
 #include "code/networking/packet.h"
-//#define BT_USE_DOUBLE_PRECISION
+#ifndef __linux__ 
+    #define BT_USE_DOUBLE_PRECISION
+#endif
 #include <btBulletDynamicsCommon.h>
 #include "code/utility/logger.h"
 
