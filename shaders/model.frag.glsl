@@ -31,7 +31,7 @@ uniform int shadowSoftness;
 uniform bool sunAboveHorizon;
 uniform vec3 fogColor;
 uniform vec3 sunDirection;
-uniform vec3 sunColor;
+uniform vec4 sunColor;
 uniform bool previewTexture;
 uniform float dncInterpolation;
 uniform vec3 skyColor;
@@ -398,6 +398,11 @@ void main()
 		if(!pointLightUsed[i])
 			continue;
 			
+		float distance    = length(pointLightPos[i] - worldPos);
+			
+		if(distance > 200)
+			continue;
+			
 		vec3 lightDirection = normalize(pointLightPos[i] - worldPos);
 		float thetaStrength = 1.0;
 			
@@ -414,7 +419,6 @@ void main()
 	
 		//vec3 pointLightColor = vec3(900,900,400);
 		//vec3 pointLightPos = vec3(1020,37,227);
-		float distance    = length(pointLightPos[i] - worldPos);
 		float attenuation = 1.0 / (distance * distance);
 		vec3 radiance     = pointLightColor[i] * attenuation; 
 		vec3 lightHalfVector = normalize(viewVector + lightDirection);

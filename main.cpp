@@ -45,6 +45,7 @@
 #include "code/gui/updater.h"
 #include <bearssl/bearssl_hash.h>
 #include "code/graphics/bulletTrails.h"
+#include "code/gui/contentDownload.h"
 
 #define hardCodedNetworkVersion 10014
 
@@ -77,7 +78,7 @@ bool godRayButton(const CEGUI::EventArgs &e)
 
 enum gameState
 {
-    STATE_MAINMENU,STATE_CONNECTING,STATE_PLAYING,STATE_AVATARPICKER,STATE_QUITTING,STATE_CLEANUP,STATE_LOADING
+    STATE_MAINMENU,STATE_GETCONTENTLIST,STATE_DOWNLOADCONTENT,STATE_CONNECTING,STATE_PLAYING,STATE_AVATARPICKER,STATE_QUITTING,STATE_CLEANUP,STATE_LOADING
 };
 
 int main(int argc, char *argv[])
@@ -106,8 +107,9 @@ int main(int argc, char *argv[])
     if(argc > 0)
         info(argv[0]);
 
-    create_directory("logs");
+    create_directory("Logs"); //CEGUI on Linux needs the L to be capital
     create_directory("saves");
+    create_directory("add-ons");
     create_directory("assets");
     create_directory("assets/brick");
     create_directory("assets/brick/types");
@@ -221,6 +223,8 @@ int main(int argc, char *argv[])
     clientEnvironment.bottomPrint.textBar = hud->getChild("BottomPrint");
     CEGUI::Window *saveLoadWindow = loadSaveLoadWindow(&clientEnvironment);
     CEGUI::Window *brickPopup = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("HUD")->getChild("BrickPopup");
+
+    CEGUI::Window *contentMenu = loadContentMenu(&clientEnvironment);
 
     if(ourRevisionVersion == -1 || ourRevisionVersion == 0)
     {
@@ -410,6 +414,8 @@ int main(int argc, char *argv[])
             }
             case STATE_CLEANUP:
             {
+                clientEnvironment.ignoreGamePackets = true;
+
                 serverStuff *serverData = clientEnvironment.serverData;
 
                 //Clear chats:
@@ -537,6 +543,8 @@ int main(int argc, char *argv[])
             }
             case STATE_MAINMENU:
             {
+                clientEnvironment.ignoreGamePackets = true;
+
                 if(clientEnvironment.serverData)
                 {
                     delete clientEnvironment.serverData;
@@ -620,13 +628,149 @@ int main(int argc, char *argv[])
                 if(!clientEnvironment.waitingToPickServer)
                 {
                     bounceText->setVisible(false);
-                    currentState = STATE_CONNECTING;
+                    currentState = STATE_GETCONTENTLIST;
+
+                    clientEnvironment.waitingOnContentList = true;
+                    clientEnvironment.cancelCustomContent = false;
+                    clientEnvironment.expectedCustomFiles = -1;
+
+                    ((CEGUI::MultiColumnList*)contentMenu->getChild("List"))->clearAllSelections();
+                    ((CEGUI::MultiColumnList*)contentMenu->getChild("List"))->resetList();
+                    contentMenu->setVisible(true);
+                    contentMenu->moveToFront();
+                    contentMenu->getChild("Size")->setText("");
+                    contentMenu->getChild("Number")->setText("");
+
+                    if(contentMenu->getUserData())
+                    {
+                        std::vector<customFileDescriptor*> *contentList = (std::vector<customFileDescriptor*> *)contentMenu->getUserData();
+                        for(int a = 0; a<contentList->size(); a++)
+                            delete contentList->at(a);
+                        contentList->clear();
+                    }
+
+                    networkingPreferences netPrefs;
+                    netPrefs.timeoutMS = 10000;
+                    serverConnection = new client(netPrefs,clientEnvironment.wantedIP);
+                    serverConnection->userData = &clientEnvironment;
+                    serverConnection->receiveHandle = recvHandle;
+                    serverConnection->kickHandle = gotKicked;
+
+                    packet requestContent;
+                    requestContent.writeUInt(clientPacketType_requestName,4);
+                    requestContent.writeUInt(hardCodedNetworkVersion,32);
+                    requestContent.writeBit(true);
+                    serverConnection->send(&requestContent,true);
+
+                    info("Retrieving custom content list...");
                 }
+
+                break;
+            }
+            case STATE_GETCONTENTLIST:
+            {
+                clientEnvironment.ignoreGamePackets = true;
+
+                serverConnection->run();
+
+                if(clientEnvironment.cancelCustomContent)
+                {
+                    delete serverConnection;
+                    serverConnection = 0;
+                    clientEnvironment.cancelCustomContent = false;
+                    clientEnvironment.waitingToPickServer = true;
+                    currentState = STATE_MAINMENU;
+                    break;
+                }
+
+                if(!clientEnvironment.waitingOnContentList)
+                {
+                    bool oneEnabled = false;
+                    for(int a = 0; a<((std::vector<customFileDescriptor*> *)contentMenu->getUserData())->size(); a++)
+                    {
+                        if(((std::vector<customFileDescriptor*> *)contentMenu->getUserData())->at(a)->enabled)
+                        {
+                            oneEnabled = true;
+                            break;
+                        }
+                    }
+
+                    //We selected none of the available downloads...
+                    if(!oneEnabled)
+                    {
+                        delete serverConnection;
+                        serverConnection = 0;
+                        currentState = STATE_CONNECTING;
+                        contentMenu->setVisible(false);
+                        break;
+                    }
+                    else
+                    {
+                        //gotta download at least one file...
+
+                        //IDK DO SOMETHING
+                    }
+                }
+
+                //We don't actually have any new files we even *could* download if we wanted to, just skip to connecting...
+                if(clientEnvironment.expectedCustomFiles == ((std::vector<customFileDescriptor*> *)contentMenu->getUserData())->size())
+                {
+                    bool oneSelectable = false;
+                    for(int a = 0; a<((std::vector<customFileDescriptor*> *)contentMenu->getUserData())->size(); a++)
+                    {
+                        if(((std::vector<customFileDescriptor*> *)contentMenu->getUserData())->at(a)->selectable)
+                        {
+                            oneSelectable = true;
+                            break;
+                        }
+                    }
+
+                    if(!oneSelectable)
+                    {
+                        delete serverConnection;
+                        serverConnection = 0;
+                        currentState = STATE_CONNECTING;
+                        contentMenu->setVisible(false);
+                        break;
+                    }
+                }
+
+                const Uint8 *states = SDL_GetKeyboardState(NULL);
+                SDL_Event event;
+                while(SDL_PollEvent(&event))
+                {
+                    if(event.type == SDL_QUIT)
+                    {
+                        currentState = STATE_QUITTING;
+                        break;
+                    }
+
+                    processEventsCEGUI(event,states);
+
+                    if(event.type == SDL_WINDOWEVENT)
+                    {
+                        if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                        {
+                            context.setSize(event.window.data1,event.window.data2);
+                        }
+                    }
+                }
+
+                context.clear(0.5,0.5,1.0,1.0);
+                context.select();
+                CEGUI::System::getSingleton().getRenderer()->setDisplaySize(CEGUI::Size<float>(context.getResolution().x,context.getResolution().y));
+                glViewport(0,0,context.getResolution().x,context.getResolution().y);
+                glDisable(GL_DEPTH_TEST);
+                glActiveTexture(GL_TEXTURE0);
+                CEGUI::System::getSingleton().renderAllGUIContexts();
+                context.swap();
 
                 break;
             }
             case STATE_PLAYING:
             {
+                clientEnvironment.ignoreGamePackets = false;
+
                 hud->setVisible(true);
                 joinServer->setVisible(false);
                 updater->setVisible(false);
@@ -636,9 +780,18 @@ int main(int argc, char *argv[])
 
                 if(clientEnvironment.exitToMenu)
                 {
+                    clientEnvironment.ignoreGamePackets = true;
+
+                    packet quitPacket;
+                    quitPacket.writeUInt(clientPacketType_requestName,4);
+                    quitPacket.writeUInt(0,32);
+                    serverConnection->send(&quitPacket,true);
+                    serverConnection->run();
+
                     clientEnvironment.exitToMenu = false;
                     clientEnvironment.waitingToPickServer = true;
                     currentState = STATE_CLEANUP;
+
                     break;
                 }
 
@@ -2238,6 +2391,8 @@ int main(int argc, char *argv[])
             }
             case STATE_CONNECTING:
             {
+                clientEnvironment.ignoreGamePackets = false;
+
                 //TODO: Multithread loading and have an actual loading screen...
 
                 info("Trying to connect to server...");
@@ -2281,6 +2436,7 @@ int main(int argc, char *argv[])
                 packet requestName;
                 requestName.writeUInt(clientPacketType_requestName,4);
                 requestName.writeUInt(hardCodedNetworkVersion,32);
+                requestName.writeBit(false);
 
                 requestName.writeBit(clientEnvironment.loggedIn);
                 if(clientEnvironment.loggedIn)
@@ -2413,6 +2569,8 @@ int main(int argc, char *argv[])
             }
             case STATE_LOADING:
             {
+                clientEnvironment.ignoreGamePackets = false;
+
                 serverStuff *serverData = clientEnvironment.serverData;
 
                 serverConnection->run(1);

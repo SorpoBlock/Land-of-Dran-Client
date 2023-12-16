@@ -13,6 +13,7 @@ uniform vec3 sunDirection;
 uniform mat4 boneTransforms[100];
 uniform int isAnimated;
 uniform bool doingGodRayPass;
+uniform float sunDistance;
 
 layout(location = 0) in vec3  positions;
 layout(location = 1) in vec3  normals;
@@ -38,7 +39,7 @@ void main()
 	
 	if(renderingSun)
 	{
-		gl_Position = projectionShadowMatrix * angleShadowMatrix * vec4(positions + normalize(sunDirection) * 20.0,1.0);
+		gl_Position = projectionShadowMatrix * angleShadowMatrix * vec4(positions + normalize(sunDirection) * 20.0 * sunDistance,1.0);
 		return;
 	}
 	

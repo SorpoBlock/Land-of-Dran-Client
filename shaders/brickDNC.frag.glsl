@@ -9,6 +9,7 @@ uniform bool useAO;
 uniform bool useHeight;
 uniform bool useRoughness;
 
+
 //Either use these for basic bricks...
 uniform sampler2D albedoTexture;
 uniform sampler2D normalTexture;
@@ -28,15 +29,19 @@ uniform sampler2D printTextureSpecialBrickNormal;
 uniform sampler2DArray shadowNearMap;
 uniform sampler2DArray shadowColorMap;
 
-uniform samplerCube cubeMapRadiance;
-uniform samplerCube cubeMapIrradiance;
-uniform sampler2D brdfTexture;
-
 uniform vec3 cameraPlayerPosition;
-uniform vec3 cameraPlayerDirection;
 
+in vec3 modelPos; //Used only for living bricks
+in vec2 uv;
+in vec2 verts;
+in vec3 normal;
+in vec3 worldPos;
+in vec4 finalColor;
+in vec2 swapDimensions;
+flat in vec3 dimension;
+flat in int direction;
+uniform bool specialBricks;
 uniform float materialCutoff;
-uniform bool useShadows;
 uniform bool useColoredShadows;
 uniform int shadowSoftness;
 uniform vec3 sunDirection;
@@ -45,6 +50,7 @@ uniform vec3 fogColor;
 uniform bool sunAboveHorizon;
 uniform float deltaT;
 uniform bool isPrint;
+uniform bool useShadows;
 
 uniform bool pointLightUsed[8];
 uniform vec3 pointLightPos[8];
@@ -52,21 +58,41 @@ uniform vec3 pointLightColor[8];
 uniform bool pointLightIsSpotlight[8];
 uniform vec4 pointLightDirection[8];
 
-in vec3 modelPos; //Used only for living bricks
-in vec2 uv;
-in vec2 verts;
-in vec3 normal;
-in vec3 worldPos;
-in vec4 finalColor;
-flat in vec2 swapDimensions;
-flat in vec3 dimension;
-flat in int direction;
-uniform bool specialBricks;
 in vec4 shadowPos[3];
 in float brickMaterial;
 in float textureToUse;
 
-uniform int debugMode;
+vec3 getNormalFromMapTop(sampler2D tex,vec2 realUV)
+{
+    vec3 tangentNormal = texture(tex, realUV).xyz * 2.0 - 1.0;
+	
+    //Extra code so that if useNormal(map) is 0, texture map normal defaults to 0,1,0 aka it's just the interpolated vertex normal
+	//if(!useNormal)
+	//	tangentNormal = vec3(0,1,0);
+
+
+	mat3 TBN;		
+
+	if(true)		//As of 03feb we still need to calc these cause actual tangent/bitangent is messed up
+	{
+		//Honeslty don't even need this because assImp calcs TBN for us
+		vec3 Q1  = dFdx(worldPos);
+		vec3 Q2  = dFdy(worldPos);
+		vec2 st1 = dFdx(uv);
+		vec2 st2 = dFdy(uv);
+		vec3 N   = normalize(normal);
+		vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+		vec3 B  = -normalize(cross(N, T));
+		TBN = mat3(T,B,N);
+	}
+
+    return normalize(TBN * tangentNormal);
+}
+
+bool floatCompare(float a,float b)
+{
+	return abs(a-b) < 0.05;
+}
 
 vec3 getNormalFromMap(sampler2D tex,vec2 realUV)
 {
@@ -95,33 +121,6 @@ vec3 getNormalFromMap(sampler2D tex,vec2 realUV)
     return normalize(TBN * tangentNormal);
 }
 
-
-vec3 getNormalFromMapTop(sampler2D tex,vec2 realUV)
-{
-    vec3 tangentNormal = texture(tex, realUV).xyz * 2.0 - 1.0;
-	
-    //Extra code so that if useNormal(map) is 0, texture map normal defaults to 0,1,0 aka it's just the interpolated vertex normal
-	//if(!useNormal)
-	//	tangentNormal = vec3(0,1,0);
-
-
-	mat3 TBN;		
-
-	if(true)		//As of 03feb we still need to calc these cause actual tangent/bitangent is messed up
-	{
-		//Honeslty don't even need this because assImp calcs TBN for us
-		vec3 Q1  = dFdx(worldPos);
-		vec3 Q2  = dFdy(worldPos);
-		vec2 st1 = dFdx(uv);
-		vec2 st2 = dFdy(uv);
-		vec3 N   = normalize(normal);
-		vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
-		vec3 B  = -normalize(cross(N, T));
-		TBN = mat3(T,B,N);
-	}
-
-    return normalize(TBN * tangentNormal);
-}
 
 vec3 getNormalFromMapGrad(sampler2D tex,vec2 realUV,vec2 gradx,vec2 grady)
 {
@@ -192,40 +191,10 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 // ----------------------------------------------------------------------------
-vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
-{
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
-}   
 
-float mip_map_level(vec2 texture_coordinate)
-{
-    // The OpenGL Graphics System: A Specification 4.2
-    //  - chapter 3.9.11, equation 3.21
-
-
-    vec2  dx_vtc        = dFdx(texture_coordinate);
-    vec2  dy_vtc        = dFdy(texture_coordinate);
-    float delta_max_sqr = max(dot(dx_vtc, dx_vtc), dot(dy_vtc, dy_vtc));
-
-
-    //return max(0.0, 0.5 * log2(delta_max_sqr) - 1.0); // == log2(sqrt(delta_max_sqr));
-    return 0.5 * log2(delta_max_sqr); // == log2(sqrt(delta_max_sqr));
-}
-
-bool floatCompare(float a,float b)
-{
-	return abs(a-b) < 0.05;
-}
 
 void main()
 {	
-	/*if(debugMode == 1)
-	{
-		color = finalColor;
-		color.rgb *= clamp(dot(sunDirection,normal),0.2,1.0);
-		return;
-	}*/
-
 	vec3 viewVector = normalize(cameraPlayerPosition - worldPos);
 	float finalAlpha = finalColor.a;
 	vec3 finalColorChangeable = finalColor.rgb;
@@ -464,34 +433,11 @@ void main()
 	float NdotV = max(dot(newNormal, viewVector), 0.0);	
 	vec3 F0 = vec3(0.04); 
     F0 = mix(F0, albedo, metalness);
-    vec3 F = fresnelSchlickRoughness(NdotV, F0, roughness);
+    //vec3 F = fresnelSchlickRoughness(NdotV, F0, roughness);
+	vec3 F    = fresnelSchlick(max(dot(halfVector, viewVector), 0.0), F0);
 	vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
     kD *= 1.0 - metalness;
-	vec3 R = reflect(-viewVector,newNormal);
-	
-	//New IBL lighting code: 
-	float specularShadowEffect = 1.0 - (metalness * 0.5);
-	specularShadowEffect *= 1.0 - length(windowTint);
-	
-	float forceShadow = -1.0 * dot(sunDirection,newNormal);
-	forceShadow = clamp(forceShadow,0.0,0.3);
-	forceShadow *= (1.0/0.3);
-	
-	/*color = vec4(shadowCoverage,forceShadow,0,1);
-	return;*/
-	
-	shadowCoverage = max(shadowCoverage,forceShadow);
-	
-	float totalFaceAwayFromSunAmountDiffuse = clamp(1.0-(shadowCoverage*0.5),0,1);
-	float totalFaceAwayFromSunAmountSpecular = clamp(1.0-(shadowCoverage*specularShadowEffect),0,1);
-	
-	if(floatCompare(brickMaterial,4))
-	{
-		totalFaceAwayFromSunAmountDiffuse = 1.0;
-		totalFaceAwayFromSunAmountSpecular = 1.0;
-		albedo *= 3.0;
-	}
 	
 	color = vec4(0,0,0,1);
 	
@@ -537,52 +483,23 @@ void main()
 	}
 	//End point light	
 	
-	if(false && metalness < 0.1)
-	{
-		vec3 lightDirection = sunDirection;
-		vec3 lightHalfVector = normalize(viewVector + lightDirection);
-		
-		float NdotL = max(dot(newNormal, lightDirection), 0.0) * (1.0-shadowCoverage); 
-		
-		color = vec4(vec3(NdotL),1);
-		return;
-		
-		vec3 radiance = sunColor.rgb;
-		float NDF = DistributionGGX(newNormal, lightHalfVector, roughness);            
-		float G   = GeometrySmith(NdotV,NdotL,roughness);
-		vec3 lightF = fresnelSchlick(max(dot(lightHalfVector,viewVector),0.0),F0);
-		vec3 numerator    = NDF * G * lightF;
-		float denominator = 4.0 * NdotV * NdotL + 0.0001;
-		vec3 lightSpecular     = numerator / denominator;       
-		
-		color.rgb += (kD * albedo / PI + lightSpecular) * radiance * NdotL; 
-		
-		/*NdotL = 1.0 - NdotL;
-		
-		radiance = vec3(1,2,4);
-		NDF = DistributionGGX(newNormal, lightHalfVector, roughness);            
-		G   = GeometrySmith(NdotV,NdotL,roughness);
-		lightF = fresnelSchlick(max(dot(lightHalfVector,viewVector),0.0),F0);
-		numerator    = NDF * G * lightF;
-		denominator = 4.0 * NdotV * NdotL + 0.0001;
-		lightSpecular     = numerator / denominator;       
-		
-		color.rgb += (kD * albedo / PI + lightSpecular) * radiance * NdotL; */
-	}
-	else
-	{	
-		vec3 irradiance = textureLod(cubeMapIrradiance, vec3(1,-1,1)*newNormal,0).rgb;
-		
-		windowTint *= (irradiance.r + irradiance.g + irradiance.b);
-		vec3 diffuse      = irradiance * albedo;
-		diffuse += albedo * (irradiance + windowTint);
-		const float MAX_REFLECTION_LOD = 10.0;
-		vec3 prefilteredColor = textureLod(cubeMapRadiance, vec3(1,-1,1)*R,  roughness * MAX_REFLECTION_LOD).rgb;   
-		vec2 brdf  = texture(brdfTexture, vec2(max(dot(newNormal, viewVector), 0.0), roughness)).rg; 
-		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * totalFaceAwayFromSunAmountSpecular;
-		vec3 ambient = (kD * diffuse + specular) * occlusion * totalFaceAwayFromSunAmountDiffuse;
-		color.rgb += ambient;
-	}
+	float NdotL = max(dot(normalize(newNormal), normalize(sunDirection)), 0.0);  
+	float NDF = DistributionGGX(newNormal, halfVector, roughness);   
+	float G   = GeometrySmith(NdotV,NdotL,roughness);   
+	
+	vec3 numerator    = NDF * G * F; 
+	float denominator = 4 * NdotV * NdotL + 0.001; // 0.001 to prevent divide by zero
+	vec3 specular = numerator / denominator;
+	
+	//The contentious part
+	float totalFaceAwayFromSunAmount = min(1.0-(shadowCoverage*0.8),NdotL);
+	
+	specular *= sqrt(clamp(vec3(1.0 - shadowCoverage),0.1,1));
+	vec3 windowRadiance = vec3(0); //windowTint.rgb * length(sunColor) * windowTint.a * 5;
+	color.rgb += (kD * albedo / PI + specular) * sunColor.rgb * totalFaceAwayFromSunAmount;
+	color.rgb += (kD * albedo / PI + specular) * windowRadiance * NdotL;
+	color.rgb += vec3(0.2) * albedo * occlusion * normalize(sunColor.rgb);
+	//...
 	
 	//Tone maping
 	color.rgb = color.rgb / (color.rgb + vec3(1.0));
@@ -590,11 +507,10 @@ void main()
 	color.rgb = pow(color.rgb, vec3(1.0/2.2)); 
 	color.a = 1.0;
 	
-	float fogDist = clamp(dist,500,1200);
+	float fogDist = clamp(dist,500,1000);
 	fogDist -= 500.0;
-	fogDist /= 700.0;
-	vec3 tmpFogColor = vec3(172,170,190) / 255.0;
-	color.rgb = mix(color.rgb,tmpFogColor,fogDist);
+	fogDist /= 500.0;
+	color.rgb = mix(color.rgb,fogColor,fogDist);
 	
-	color.a = finalAlpha;
+	color.a = finalColor.a;
 }

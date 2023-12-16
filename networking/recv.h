@@ -3,6 +3,7 @@
 
 #include "code/utility/clientStuff.h"
 #include "code/utility/rectToCube.h"
+#include "code/gui/contentDownload.h"
 
 #define clientPacketType_requestName 0
 #define clientPacketType_startLoadingStageTwo 1

@@ -5,6 +5,8 @@ boxEdges	frag	boxEdges.frag.glsl
 boxEdges	vert	boxEdges.vert.glsl
 brick	frag	brick.frag.glsl
 brick	vert	brick.vert.glsl
+brickDNC	frag	brickDNC.frag.glsl
+brickDNC	vert	brick.vert.glsl
 bullet	frag	bullet.frag.glsl
 bullet	vert	bullet.vert.glsl
 emitter	frag	emitter.frag.glsl
@@ -17,6 +19,8 @@ godPrePassSun	frag	godPrePassSun.frag.glsl
 godPrePassSun	vert	godPrePassSun.vert.glsl
 model	frag	model.frag.glsl
 model	vert	model.vert.glsl
+modelDNC	frag	modelDNC.frag.glsl
+modelDNC	vert	model.vert.glsl
 modelShadow	frag	modelShadow.frag.glsl
 modelShadow	geom	modelShadow.geom.glsl
 modelShadow	vert	modelShadow.vert.glsl

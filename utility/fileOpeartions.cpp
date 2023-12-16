@@ -8,7 +8,6 @@ bool okayFilePath(std::string path)
     //Can not have a . or / as the first character
     //Can only have one .
     //Can not be longer than 48 characters
-    //Will have assets/ prepended to the path
 
     if(path.length() < 2)
         return false;

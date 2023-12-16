@@ -38,11 +38,12 @@ uniform vec3 cameraPlayerPosition;
 uniform bool useShadows;
 uniform int shadowSoftness;
 uniform vec3 sunDirection;
-uniform vec3 sunColor;
+uniform vec4 sunColor;
 uniform vec3 fogColor;
 uniform bool sunAboveHorizon;
 uniform float deltaT;
 uniform bool isPrint;
+uniform bool useIBL;
 
 in vec3 modelPos; //Used only for living bricks
 in vec2 uv;
@@ -165,10 +166,12 @@ void main()
 	float NdotV = max(dot(newNormal, viewVector), 0.0);	
 	vec3 F0 = vec3(0.04); 
     F0 = mix(F0, albedo, metalness);
-    vec3 F = fresnelSchlickRoughness(NdotV, F0, roughness);
+    //vec3 F = fresnelSchlickRoughness(NdotV, F0, roughness);
+	vec3 F = fresnelSchlick(max(dot(halfVector, viewVector), 0.0), F0);
 	vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
     kD *= 1.0 - metalness;
+	float NdotL = max(dot(newNormal, sunDirection), 0.0) * (1.0-shadowCoverage); 
 	
 	//New IBL lighting code:
 	float specularShadowEffect = 1.0 - (metalness * 0.5);
@@ -184,7 +187,7 @@ void main()
 	
 	color = vec4(0,0,0,1);
 	
-	if(debugMode == 2)
+	/*if(debugMode == 2)
 	{
 		vec3 lightDirection = sunDirection;
 		vec3 lightHalfVector = normalize(viewVector + lightDirection);
@@ -225,6 +228,30 @@ void main()
 		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * totalFaceAwayFromSunAmountSpecular;
 		vec3 ambient = (kD * diffuse + specular) * occlusion * totalFaceAwayFromSunAmountDiffuse;
 		color.rgb += ambient;
+	}*/
+	
+	if(useIBL)
+	{
+	
+	}
+	else
+	{				
+		float NDF = DistributionGGX(newNormal, halfVector, roughness);   
+		float G   = GeometrySmith(NdotV,NdotL,roughness);   
+		
+		vec3 numerator    = NDF * G * F; 
+		float denominator = 4 * NdotV * NdotL + 0.001; // 0.001 to prevent divide by zero
+		vec3 specular = numerator / denominator;
+		
+		//The contentious part
+		float totalFaceAwayFromSunAmount = min(1.0-(shadowCoverage*0.8),NdotL);
+		
+		specular *= sqrt(clamp(vec3(1.0 - shadowCoverage),0.1,1));
+		vec3 windowRadiance = vec3(0); //windowTint.rgb * length(sunColor) * windowTint.a * 5;
+		color.rgb = (kD * albedo / PI + specular) * sunColor.rgb * totalFaceAwayFromSunAmount;
+		color.rgb += (kD * albedo / PI + specular) * windowRadiance * NdotL;
+		color.rgb += vec3(0.2) * albedo * occlusion * normalize(sunColor.rgb);
+		//...
 	}
 	
 	//Tone maping

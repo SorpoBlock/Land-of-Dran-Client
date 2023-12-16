@@ -61,6 +61,10 @@ namespace syj
         bool exitToMenu = false;
         bool waitingToPickServer = true;
         bool clickedMainMenuExit = false;
+        bool waitingOnContentList = false;
+        bool cancelCustomContent = false;
+        bool ignoreGamePackets = true;
+        int expectedCustomFiles = -1;
 
         std::string wantedName = "Guest";
         std::string wantedIP = "127.0.0.1";

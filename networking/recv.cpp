@@ -52,6 +52,12 @@ void processCommand(clientStuff *clientEnvironment,std::string commandType,packe
 {
     serverStuff *serverData = clientEnvironment->serverData;
 
+    if(clientEnvironment->ignoreGamePackets)
+    {
+        if(!(commandType == "numCustomFiles" || commandType == "customFileDescription"))
+            return;
+    }
+
     if(commandType == "clearAllBricks")
     {
         //TODO: CHECKS FOR BOUND LIGHTS AND MUSIC???
@@ -155,6 +161,24 @@ void processCommand(clientStuff *clientEnvironment,std::string commandType,packe
             serverData->staticBricks.transparentSpecialBricks.push_back(specialTempBrick);
 
         serverData->staticBricks.recompileEverything();
+
+        return;
+    }
+    else if(commandType == "numCustomFiles")
+    {
+        clientEnvironment->expectedCustomFiles = data->readUInt(16);
+
+        return;
+    }
+    else if(commandType == "customFileDescription")
+    {
+        std::string name = data->readString();
+        std::string path = data->readString();
+        int checksum = data->readUInt(32);
+        int sizebytes = data->readUInt(32);
+        int type = data->readUInt(4);
+        int id = data->readUInt(16);
+        addCustomFileToGUI(name,path,checksum,sizebytes,type,id);
 
         return;
     }
@@ -807,6 +831,9 @@ namespace syj
             //std::cout<<"Got "<<(data->critical?"critical":"normal")<<" packet type: "<<packetType<<" streampos: "<<data->getStreamPos()<<" allocated bytes: "<<data->allocatedChunks<<"\n";
         //if(packetType >= 0 && packetType <= 31)
             //++serverData->numGottenPackets[packetType];
+
+        if(packetType != packetType_serverCommand && clientEnvironment->ignoreGamePackets)
+            return;
 
         switch(packetType)
         {

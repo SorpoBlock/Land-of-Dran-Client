@@ -6,7 +6,7 @@ uniform vec3 cameraPlayerDirection;
 uniform vec3 fogColor;
 uniform float fogDistance;
 
-uniform vec3 sunColor;
+uniform vec4 sunColor;
 uniform vec3 sunDirection;
 
 uniform sampler2D normalTexture;

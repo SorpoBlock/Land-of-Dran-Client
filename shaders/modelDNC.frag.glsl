@@ -12,14 +12,6 @@ uniform bool useRoughness;
 uniform bool calcTBN;
 uniform bool renderingSky;
 uniform bool renderingSun;
-uniform bool renderingRays;
-uniform bool useIBL;
-
-uniform float godRayDensity;
-uniform float godRayExposure;
-uniform float godRayDecay;
-uniform float godRayWeight;
-uniform int godRaySamples;
 
 uniform vec3 cameraPlayerPosition;
 uniform vec3 cameraPlayerDirection;
@@ -48,10 +40,7 @@ uniform vec3 debugColor;
 uniform vec3 tint;
 uniform bool useTint;
 uniform bool skipCamera;
-uniform float waterLevel;
 
-uniform bool usePickingColor;
-uniform int pickingColor;
 uniform bool avatarSelectorLighting;
 uniform int currentMesh;
 /*uniform bool useNodeColor;
@@ -63,12 +52,10 @@ uniform vec3 pointLightColor[8];
 uniform bool pointLightIsSpotlight[8];
 uniform vec4 pointLightDirection[8];
 
-
 uniform samplerCube cubeMapRadiance;
 uniform samplerCube cubeMapIrradiance;
 uniform sampler2D brdfTexture;
 
-in vec3 skyDir;
 in vec2 uv;
 in vec3 normal;
 in vec3 bitangent;
@@ -78,6 +65,9 @@ in vec3 tanFragPos;
 in vec3 tanViewPos;
 in vec4 shadowPos[3];
 in vec3 nodeColor;
+
+flat in int usePickingColor;
+flat in int pickingColor;
  
 //Start tutorial code
 //https://github.com/JoeyDeVries/LearnOpenGL/blob/master/src/6.pbr/1.2.lighting_textured/1.2.pbr.fs
@@ -222,7 +212,7 @@ vec2 simpleParallaxMapping(vec2 texCoords, vec3 viewDir)
 
 void main()
 {	
-	if(usePickingColor)
+	if(usePickingColor == 1)
 	{
 		float pickingFloat = pickingColor;
 		color = vec4(vec3(pickingFloat/255.0),1);
@@ -243,24 +233,6 @@ void main()
 		color = vec4(1,1,1,1);
 		return;
 	}
-
-	if(renderingSky)
-	{	
-		if(useIBL)
-		{
-			//New IBL based:
-			color = vec4(texture(cubeMapEnvironment,skyDir).rgb,1.0);
-			color.rgb = color.rgb / (color.rgb + vec3(1.0));
-			//Gamma correction
-			color.rgb = pow(color.rgb, vec3(1.0/2.2)); 
-		}
-		else
-		{
-			//Old DNC based:
-			color = vec4(skyColor * mix(texture2D(albedoTexture,uv).rgb,texture2D(normalTexture,uv).rgb,dncInterpolation),0.0);
-		}
-		return;
-	}
 	 
 	color.a = 0.0;
 	
@@ -268,6 +240,7 @@ void main()
 	{
 		//color = texture(normalTexture,uv);
 		color = texture(normalTexture,uv);
+		color.a = 1.0;
 		//if(color.a < 0.1)
 			//discard;
 		return;
@@ -425,6 +398,11 @@ void main()
 		if(!pointLightUsed[i])
 			continue;
 			
+		float distance    = length(pointLightPos[i] - worldPos);
+			
+		if(distance > 200)
+			continue;
+			
 		vec3 lightDirection = normalize(pointLightPos[i] - worldPos);
 		float thetaStrength = 1.0;
 			
@@ -441,7 +419,6 @@ void main()
 	
 		//vec3 pointLightColor = vec3(900,900,400);
 		//vec3 pointLightPos = vec3(1020,37,227);
-		float distance    = length(pointLightPos[i] - worldPos);
 		float attenuation = 1.0 / (distance * distance);
 		vec3 radiance     = pointLightColor[i] * attenuation; 
 		vec3 lightHalfVector = normalize(viewVector + lightDirection);
@@ -456,45 +433,25 @@ void main()
 		vec3 lightSpecular     = numerator / denominator;              
 		color.rgb += (kD * albedo / PI + lightSpecular) * radiance * NdotL; 
 	}
+		
+
+	float NdotL = max(dot(normalize(newNormal), normalize(sunDirection)), 0.0);  
+	float NDF = DistributionGGX(newNormal, halfVector, roughness);   
+	float G   = GeometrySmith(NdotV,NdotL,roughness);   
 	
-	//Point light
-	/*vec3 pointLightColor = vec3(900,900,400);
-	vec3 pointLightPos = vec3(287.81,601.705,1.18946);
-	float distance    = length(pointLightPos - worldPos);
-    float attenuation = 1.0 / (distance * distance);
-    vec3 radiance     = pointLightColor * attenuation; 
-	vec3 lightDirection = normalize(pointLightPos - worldPos);
-    float NdotL = max(dot(newNormal, lightDirection), 0.0); 
-	float NDF = DistributionGGX(newNormal, halfVector, roughness);            
-    float G   = GeometrySmith(NdotV,NdotL,roughness);
-    //vec3 F    = fresnelSchlick(NdotV, F0);   
-        	
-	vec3 numerator    = NDF * G * F;
-	float denominator = 4.0 * NdotV * NdotL + 0.0001;
-	vec3 pointSpecular     = numerator / denominator;  
-	               
-    color.rgb += (kD * albedo / PI + pointSpecular) * radiance * NdotL; */
-	//End point light
+	vec3 numerator    = NDF * G * F; 
+	float denominator = 4 * NdotV * NdotL + 0.001; // 0.001 to prevent divide by zero
+	vec3 specular = numerator / denominator;
 	
-	vec3 R = reflect(-viewVector,newNormal);
-    vec3 irradiance = textureLod(cubeMapIrradiance, vec3(1,-1,1)*newNormal,0).rgb;
-    vec3 diffuse      = irradiance * albedo;
-	diffuse += albedo * (irradiance + windowTint);
-    const float MAX_REFLECTION_LOD = 10.0;
-    vec3 prefilteredColor = textureLod(cubeMapRadiance, normalize(vec3(1,-1,1)*R),  roughness * MAX_REFLECTION_LOD).rgb + windowTint;    
-    vec2 brdf  = texture(brdfTexture, vec2(max(dot(newNormal, viewVector), 0.0), roughness)).rg;
-    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * totalFaceAwayFromSunAmountSpecular;
-    vec3 ambient = (kD * diffuse + specular) * occlusion * totalFaceAwayFromSunAmountDiffuse;
-	color.rgb += ambient;
+	//The contentious part
+	float totalFaceAwayFromSunAmount = min(1.0-(shadowCoverage*0.8),NdotL);
 	
-	//Old DNC lighting code:
-	/*float totalFaceAwayFromSunAmount = min(1.0-(shadowCoverage*0.8),NdotL);
 	specular *= sqrt(clamp(vec3(1.0 - shadowCoverage),0.1,1));
-	vec3 windowRadiance = windowTint.rgb * length(sunColor) * windowTint.a * 5;
-	color.rgb = (kD * albedo / PI + specular) * sunColor * totalFaceAwayFromSunAmount;
+	vec3 windowRadiance = vec3(0); //windowTint.rgb * length(sunColor) * windowTint.a * 5;
+	color.rgb += (kD * albedo / PI + specular) * sunColor.rgb * totalFaceAwayFromSunAmount;
 	color.rgb += (kD * albedo / PI + specular) * windowRadiance * NdotL;
-	color.rgb += vec3(0.2) * albedo * occlusion * normalize(sunColor);*/
-	color.a = 1.0;
+	color.rgb += vec3(0.2) * albedo * occlusion * normalize(sunColor.rgb);
+	//...
 	
 	if(!skipCamera)
 	{

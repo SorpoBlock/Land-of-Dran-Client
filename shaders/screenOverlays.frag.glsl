@@ -15,6 +15,10 @@ uniform int godRaySamples;
 uniform vec3 vignetteColor;
 uniform float vignetteStrength;
 
+uniform vec4 sunColor;
+uniform bool useIBL;
+uniform bool sunAboveHorizon;
+
 uniform sampler2D albedoTexture;
 
 in vec2 uv;
@@ -22,49 +26,53 @@ in vec4 sunPos;
 
 void main()
 {	
-	color = vec4(vignetteColor,0);
-	
-	float vignetteDist = (abs(uv.x-0.5) + abs(uv.y-0.5))/2.0;
-	
-	color.a = vignetteDist*vignetteStrength;
-
 	if(cameraPlayerPosition.y < waterLevel)
-	{
 		color = vec4(0.2,0.2,0.8,0.5);
-		return;
-	}
-	
-	if(godRaySamples > 1)
+	else if(sunAboveHorizon)
 	{
-		color = vec4(0,0,0,0);
-		float center = abs(uv.x-0.5) + abs(uv.y-0.5);
-		if(center > 0.005 && center < 0.01)
-			color = vec4(1,1,1,0.5);
-		//color.gb = (sunPos.xy + 1.0) / 2.0;
 		vec3 sunCoords = sunPos.xyz / sunPos.w;
 		vec2 realSunPos = sunCoords.xy * 0.5 + 0.5;//(sunCoords.xy + 1.0) / 2.0;
-		
-
-		vec2 textCoo = uv;
-		vec2 deltaTextCoord = vec2( textCoo - realSunPos );
-		deltaTextCoord *= 1.0 /  float(godRaySamples) * godRayDensity;
-		float illuminationDecay = 1.0;
-		float endColor = 0;
-	
-		for(int i=0; i < godRaySamples ; i++)
+			
+		if(godRaySamples > 1)
 		{
-				textCoo -= deltaTextCoord;
-				float mySample = texture(albedoTexture, textCoo ).r;
+			color = vec4(0,0,0,0);
+			
+			vec2 textCoo = uv;
+			vec2 deltaTextCoord = vec2( textCoo - realSunPos );
+			deltaTextCoord *= 1.0 /  float(godRaySamples) * godRayDensity;
+			float illuminationDecay = 1.0;
+			float endColor = 0;
 		
-				mySample *= illuminationDecay * godRayWeight;
+			for(int i=0; i < godRaySamples ; i++)
+			{
+					textCoo -= deltaTextCoord;
+					float mySample = texture(albedoTexture, textCoo ).r;
+			
+					mySample *= illuminationDecay * godRayWeight;
 
-				endColor += mySample;
+					endColor += mySample;
 
-				illuminationDecay *= godRayDecay;
-		 }
+					illuminationDecay *= godRayDecay;
+			 }
 
-		endColor *= godRayExposure;
-		color.a = endColor;
-		color.rgb = vec3(1.0,1.0,0.7);
+			endColor *= godRayExposure;
+			color.a = clamp(endColor,0,1);
+			color.rgb = sunColor.rgb;
+		}
+		else if(!useIBL)
+		{	
+			float mySample = texture(albedoTexture, uv ).r;
+			if(mySample > 0.5)
+				color = vec4(sunColor.rgb,1);
+		}
 	}
+	
+	float vignetteDist = (abs(uv.x-0.5) + abs(uv.y-0.5))/2.0;
+	vec4 vignette = vec4(vignetteColor,clamp(vignetteDist * vignetteStrength,0,1));
+	
+	color.rgb = color.rgb * color.a + vignette.rgb * vignette.a;//mix(color.rgb,vignette.rgb,vignette.a);
+	color.a = max(vignette.a,color.a);
+	
+	//if(vignetteDist*vignetteStrength > 0.1)
+		//color = vec4(vignetteColor,vignetteDist*vignetteStrength);
 }
