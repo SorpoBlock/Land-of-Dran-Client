@@ -2,12 +2,12 @@
 <GUIScheme name="GWEN"	version="5">
   <Imageset filename="GWEN.imageset" />
   <Imageset filename="Palette.imageset" />
-  <Imageset filename="Paintselector.imageset" />
+  <Imageset filename="PaintSelector.imageset" />
   <Imageset filename="BrickPopup.imageset" />
-  <Imageset filename="ItemBox.imageset" />
+  <Imageset filename="itemBox.imageset" />
   <Font filename="OpenSans-8.font" />  
   <Font filename="OpenSans-20.font" />  
-  <Font filename="OpenSans-30.font" />
+  <Font filename="Opensans-30.font" />
   <Font filename="DejaVuSans-12.font" />
   <Font filename="DejaVuSans-10.font" />
   <Font filename="DejaVuSans-10-NoScale.font" />
