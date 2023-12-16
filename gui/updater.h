@@ -5,7 +5,7 @@
 #include "code/utility/ceguiHelper.h"
 #include "code/utility/logger.h"
 #include "code/networking/recv.h"
-#include <CURL/curl.h>
+#include <curl/curl.h>
 #include "code/utility/clientStuff.h"
 
 namespace syj
