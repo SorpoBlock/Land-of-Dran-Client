@@ -6,7 +6,7 @@ namespace syj
     {
         scope("shader::shader");
 
-        info("Trying to create shader with filePath " + filePath);
+        info("Trying to create shader with filePath \"" + filePath + "\"");
 
         shaderType = type;
         switch(shaderType)
