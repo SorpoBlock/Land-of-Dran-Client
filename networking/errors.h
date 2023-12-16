@@ -2,7 +2,7 @@
 #define ERRORS_H_INCLUDED
 
 //We return the string as an LPS
-#include "lengthPrefixedString.h"
+#include "code/networking/lengthPrefixedString.h"
 //We need to include this to return SDL errors
 #include "SDL2/SDL_net.h"
 

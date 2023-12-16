@@ -4,8 +4,8 @@
 //Still it basically works...
 
 /*
-    logger::setErrorFile("logs/error.txt");
-    logger::setInfoFile("logs/log.txt");
+    logger::setErrorFile("Logs/error.txt");
+    logger::setInfoFile("Logs/log.txt");
 
     scope("Main");
     log().setDebug(true);

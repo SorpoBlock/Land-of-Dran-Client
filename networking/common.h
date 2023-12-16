@@ -8,7 +8,7 @@
 //Function handles for users to listen to connections, disconnections, data received etc.
 #include <functional>
 //These strings are good for putting into our packets
-#include "lengthPrefixedString.h"
+#include "code/networking/lengthPrefixedString.h"
 //A nice lightweight and cross-platform networking library
 #include <SDL2/SDL_net.h>
 //Helpful error struct
@@ -19,6 +19,13 @@
 #include "code/networking/packet.h"
 //Code for the server
 //#include "server.h"
+
+//A custom getline for Linux Compatibility
+#ifdef __linux__ 
+    std::istream& lodGetLine(std::istream& is, std::string& t);
+#elif _WIN32
+    #define lodGetLine(file, line) std::getline(file, line)
+#endif
 
 //How much data do we allocate at a time for our packets
 #define syjNET_PacketChunkSize      200

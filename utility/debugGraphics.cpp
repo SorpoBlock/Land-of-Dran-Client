@@ -193,17 +193,17 @@ namespace syj
     {
         std::ifstream in("debugTransform.txt");
         std::string line = "";
-        getline(in,line);
+        lodGetLine(in,line);
         pos.x = atof(line.c_str());
-        getline(in,line);
+        lodGetLine(in,line);
         pos.y = atof(line.c_str());
-        getline(in,line);
+        lodGetLine(in,line);
         pos.z = atof(line.c_str());
-        getline(in,line);
+        lodGetLine(in,line);
         dir.x = atof(line.c_str());
-        getline(in,line);
+        lodGetLine(in,line);
         dir.y = atof(line.c_str());
-        getline(in,line);
+        lodGetLine(in,line);
         dir.z = atof(line.c_str());
         in.close();
     }

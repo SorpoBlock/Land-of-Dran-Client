@@ -1,6 +1,7 @@
 #ifndef BLOCKLANDBRICKS_H_INCLUDED
 #define BLOCKLANDBRICKS_H_INCLUDED
 
+#include "code/networking/common.h"
 #include "code/graphics/blocklandBrickType.h"
 #include "code/gui/brickSelector.h"
 #include <filesystem>

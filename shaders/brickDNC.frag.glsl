@@ -37,7 +37,7 @@ in vec2 verts;
 in vec3 normal;
 in vec3 worldPos;
 in vec4 finalColor;
-in vec2 swapDimensions;
+flat in vec2 swapDimensions;
 flat in vec3 dimension;
 flat in int direction;
 uniform bool specialBricks;

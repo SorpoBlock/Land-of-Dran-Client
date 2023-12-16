@@ -337,7 +337,7 @@ bool preferenceFile::importFromFile(std::string path)
     std::string line;
     while(!importFile.eof())
     {
-        getline(importFile,line);
+        lodGetLine(importFile,line);
         //Break up the line into 3 fields using tabs
         unsigned int firstSpace = line.find("\t");
         unsigned int secondSpace = line.find("\t",firstSpace+1);

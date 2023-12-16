@@ -41,7 +41,7 @@
 #include "code/graphics/emitter.h"
 #include <chrono>
 #include "code/physics/selectionBox.h"
-#include <CURL/curl.h>
+#include <curl/curl.h>
 #include "code/gui/updater.h"
 #include <bearssl/bearssl_hash.h>
 #include "code/graphics/bulletTrails.h"
@@ -56,6 +56,25 @@
 using namespace syj;
 using namespace std::filesystem;
 using namespace std::chrono;
+
+//A custom getline for Linux Compatibility
+#ifdef __linux__ 
+    std::istream& lodGetLine(std::istream& is, std::string& t)
+    {
+        t.clear();
+        std::istream::sentry se(is, true);
+        std::streambuf* sb = is.rdbuf();
+        for(;;) {
+            int c = sb->sbumpc();
+            switch (c) {
+                case '\n': return is;
+                case '\r': if(sb->sgetc() == '\n') { sb->sbumpc(); } return is;
+                case std::streambuf::traits_type::eof(): if(t.empty()) { is.setstate(std::ios::eofbit); } return is;
+                default: t += (char)c;
+            }
+        }
+    }
+#endif
 
 void gotKicked(client *theClient,unsigned int reason,void *userData)
 {
@@ -99,8 +118,8 @@ int main(int argc, char *argv[])
     if(prefs.getPreference("IP"))
         ip = prefs.getPreference("IP")->toString();
 
-    logger::setErrorFile("logs/error.txt");
-    logger::setInfoFile("logs/log.txt");
+    logger::setErrorFile("Logs/error.txt");
+    logger::setInfoFile("Logs/log.txt");
     syj::log().setDebug(false);
     scope("Main");
     info("Starting up!");
@@ -318,7 +337,7 @@ int main(int argc, char *argv[])
 
     GLuint quadVAO = createQuadVAO();
     GLuint cubeVAO = createCubeVAO();
-    clientEnvironment.prints = new printLoader(".\\assets\\brick\\prints");
+    clientEnvironment.prints = new printLoader("./assets/brick/prints");
     clientEnvironment.cubeVAO = cubeVAO;
     texture *bdrf = generateBDRF(quadVAO);
     material grass("assets/ground/grass1/grass.txt");
@@ -332,7 +351,7 @@ int main(int argc, char *argv[])
     dudvTexture->createFromFile("assets/dudv.png");
     tessellation water(0);
 
-    //blocklandCompatibility blocklandHolder("assets/brick/types/test.cs",".\\assets\\brick\\types",clientEnvironment.brickSelector,true);
+    //blocklandCompatibility blocklandHolder("assets/brick/types/test.cs","./assets/brick/types",clientEnvironment.brickSelector,true);
     blocklandCompatibility *blocklandHolder = 0;
 
     CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
@@ -2424,7 +2443,7 @@ int main(int argc, char *argv[])
                 else
                     connected = true;
 
-                blocklandHolder = new blocklandCompatibility("assets/brick/types/test.cs",".\\assets\\brick\\types",clientEnvironment.brickSelector,true);
+                blocklandHolder = new blocklandCompatibility("assets/brick/types/test.cs","./assets/brick/types",clientEnvironment.brickSelector,true);
 
                 serverData->staticBricks.allocateVertBuffer();
                 serverData->staticBricks.allocatePerTexture(clientEnvironment.brickMat);

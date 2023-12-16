@@ -1,6 +1,7 @@
 #ifndef BLOCKLANDBRICKTYPE_H_INCLUDED
 #define BLOCKLANDBRICKTYPE_H_INCLUDED
 
+#include "code/networking/common.h"
 #include "code/graphics/renderContext.h"
 #include "code/graphics/uniformsBasic.h"
 #include "code/physics/bulletIncludes.h"

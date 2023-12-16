@@ -3294,7 +3294,7 @@ namespace syj
                 for(int a = 0; a<howMany; a++)
                 {
                     int typeID = data->readUInt(10);
-                    std::string filePath = "assets\\brick\\types" + data->readString();
+                    std::string filePath = "assets/brick/types" + data->readString();
 
                     //std::cout<<"Adding type: "<<typeID<<" "<<filePath<<"\n";
                     serverData->staticBricks.blocklandTypes->addSpecialBrickType(filePath,clientEnvironment->brickSelector,typeID);

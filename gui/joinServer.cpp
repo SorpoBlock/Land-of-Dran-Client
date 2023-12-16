@@ -190,14 +190,14 @@ namespace syj
         std::string line = "";
         while(!serverListIn.eof())
         {
-            getline(serverListIn,line);
+            lodGetLine(serverListIn,line);
             if(line == "" || line == " ")
                 continue;
 
             std::vector<std::string> fields;
             std::istringstream iss(line);
             std::string token;
-            while(std::getline(iss,token,'\t'))
+            while(lodGetLine(iss,token))
                 fields.push_back(token);
             if(fields.size() != 6)
             {

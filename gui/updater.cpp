@@ -226,7 +226,7 @@ namespace syj
         std::string line = "";
         while(!fileListFileIn.eof())
         {
-            getline(fileListFileIn,line);
+            lodGetLine(fileListFileIn,line);
             if(line == "")
                 continue;
             if(line == "\n")
@@ -235,6 +235,9 @@ namespace syj
 
             int firstTab = line.find("\t");
             std::string fileName = line.substr(0,firstTab);
+#ifdef __linux__ 
+            replaceAll(fileName,"\\","/");
+#endif
             std::string afterFirstTab = line.substr(firstTab+1,line.length()-(firstTab+1));
 
             if(afterFirstTab.find("\t") == std::string::npos)
