@@ -1,6 +1,7 @@
 #ifndef PREFERENCE_H_INCLUDED
 #define PREFERENCE_H_INCLUDED
 
+#include "code/networking/common.h"
 #include <iostream>
 #include <vector>
 //Used for trimming:

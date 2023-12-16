@@ -18,7 +18,7 @@ namespace syj
 
             while(!shadersList.eof())
             {
-                getline(shadersList,line);
+                lodGetLine(shadersList,line);
 
                 if(line.length() < 1)
                     continue;

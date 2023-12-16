@@ -226,7 +226,7 @@ namespace syj
         std::string line = "";
         while(!fileListFileIn.eof())
         {
-            getline(fileListFileIn,line);
+            lodGetLine(fileListFileIn,line);
             if(line == "")
                 continue;
             if(line == "\n")
