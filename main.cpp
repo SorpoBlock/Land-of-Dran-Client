@@ -47,7 +47,7 @@
 #include "code/graphics/bulletTrails.h"
 #include "code/gui/contentDownload.h"
 
-#define hardCodedNetworkVersion 10014
+#define hardCodedNetworkVersion 10015
 
 #define cammode_firstPerson 0
 #define cammode_thirdPerson 1
@@ -58,7 +58,7 @@ using namespace std::filesystem;
 using namespace std::chrono;
 
 //A custom getline for Linux Compatibility
-#ifdef __linux__ 
+#ifdef __linux__
     std::istream& lodGetLine(std::istream& is, std::string& t)
     {
         t.clear();
