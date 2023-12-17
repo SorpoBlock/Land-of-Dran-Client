@@ -22,6 +22,8 @@ struct customFileDescriptor
     std::string name = "";
     std::string path = "";
     int size = 0;
+    int bytesReceived = 0;
+    bool doneDownloading = false;
     int checksum = 0;
     fileType type = unknownFile;
     int id = 0;

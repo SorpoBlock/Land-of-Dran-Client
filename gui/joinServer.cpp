@@ -197,11 +197,11 @@ namespace syj
             std::vector<std::string> fields;
             std::istringstream iss(line);
             std::string token;
-            while(lodGetLine(iss,token))
+            while(std::getline(iss,token,'\t'))
                 fields.push_back(token);
             if(fields.size() != 6)
             {
-                error("Malformed server list entry!");
+                error("Malformed server list entry: |" + line + "| had " + std::to_string(fields.size()) + " fields.");
                 continue;
             }
 

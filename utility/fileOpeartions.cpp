@@ -24,6 +24,13 @@ bool okayFilePath(std::string path)
     if(path[0] == '\\')
         return false;
 
+    //This is a redundant safety check since we should be explicitly checking if file is actually a valid content file elsewhere i.e. wav/png/bls
+    if(path.find(".exe") != std::string::npos)
+        return false;
+
+    if(path.find(".dll") != std::string::npos)
+        return false;
+
     bool onePeriod = false;
 
     for(int i = 0; path[i]; i++)

@@ -78,7 +78,7 @@ bool godRayButton(const CEGUI::EventArgs &e)
 
 enum gameState
 {
-    STATE_MAINMENU,STATE_GETCONTENTLIST,STATE_DOWNLOADCONTENT,STATE_CONNECTING,STATE_PLAYING,STATE_AVATARPICKER,STATE_QUITTING,STATE_CLEANUP,STATE_LOADING
+    STATE_MAINMENU,STATE_GETCONTENTLIST,STATE_GETCONTENT,STATE_DOWNLOADCONTENT,STATE_CONNECTING,STATE_PLAYING,STATE_AVATARPICKER,STATE_QUITTING,STATE_CLEANUP,STATE_LOADING
 };
 
 int main(int argc, char *argv[])
@@ -397,6 +397,11 @@ int main(int argc, char *argv[])
     unsigned int debugMode = 3;
     bool connected = false;
 
+    TCPsocket cdnClient = 0;
+    SDLNet_SocketSet cdnSocketSet = 0;
+    customFileDescriptor *downloading = 0;
+    std::ofstream currentDownloadFile;
+
     //Start connect screen
     //Start-up has finished
 
@@ -636,7 +641,6 @@ int main(int argc, char *argv[])
 
                     ((CEGUI::MultiColumnList*)contentMenu->getChild("List"))->clearAllSelections();
                     ((CEGUI::MultiColumnList*)contentMenu->getChild("List"))->resetList();
-                    contentMenu->setVisible(true);
                     contentMenu->moveToFront();
                     contentMenu->getChild("Size")->setText("");
                     contentMenu->getChild("Number")->setText("");
@@ -664,6 +668,176 @@ int main(int argc, char *argv[])
 
                     info("Retrieving custom content list...");
                 }
+
+                break;
+            }
+            case STATE_GETCONTENT:
+            {
+                const Uint8 *states = SDL_GetKeyboardState(NULL);
+                SDL_Event event;
+                while(SDL_PollEvent(&event))
+                {
+                    if(event.type == SDL_QUIT)
+                    {
+                        currentState = STATE_QUITTING;
+                        break;
+                    }
+
+                    processEventsCEGUI(event,states);
+
+                    if(event.type == SDL_WINDOWEVENT)
+                    {
+                        if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                        {
+                            context.setSize(event.window.data1,event.window.data2);
+                        }
+                    }
+                }
+
+                std::vector<customFileDescriptor*> *contentList = ((std::vector<customFileDescriptor*> *)contentMenu->getUserData());
+                if(contentList)
+                {
+                    if(contentList->size() > 1)
+                    {
+                        if(!downloading)
+                        {
+                            for(int a = 0; a<contentList->size(); a++)
+                            {
+                                if(!contentList->at(a)->selectable)
+                                    continue;
+                                if(!contentList->at(a)->enabled)
+                                    continue;
+                                if(contentList->at(a)->doneDownloading)
+                                    continue;
+                                downloading = contentList->at(a);
+                                info("Downloading add-ons/"+downloading->path);
+
+                                std::filesystem::path pathToCreateFoldersFor("add-ons/"+downloading->path);
+                                create_directories(pathToCreateFoldersFor.parent_path());
+
+                                currentDownloadFile = std::ofstream("add-ons/"+downloading->path,std::ios::binary);
+                                if(!currentDownloadFile.is_open())
+                                    error("Error opening file add-ons/" + downloading->path + " for write!");
+                                break;
+                            }
+                        }
+
+                        if(!downloading)
+                        {
+                            error("No possible download candidate file.");
+                            if(cdnClient)
+                            {
+                                SDLNet_TCP_Close(cdnClient);
+                                cdnClient = 0;
+                            }
+                            if(cdnSocketSet)
+                            {
+                                SDLNet_FreeSocketSet(cdnSocketSet);
+                                cdnSocketSet = 0;
+                            }
+                            delete serverConnection;
+                            serverConnection = 0;
+                            currentState = STATE_CONNECTING;
+                            contentMenu->setVisible(false);
+                            break;
+                        }
+
+                        int cdnReady = SDLNet_CheckSockets(cdnSocketSet,0);
+                        if(cdnReady > 0)
+                        {
+                            int actualMax = std::min(1024,downloading->size-downloading->bytesReceived);
+
+                            char *buf = new char[actualMax];
+                            int recvBytes = SDLNet_TCP_Recv(cdnClient,buf,actualMax);
+
+                            if(recvBytes < 1)
+                            {
+                                error("CDN Server closed connection!");
+                                if(cdnClient)
+                                {
+                                    SDLNet_TCP_Close(cdnClient);
+                                    cdnClient = 0;
+                                }
+                                if(cdnSocketSet)
+                                {
+                                    SDLNet_FreeSocketSet(cdnSocketSet);
+                                    cdnSocketSet = 0;
+                                }
+                                delete serverConnection;
+                                serverConnection = 0;
+                                currentState = STATE_CONNECTING;
+                                contentMenu->setVisible(false);
+                                delete buf;
+                                currentDownloadFile.close();
+                                break;
+                            }
+                            else
+                            {
+                                //info("Downloaded: " + std::to_string(downloading->bytesReceived) + " / " + std::to_string(downloading->size));
+                                currentDownloadFile.write(buf,recvBytes);
+                                downloading->bytesReceived += recvBytes;
+                                if(downloading->bytesReceived > downloading->size)
+                                    error("Somehow downloaded too many bytes: " + std::to_string(downloading->bytesReceived));
+                                if(downloading->bytesReceived >= downloading->size)
+                                {
+                                    currentDownloadFile.close();
+                                    downloading->doneDownloading = true;
+                                    downloading = 0;
+                                }
+                            }
+
+                            delete buf;
+                        }
+                        else if(cdnReady == -1)
+                            error("CDN CheckSockets failed!");
+                    }
+                    else
+                    {
+                        if(cdnClient)
+                        {
+                            SDLNet_TCP_Close(cdnClient);
+                            cdnClient = 0;
+                        }
+                        if(cdnSocketSet)
+                        {
+                            SDLNet_FreeSocketSet(cdnSocketSet);
+                            cdnSocketSet = 0;
+                        }
+                        delete serverConnection;
+                        serverConnection = 0;
+                        currentState = STATE_CONNECTING;
+                        contentMenu->setVisible(false);
+                        break;
+                    }
+                }
+                else
+                {
+                    error("No content list vector?");
+                    if(cdnClient)
+                    {
+                        SDLNet_TCP_Close(cdnClient);
+                        cdnClient = 0;
+                    }
+                    if(cdnSocketSet)
+                    {
+                        SDLNet_FreeSocketSet(cdnSocketSet);
+                        cdnSocketSet = 0;
+                    }
+                    delete serverConnection;
+                    serverConnection = 0;
+                    currentState = STATE_CONNECTING;
+                    contentMenu->setVisible(false);
+                    break;
+                }
+
+                context.clear(0.5,0.5,1.0,1.0);
+                context.select();
+                CEGUI::System::getSingleton().getRenderer()->setDisplaySize(CEGUI::Size<float>(context.getResolution().x,context.getResolution().y));
+                glViewport(0,0,context.getResolution().x,context.getResolution().y);
+                glDisable(GL_DEPTH_TEST);
+                glActiveTexture(GL_TEXTURE0);
+                CEGUI::System::getSingleton().renderAllGUIContexts();
+                context.swap();
 
                 break;
             }
@@ -708,7 +882,33 @@ int main(int argc, char *argv[])
                     {
                         //gotta download at least one file...
 
-                        //IDK DO SOMETHING
+                        IPaddress cdnServerAddr;
+                        SDLNet_ResolveHost(&cdnServerAddr,clientEnvironment.wantedIP.c_str(),20001);
+
+                        cdnClient = SDLNet_TCP_Open(&cdnServerAddr);
+                        cdnSocketSet = SDLNet_AllocSocketSet(1);
+                        SDLNet_TCP_AddSocket(cdnSocketSet,cdnClient);
+
+                        std::vector<customFileDescriptor*> *possibleFiles = ((std::vector<customFileDescriptor*> *)contentMenu->getUserData());
+
+                        std::string contentRequest = "";
+                        int numNeededFiles = 0;
+
+                        for(int a = 0; a<possibleFiles->size(); a++)
+                        {
+                            if(possibleFiles->at(a)->enabled)
+                            {
+                                contentRequest += std::to_string(possibleFiles->at(a)->id) + "\n";
+                                numNeededFiles++;
+                            }
+                        }
+
+                        contentRequest = "FILES" + std::to_string(numNeededFiles) + "\n" + contentRequest + "END\n";
+
+                        SDLNet_TCP_Send(cdnClient,contentRequest.c_str(),contentRequest.length());
+
+                        currentState = STATE_GETCONTENT;
+                        break;
                     }
                 }
 
@@ -727,6 +927,7 @@ int main(int argc, char *argv[])
 
                     if(!oneSelectable)
                     {
+                        info("There were no new custom files to download, skipping...");
                         delete serverConnection;
                         serverConnection = 0;
                         currentState = STATE_CONNECTING;

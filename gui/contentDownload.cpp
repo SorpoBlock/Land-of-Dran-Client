@@ -159,6 +159,8 @@ void addCustomFileToGUI(std::string name,std::string path,unsigned int checksum,
     CEGUI::MultiColumnList *serverListGUI = (CEGUI::MultiColumnList*)contentWindow->getChild("List");
     std::vector<customFileDescriptor*> *descriptorsList = (std::vector<customFileDescriptor*> *)contentWindow->getUserData();
 
+    contentWindow->setVisible(true);
+
     customFileDescriptor *tmp = new customFileDescriptor;
     tmp->checksum = checksum;
     tmp->size = size;
