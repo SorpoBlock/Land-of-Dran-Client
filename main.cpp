@@ -697,7 +697,7 @@ int main(int argc, char *argv[])
                 std::vector<customFileDescriptor*> *contentList = ((std::vector<customFileDescriptor*> *)contentMenu->getUserData());
                 if(contentList)
                 {
-                    if(contentList->size() > 1)
+                    if(contentList->size() > 0)
                     {
                         if(!downloading)
                         {
@@ -2791,10 +2791,6 @@ int main(int argc, char *argv[])
                         serverData->staticBricks.allocatePerTexture(clientEnvironment.prints->textures[a],false,false,true);
 
                     serverData->ourTempBrick = new tempBrick(serverData->staticBricks);
-
-                    std::ofstream testdnc("dnc.bin",std::ios::binary);
-                    testdnc.write((char*)&serverData->env->cycle,sizeof(dayNightCycle));
-                    testdnc.close();
 
                     info("Starting main game loop!");
                     currentState = STATE_PLAYING;
