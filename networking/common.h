@@ -22,7 +22,7 @@
 
 //A custom getline for Linux Compatibility
 #ifdef __linux__
-    std::istream& lodGetLine(std::istream& is, std::string& t)
+    inline std::istream& lodGetLine(std::istream& is, std::string& t)
     {
         t.clear();
         std::istream::sentry se(is, true);
