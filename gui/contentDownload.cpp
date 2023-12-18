@@ -97,6 +97,7 @@ bool enableAllCustomFiles(const CEGUI::EventArgs &e)
     }
 
     serverListGUI->handleUpdatedItemData();
+    return true;
 }
 
 bool disableAllCustomFiles(const CEGUI::EventArgs &e)
@@ -130,6 +131,7 @@ bool disableAllCustomFiles(const CEGUI::EventArgs &e)
     }
 
     serverListGUI->handleUpdatedItemData();
+    return true;
 }
 
 bool joinFromCustomContentWindow(const CEGUI::EventArgs &e)
@@ -139,6 +141,7 @@ bool joinFromCustomContentWindow(const CEGUI::EventArgs &e)
 
     clientStuff *clientEnvironment = (clientStuff*)serverListGUI->getUserData();
     clientEnvironment->waitingOnContentList = false;
+    return true;
 }
 
 bool cancelFromCustomContentWindow(const CEGUI::EventArgs &e)
@@ -149,6 +152,7 @@ bool cancelFromCustomContentWindow(const CEGUI::EventArgs &e)
     clientStuff *clientEnvironment = (clientStuff*)serverListGUI->getUserData();
     clientEnvironment->cancelCustomContent = true;
     contentWindow->setVisible(false);
+    return true;
 }
 
 void addCustomFileToGUI(std::string name,std::string path,unsigned int checksum,unsigned int size,unsigned char type,int id)

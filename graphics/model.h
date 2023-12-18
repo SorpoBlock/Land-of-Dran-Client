@@ -69,7 +69,7 @@ namespace syj
         std::vector<mesh*> meshes;
         glm::mat4 transform = glm::mat4(1.0);
 
-        glm::mat4 transformCollisionMeshes(glm::vec3 &totalColMin,glm::vec3 &totalColMax,glm::mat4 startTransform = glm::mat4(1.0));
+        void transformCollisionMeshes(glm::vec3 &totalColMin,glm::vec3 &totalColMax,glm::mat4 startTransform = glm::mat4(1.0));
         void render(uniformsHolder *graphics,glm::mat4 startTransform,bool skipMats = false,std::vector<glm::vec3> *nodeColors = 0,texture *decal = 0);
         void renderForPicking(uniformsHolder *graphics,glm::mat4 startTransform);
         node(aiNode *source,model *_modelParent,int debugIndent = 0);

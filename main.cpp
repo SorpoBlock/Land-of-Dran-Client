@@ -74,6 +74,8 @@ bool godRayButton(const CEGUI::EventArgs &e)
     clientEnvironment->serverData->env->godRayExposure = atof(godRayWindow->getChild("Exposure")->getText().c_str());
     clientEnvironment->serverData->env->godRayWeight = atof(godRayWindow->getChild("Weight")->getText().c_str());
     clientEnvironment->serverData->env->sunDistance = atof(godRayWindow->getChild("Distance")->getText().c_str());
+
+    return true;
 }
 
 enum gameState
@@ -131,7 +133,7 @@ int main(int argc, char *argv[])
     info("Our revision: " + std::to_string(ourRevisionVersion));
 
     renderContextOptions renderOptions;
-    renderOptions.name = "Rev " + std::to_string(ourRevisionVersion) + " - " + __DATE__;
+    renderOptions.name = "Rev " + std::to_string(ourRevisionVersion) + LOD_BUILD_AND_DATE;
     renderOptions.startingResX = clientEnvironment.settings->resolutionX;
     renderOptions.startingResY = clientEnvironment.settings->resolutionY;
     renderOptions.useVSync = clientEnvironment.settings->vsync;

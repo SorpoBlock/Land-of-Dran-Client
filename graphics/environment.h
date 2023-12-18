@@ -117,9 +117,9 @@ namespace syj
         void shadowsCalc(perspectiveCamera *playerCamera,glm::vec3 shadowDir);
         void calc(float deltaMS,perspectiveCamera *playerCamera);
         void passUniforms(uniformsHolder *uniforms,bool forgoShadowMaps = false);
-        bool loadDaySkyBox(std::string path);
-        bool loadNightSkyBox(std::string path);
-        bool loadSunModel(std::string path);
+        void loadDaySkyBox(std::string path);
+        void loadNightSkyBox(std::string path);
+        void loadSunModel(std::string path);
         void drawSun(uniformsHolder *uniforms);
         void drawSky(uniformsHolder *uniforms);
         void renderGodRays(uniformsHolder *uniforms);

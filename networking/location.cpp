@@ -8,8 +8,7 @@ namespace syj
     {
         switch(type)
         {
-            case brickPos:
-            case worldPos:
+            default: //brickPos, worldPos
                 return direction;
 
             case itemNode:
@@ -135,8 +134,7 @@ namespace syj
     {
         switch(type)
         {
-            case worldPos:
-            case brickPos:
+            default: //worldPos, brickPos
                 return fixedPos;
             /*case brickPos:
                 if(!brick)

@@ -20,8 +20,9 @@
 //Code for the server
 //#include "server.h"
 
-//A custom getline for Linux Compatibility
+//Linux specific code
 #ifdef __linux__
+    #define LOD_BUILD_AND_DATE " - " + __DATE__ + " (Linux)"
     inline std::istream& lodGetLine(std::istream& is, std::string& t)
     {
         t.clear();
@@ -38,6 +39,7 @@
         }
     }
 #else
+    #define LOD_BUILD_AND_DATE " - " + __DATE__
     #define lodGetLine(file, line) std::getline(file, line)
 #endif
 

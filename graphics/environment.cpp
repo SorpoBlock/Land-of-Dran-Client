@@ -69,21 +69,19 @@ namespace syj
 
     }
 
-    bool environment::loadDaySkyBox(std::string path)
+    void environment::loadDaySkyBox(std::string path)
     {
         for(int a = 0; a<5; a++)
-        {
             skyTexturesSideDay[a].createFromFile(path + std::to_string(a) + ".png");
-        }
     }
 
-    bool environment::loadNightSkyBox(std::string path)
+    void environment::loadNightSkyBox(std::string path)
     {
         for(int a = 0; a<5; a++)
             skyTexturesSideNight[a].createFromFile(path + std::to_string(a) + ".png");
     }
 
-    bool environment::loadSunModel(std::string path)
+    void environment::loadSunModel(std::string path)
     {
         sun = new model(path);
     }

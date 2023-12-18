@@ -409,6 +409,7 @@ namespace syj
         ((clientStuff*)updater->getUserData())->prefs->set("REVISION",((clientStuff*)updater->getUserData())->masterRevision);
         ((clientStuff*)updater->getUserData())->prefs->set("NETWORK",((clientStuff*)updater->getUserData())->masterNetwork);
         ((clientStuff*)updater->getUserData())->prefs->exportToFile("config.txt");
+        return true;
     }
 
     CEGUI::Window *addUpdater(clientStuff *clientEnvironment)
