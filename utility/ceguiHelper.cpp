@@ -50,9 +50,12 @@ CEGUI::Window *initLoadCEGUISkin(std::string skinName,int resX,int resY)
 //Adds a line of text to a textbox in the most basic form possible
 void textBoxAdd(CEGUI::Window *box,std::string text,int id,bool showSelect)
 {
+    std::cout<<"Source stf: "<<text<<"\n";
     CEGUI::Listbox *castbox = (CEGUI::Listbox*)box;
-    char *msg = std::string("[colour='FF000000']" + text).data();
-    CEGUI::ListboxTextItem *heh = new CEGUI::ListboxTextItem((CEGUI::utf8*)msg,id,0,false,true);
+    std::string msg = std::string("[colour='FF000000']" + text).data();
+    CEGUI::String finalText = CEGUI::String((CEGUI::utf8*)msg.data(),msg.length());
+    std::cout<<"UTF8: "<<msg<<"\n";
+    CEGUI::ListboxTextItem *heh = new CEGUI::ListboxTextItem(finalText,id,0,false,true);
     if(showSelect)
     {
         heh->setSelectionBrushImage("GWEN/Input.ListBox.EvenLineSelected");
