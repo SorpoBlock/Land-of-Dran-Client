@@ -237,6 +237,13 @@ namespace syj
             std::string fileName = line.substr(0,firstTab);
 #ifdef __linux__ 
             replaceAll(fileName,"\\","/");
+            std::string::size_type idx = fileName.rfind('.');
+            if(idx != std::string::npos)  {
+                std::string extension = fileName.substr(idx + 1);
+                if(extension == "exe" || extension == "dll") {
+                    continue;
+                }
+            }
 #endif
             std::string afterFirstTab = line.substr(firstTab+1,line.length()-(firstTab+1));
 
