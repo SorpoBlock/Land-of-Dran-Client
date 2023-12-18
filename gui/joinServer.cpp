@@ -17,12 +17,14 @@ namespace syj
     {
         CEGUI::Window *updater = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("Updater");
         updater->setVisible(true);
+        return true;
     }
 
     bool optionsButton(const CEGUI::EventArgs &e)
     {
         CEGUI::Window *optionsWindow = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("Options");
         optionsWindow->setVisible(true);
+        return true;
     }
 
     size_t verifyLogin(void *buffer,size_t size,size_t nmemb,void *userp)
@@ -259,6 +261,7 @@ namespace syj
         curl_easy_setopt(curlHandle,CURLOPT_POSTFIELDS,args.c_str());
         CURLcode res = curl_easy_perform(curlHandle);
         curl_easy_cleanup(curlHandle);
+        return true;
     }
 
     bool connectToServer(const CEGUI::EventArgs &e)
@@ -323,6 +326,7 @@ namespace syj
         if(!clientEnvironment)
             return true;
         clientEnvironment->clickedMainMenuExit = true;
+        return true;
     }
 
     CEGUI::Window *loadJoinServer(clientStuff *clientEnvironment)

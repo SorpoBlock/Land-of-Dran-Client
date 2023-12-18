@@ -41,6 +41,7 @@ namespace syj
             case swirl: return "Hologram";
             case slippery: return "Slippery";
             case foil: return "Foil";
+            default: return "Unknown";
         }
     }
 
