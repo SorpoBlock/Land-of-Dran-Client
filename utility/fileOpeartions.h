@@ -10,7 +10,7 @@
 #include <cctype>
 #include <bits/stdc++.h>
 #include <sys/stat.h>
-#include "code/external/crc.h"
+#include "code/external/CRC.h"
 
 bool okayFilePath(std::string path);
 
