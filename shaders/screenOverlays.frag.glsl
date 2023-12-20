@@ -66,6 +66,8 @@ void main()
 				color = vec4(sunColor.rgb,1);
 		}
 	}
+	else
+		color = vec4(0,0,0,0);
 	
 	float vignetteDist = (abs(uv.x-0.5) + abs(uv.y-0.5))/2.0;
 	vec4 vignette = vec4(vignetteColor,clamp(vignetteDist * vignetteStrength,0,1));
