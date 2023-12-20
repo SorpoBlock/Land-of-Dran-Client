@@ -37,8 +37,8 @@ namespace syj
             static logger& get();
 
             //Make sure there can't ever be more than one logger at a time
-            logger(const &logger) = delete;
-            logger &operator=(const &logger) = delete;
+            //logger(const &logger) = delete; linux doesn't like these lines?
+            //logger &operator=(const &logger) = delete;
 
         private:
             static std::string format(std::string text,bool noLine = false,bool noHeader = false);

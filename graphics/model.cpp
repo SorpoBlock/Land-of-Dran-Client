@@ -409,7 +409,7 @@ namespace syj
 
     glm::vec4 postovec4(glm::vec3 a){return glm::vec4(a.x,a.y,a.z,1.0);}
 
-    glm::mat4 node::transformCollisionMeshes(glm::vec3 &totalColMin,glm::vec3 &totalColMax,glm::mat4 startTransform)
+    void node::transformCollisionMeshes(glm::vec3 &totalColMin,glm::vec3 &totalColMax,glm::mat4 startTransform)
     {
         startTransform = startTransform * transform;
 
