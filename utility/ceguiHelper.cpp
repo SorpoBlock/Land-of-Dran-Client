@@ -50,11 +50,9 @@ CEGUI::Window *initLoadCEGUISkin(std::string skinName,int resX,int resY)
 //Adds a line of text to a textbox in the most basic form possible
 void textBoxAdd(CEGUI::Window *box,std::string text,int id,bool showSelect)
 {
-    std::cout<<"Source stf: "<<text<<"\n";
     CEGUI::Listbox *castbox = (CEGUI::Listbox*)box;
     std::string msg = std::string("[colour='FF000000']" + text).data();
     CEGUI::String finalText = CEGUI::String((CEGUI::utf8*)msg.data(),msg.length());
-    std::cout<<"UTF8: "<<msg<<"\n";
     CEGUI::ListboxTextItem *heh = new CEGUI::ListboxTextItem(finalText,id,0,false,true);
     if(showSelect)
     {
@@ -65,7 +63,7 @@ void textBoxAdd(CEGUI::Window *box,std::string text,int id,bool showSelect)
         heh->setSelectionColours(CEGUI::Colour(0,0,0,0));
     castbox->addItem(heh);
 
-    CEGUI::Sizef s = heh->getPixelSize();
+    //CEGUI::Sizef s = heh->getPixelSize();
     //castbox->ensureItemIsVisible(heh);
 }
 
@@ -222,7 +220,8 @@ void processEventsCEGUI(SDL_Event &event,const Uint8 *keystates)
     if(event.type == SDL_TEXTINPUT)
     {
         char *text = event.text.text;
-        CEGUI::String test((CEGUI::utf8*)text);
+        std::string realStr = std::string(text);
+        CEGUI::String test((CEGUI::utf8*)text,realStr.length());
         CEGUI::System::getSingleton().getDefaultGUIContext().injectChar(test[0]);
     }
     if(event.type == SDL_MOUSEMOTION)
@@ -240,7 +239,9 @@ void processEventsCEGUI(SDL_Event &event,const Uint8 *keystates)
         }
         if(event.key.keysym.sym == SDLK_v && keystates[SDL_SCANCODE_LCTRL])
         {
-            CEGUI::System::getSingleton().getClipboard()->setText((CEGUI::utf8*)(SDL_GetClipboardText()));
+            char *clipboard = SDL_GetClipboardText();
+            std::string clipboardStr = std::string(clipboard);
+            CEGUI::System::getSingleton().getClipboard()->setText(CEGUI::String((CEGUI::utf8*)clipboard,clipboardStr.length()));
             CEGUI::System::getSingleton().getDefaultGUIContext().injectPasteRequest();
         }
         if(event.key.keysym.sym == SDLK_c && keystates[SDL_SCANCODE_LCTRL])
