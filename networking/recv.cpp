@@ -1926,6 +1926,8 @@ namespace syj
                 std::string file = data->readString();
                 std::string name = data->readString();
 
+                replaceAll(file,"add-ons/","cache/");
+
                 int id = data->readUInt(10);
                 bool isMusic = data->readBit();
 
@@ -3294,11 +3296,16 @@ namespace syj
                 for(int a = 0; a<howMany; a++)
                 {
                     int typeID = data->readUInt(10);
-                    std::string filePath = "assets/brick/types" + data->readString();
+                    std::string filePath = data->readString();
+                    if(filePath.substr(0,8) != "add-ons/" && filePath.substr(0,6) != "cache/")
+                        filePath = "assets/brick/types" + filePath;
                     replaceAll(filePath,"\\","/");
+                    replaceAll(filePath,"add-ons/","cache/");
+
+                    bool customMesh = data->readBit();
 
                     //std::cout<<"Adding type: "<<typeID<<" "<<filePath<<"\n";
-                    serverData->staticBricks.blocklandTypes->addSpecialBrickType(filePath,clientEnvironment->brickSelector,typeID);
+                    serverData->staticBricks.blocklandTypes->addSpecialBrickType(filePath,clientEnvironment->brickSelector,typeID,customMesh);
                 }
 
                 finishLoadingTypesCheck(clientEnvironment);

@@ -83,7 +83,7 @@ namespace syj
         else if(audioFile.getNumChannels() == 2 && audioFile.getBitDepth() == 16)
             format = AL_FORMAT_STEREO16;
         else
-            error("Weird audio format: " + std::to_string(audioFile.getNumChannels()) + " channels and " + std::to_string(audioFile.getBitDepth()) + " bit depth.");
+            error(_fileName + " Weird audio format: " + std::to_string(audioFile.getNumChannels()) + " channels and " + std::to_string(audioFile.getBitDepth()) + " bit depth.");
 
         debug("Loading audio " + fileName + " " + std::to_string(audioFile.getNumChannels()) +"/"+ std::to_string(audioFile.getBitDepth()) +"/"+ std::to_string(audioFile.getSampleRate()));
 

@@ -116,7 +116,7 @@ namespace syj
         blocklandCompatibility(std::string aliasFile,std::string searchPath,CEGUI::Window *brickSelector = 0,bool onlyBasic = false);
         ~blocklandCompatibility();
 
-        void addSpecialBrickType(std::string filePath,CEGUI::Window *brickSelector,int serverID);
+        void addSpecialBrickType(std::string filePath,CEGUI::Window *brickSelector,int serverID,bool customMesh);
     };
 }
 

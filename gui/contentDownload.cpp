@@ -75,6 +75,10 @@ bool enableAllCustomFiles(const CEGUI::EventArgs &e)
     for(int a = 0; a<descriptorsList->size(); a++)
     {
         customFileDescriptor *targetFile = descriptorsList->at(a);
+
+        if(!targetFile->selectable)
+            continue;
+
         targetFile->enabled = true;
         if(targetFile->enabledBox)
             targetFile->enabledBox->setText(targetFile->enabled ? "   X" : "   ");
@@ -163,8 +167,6 @@ void addCustomFileToGUI(std::string name,std::string path,unsigned int checksum,
     CEGUI::MultiColumnList *serverListGUI = (CEGUI::MultiColumnList*)contentWindow->getChild("List");
     std::vector<customFileDescriptor*> *descriptorsList = (std::vector<customFileDescriptor*> *)contentWindow->getUserData();
 
-    contentWindow->setVisible(true);
-
     customFileDescriptor *tmp = new customFileDescriptor;
     tmp->checksum = checksum;
     tmp->size = size;
@@ -194,17 +196,19 @@ void addCustomFileToGUI(std::string name,std::string path,unsigned int checksum,
         return;
     }
 
-    if(std::filesystem::exists("add-ons/" + path))
+    if(std::filesystem::exists("cache/" + path))
     {
-        if(size == std::filesystem::file_size("add-ons/" + path))
+        if(size == std::filesystem::file_size("cache/" + path))
         {
-            if(getFileChecksum(std::string("add-ons/" + path).c_str()) == checksum)
+            if(getFileChecksum(std::string("cache/" + path).c_str()) == checksum)
             {
-                syj::info("We already have an identical add-ons/" + path + " skipping!");
+                //syj::info("We already have an identical add-ons/" + path + " skipping!");
                 return;
             }
         }
     }
+
+    contentWindow->setVisible(true);
 
     tmp->selectable = true;
 

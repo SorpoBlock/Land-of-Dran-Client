@@ -39,7 +39,7 @@ namespace syj
 
         void initModTerrain(std::string filePath);
 
-        specialBrickType(std::string blbFile);
+        specialBrickType(std::string blbFile,bool customMesh);
         ~specialBrickType();
     };
 }

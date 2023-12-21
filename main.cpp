@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 
     create_directory("Logs"); //CEGUI on Linux needs the L to be capital
     create_directory("saves");
-    create_directory("add-ons");
+    create_directory("cache");
     create_directory("assets");
     create_directory("assets/brick");
     create_directory("assets/brick/types");
@@ -641,6 +641,9 @@ int main(int argc, char *argv[])
                     clientEnvironment.cancelCustomContent = false;
                     clientEnvironment.expectedCustomFiles = -1;
 
+                    contentMenu->getChild("Join")->setText("Loading list...");
+                    contentMenu->getChild("Join")->setDisabled(true);
+
                     ((CEGUI::MultiColumnList*)contentMenu->getChild("List"))->clearAllSelections();
                     ((CEGUI::MultiColumnList*)contentMenu->getChild("List"))->resetList();
                     contentMenu->moveToFront();
@@ -706,18 +709,27 @@ int main(int argc, char *argv[])
                             for(int a = 0; a<contentList->size(); a++)
                             {
                                 if(!contentList->at(a)->selectable)
+                                {
+                                    //std::cout<<"Not selectable...\n";
                                     continue;
+                                }
                                 if(!contentList->at(a)->enabled)
+                                {
+                                    //std::cout<<"Not enabled...\n";
                                     continue;
+                                }
                                 if(contentList->at(a)->doneDownloading)
+                                {
+                                    //std::cout<<"Done...\n";
                                     continue;
+                                }
                                 downloading = contentList->at(a);
-                                info("Downloading add-ons/"+downloading->path);
+                                info("Downloading add-ons/"+downloading->path + " ID: " + std::to_string(contentList->at(a)->id));
 
-                                std::filesystem::path pathToCreateFoldersFor("add-ons/"+downloading->path);
+                                std::filesystem::path pathToCreateFoldersFor("cache/"+downloading->path);
                                 create_directories(pathToCreateFoldersFor.parent_path());
 
-                                currentDownloadFile = std::ofstream("add-ons/"+downloading->path,std::ios::binary);
+                                currentDownloadFile = std::ofstream("cache/"+downloading->path,std::ios::binary);
                                 if(!currentDownloadFile.is_open())
                                     error("Error opening file add-ons/" + downloading->path + " for write!");
                                 break;
@@ -726,7 +738,7 @@ int main(int argc, char *argv[])
 
                         if(!downloading)
                         {
-                            error("No possible download candidate file.");
+                            //error("No possible download candidate file.");
                             if(cdnClient)
                             {
                                 SDLNet_TCP_Close(cdnClient);
@@ -898,6 +910,7 @@ int main(int argc, char *argv[])
 
                         for(int a = 0; a<possibleFiles->size(); a++)
                         {
+                            //possibleFiles->at(a)->print();
                             if(possibleFiles->at(a)->enabled)
                             {
                                 contentRequest += std::to_string(possibleFiles->at(a)->id) + "\n";
@@ -917,6 +930,9 @@ int main(int argc, char *argv[])
                 //We don't actually have any new files we even *could* download if we wanted to, just skip to connecting...
                 if(clientEnvironment.expectedCustomFiles == ((std::vector<customFileDescriptor*> *)contentMenu->getUserData())->size())
                 {
+                    contentMenu->getChild("Join")->setText("Confirm and Join");
+                    contentMenu->getChild("Join")->setDisabled(false);
+
                     bool oneSelectable = false;
                     for(int a = 0; a<((std::vector<customFileDescriptor*> *)contentMenu->getUserData())->size(); a++)
                     {

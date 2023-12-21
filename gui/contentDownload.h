@@ -29,6 +29,11 @@ struct customFileDescriptor
     int id = 0;
     bool selectable = false;
     CEGUI::ListboxTextItem *enabledBox = 0;
+
+    void print()
+    {
+        std::cout<<id<<"|"<<name<<"|"<<path<<"|"<<size<<"|"<<(enabled?"enabled":"disabled")<<"|"<<(selectable?"selectable":"not selectable")<<"|"<<(doneDownloading?"done":"not done")<<"\n";
+    }
 };
 
 void addCustomFileToGUI(std::string name,std::string path,unsigned int checksum,unsigned int size,unsigned char type,int id);

@@ -12,7 +12,7 @@ bool okayFilePath(std::string path)
     if(path.length() < 2)
         return false;
 
-    if(path.length() > 48)
+    if(path.length() > 64)
         return false;
 
     if(path[0] == '.')
@@ -42,6 +42,8 @@ bool okayFilePath(std::string path)
         if(path[i] >= '0' && path[i] <= '9')
             continue;
         if(path[i] == '/' || path[i] == '_')
+            continue;
+        if(path[i] == '-')
             continue;
         if(path[i] == '.')
         {

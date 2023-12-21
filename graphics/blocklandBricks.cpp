@@ -2,12 +2,12 @@
 
 namespace syj
 {
-    void blocklandCompatibility::addSpecialBrickType(std::string filePath,CEGUI::Window *brickSelector,int serverID)
+    void blocklandCompatibility::addSpecialBrickType(std::string filePath,CEGUI::Window *brickSelector,int serverID,bool customMesh)
     {
         std::string name = filePath.substr(0,filePath.length()-4);
         std::string pngFile = filePath.substr(0,filePath.length()-3) + "png";
 
-        specialBrickType *tmp = new specialBrickType(filePath);
+        specialBrickType *tmp = new specialBrickType(filePath,customMesh);
         specialBrickTypes.push_back(tmp);
         tmp->serverID = serverID;
 
@@ -16,7 +16,7 @@ namespace syj
         else
         {
             replaceAll(pngFile,"Bricks/","BrickIcons/");
-            replaceAll(pngFile,"Bricks\\","BrickIcons\\");
+            //replaceAll(pngFile,"Bricks\\","BrickIcons\\");
             if(doesFileExist(pngFile))
                 addSpecialBrickToSelector(brickSelector,pngFile,name,specialBrickTypes.size() - 1);
             else
@@ -283,12 +283,9 @@ namespace syj
                         if(onlyBasic)
                             continue;
 
-                        specialBrickType *tmp = new specialBrickType(i->path().string());
-                        //tmp->fileName = fname;
-                        /*for(int a = 0; a<blocklandUINames.size(); a++)
-                        {
-                            std::cout<<"DB: "<<blocklandDatablockNames[a]<<" UIName: "<<blocklandUINames[a]<<"\n";
-                        }*/
+                        error("i forgot to take out client-side creation of special brick types lol");
+
+                        /*specialBrickType *tmp = new specialBrickType(i->path().string(),false);
 
                         specialBrickTypes.push_back(tmp);
 
@@ -302,7 +299,7 @@ namespace syj
                             }
                             else
                                 addSpecialBrickToSelector(brickSelector,"assets/brick/types/Unknown.png",i->path().stem().string(),specialBrickTypes.size() - 1);
-                        }
+                        }*/
                         continue;
                     }
                     else

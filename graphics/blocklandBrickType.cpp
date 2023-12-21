@@ -195,9 +195,9 @@ namespace syj
             glDeleteBuffers(1,&buffers[customVertexBuffer]);
     }
 
-    specialBrickType::specialBrickType(std::string blbFile)
+    specialBrickType::specialBrickType(std::string blbFile,bool customMesh)
     {
-        bool shouldBeModTerr = blbFile.find("ModTer") != std::string::npos;
+        bool shouldBeModTerr = customMesh;//blbFile.find("ModTer") != std::string::npos;
 
         std::fstream theFile(blbFile.c_str(),std::ios::in);
         if(!theFile.is_open())
