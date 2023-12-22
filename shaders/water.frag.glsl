@@ -5,6 +5,7 @@ uniform vec3 cameraPlayerDirection;
 
 uniform vec3 fogColor;
 uniform float fogDistance;
+uniform float waterLevel;
 
 uniform vec4 sunColor;
 uniform vec3 sunDirection;
@@ -81,6 +82,13 @@ void main()
 
 	vec4 reflectColor = texture(reflectionTexture,reflectTexCoords);
 	vec4 refractColor = texture(refractionTexture,refractTexCoords);
+	
+	if(cameraPlayerPosition.y < waterLevel)
+	{
+		vec4 swap = reflectColor;
+		reflectColor = refractColor;
+		refractColor = swap;
+	}
 	
 	float nonLinearAlbedoF = 1.0;
 	reflectColor.rgb = pow(reflectColor.rgb,vec3(1.0 + 1.2 * nonLinearAlbedoF));

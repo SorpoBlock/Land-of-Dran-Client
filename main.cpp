@@ -1543,8 +1543,8 @@ int main(int argc, char *argv[])
 
                                 if(serverData->box->currentPhase == selectionBox::selectionPhase::waitingForClick)
                                 {
-                                    serverData->box->minExtents = res.m_hitPointWorld[idx];
-                                    serverData->box->maxExtents = res.m_hitPointWorld[idx];
+                                    serverData->box->minExtents = res.m_hitPointWorld[idx] - btVector3(0.1,0.1,0.1);
+                                    serverData->box->maxExtents = res.m_hitPointWorld[idx] + btVector3(0.1,0.1,0.1);
                                     serverData->box->currentPhase = selectionBox::selectionPhase::selecting;
                                     serverData->box->movePulls();
                                 }
@@ -2181,6 +2181,9 @@ int main(int argc, char *argv[])
                 uniformsHolder *whichBrickUnis = serverData->env->useIBL ? brickUnis : brickDNCUnis;
                 uniformsHolder *whichModelUnis = serverData->env->useIBL ? modelUnis : modelDNCUnis;
 
+                clientEnvironment.nonInstancedShader = oldModelUnis;
+                clientEnvironment.instancedShader = modelDNCUnis;
+
                 serverData->env->calc(deltaT*10.0,serverData->playerCamera);
 
                 bdrf->bind(brdf);
@@ -2225,7 +2228,10 @@ int main(int argc, char *argv[])
                         waterReflection->bind();
 
                             oldModelUnis->use();
-                                glUniform1f(oldModelUnis->clipHeight,serverData->waterLevel);
+                                if(serverData->playerCamera->getPosition().y < serverData->waterLevel)
+                                    glUniform1f(oldModelUnis->clipHeight,-serverData->waterLevel);
+                                else
+                                    glUniform1f(oldModelUnis->clipHeight,serverData->waterLevel);
                                 serverData->playerCamera->renderReflection(oldModelUnis,serverData->waterLevel);
                                 serverData->env->passUniforms(oldModelUnis);
                                 clientEnvironment.settings->render(oldModelUnis);
@@ -2234,7 +2240,10 @@ int main(int argc, char *argv[])
                                 glEnable(GL_CLIP_DISTANCE0);
 
                             whichModelUnis->use();
-                                glUniform1f(whichModelUnis->clipHeight,serverData->waterLevel);
+                                if(serverData->playerCamera->getPosition().y < serverData->waterLevel)
+                                    glUniform1f(whichModelUnis->clipHeight,-serverData->waterLevel);
+                                else
+                                    glUniform1f(whichModelUnis->clipHeight,serverData->waterLevel);
                                 clientEnvironment.settings->render(whichModelUnis);
                                 serverData->playerCamera->renderReflection(whichModelUnis,serverData->waterLevel);
                                 serverData->env->passUniforms(whichModelUnis);
@@ -2257,7 +2266,10 @@ int main(int argc, char *argv[])
                             whichBrickUnis->use();
                                 glUniform1i(whichBrickUnis->target->getUniformLocation("debugMode"),debugMode);
 
-                                glUniform1f(whichBrickUnis->clipHeight,serverData->waterLevel);
+                                if(serverData->playerCamera->getPosition().y < serverData->waterLevel)
+                                    glUniform1f(whichBrickUnis->clipHeight,-serverData->waterLevel);
+                                else
+                                    glUniform1f(whichBrickUnis->clipHeight,serverData->waterLevel);
                                 serverData->playerCamera->renderReflection(whichBrickUnis,serverData->waterLevel);
                                 serverData->env->passUniforms(whichBrickUnis);
                                 clientEnvironment.settings->render(whichBrickUnis);
@@ -2277,7 +2289,10 @@ int main(int argc, char *argv[])
                         waterRefraction->bind();
 
                             whichModelUnis->use();
-                                glUniform1f(whichModelUnis->clipHeight,-serverData->waterLevel);
+                                if(serverData->playerCamera->getPosition().y < serverData->waterLevel)
+                                    glUniform1f(whichModelUnis->clipHeight,serverData->waterLevel);
+                                else
+                                    glUniform1f(whichModelUnis->clipHeight,-serverData->waterLevel);
                                 clientEnvironment.settings->render(whichModelUnis);
                                 serverData->playerCamera->render(whichModelUnis);
                                 serverData->env->passUniforms(whichModelUnis);
@@ -2287,7 +2302,10 @@ int main(int argc, char *argv[])
                                 clientEnvironment.newWheelModel->renderInstanced(whichModelUnis);
 
                             oldModelUnis->use();
-                                glUniform1f(oldModelUnis->clipHeight,-serverData->waterLevel);
+                                if(serverData->playerCamera->getPosition().y < serverData->waterLevel)
+                                    glUniform1f(oldModelUnis->clipHeight,serverData->waterLevel);
+                                else
+                                    glUniform1f(oldModelUnis->clipHeight,-serverData->waterLevel);
                                 serverData->playerCamera->render(oldModelUnis);
                                 serverData->env->passUniforms(oldModelUnis);
 
@@ -2302,7 +2320,10 @@ int main(int argc, char *argv[])
                             glUniform1i(whichBrickUnis->target->getUniformLocation("debugMode"),debugMode);
                             serverData->env->passUniforms(whichBrickUnis);
                             clientEnvironment.settings->render(whichBrickUnis);
-                                glUniform1f(whichBrickUnis->clipHeight,-serverData->waterLevel);
+                                if(serverData->playerCamera->getPosition().y < serverData->waterLevel)
+                                    glUniform1f(whichBrickUnis->clipHeight,serverData->waterLevel);
+                                else
+                                    glUniform1f(whichBrickUnis->clipHeight,-serverData->waterLevel);
                                 serverData->playerCamera->render(whichBrickUnis);
                                 glEnable(GL_BLEND);
                                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2380,6 +2401,8 @@ int main(int argc, char *argv[])
 
                         serverData->env->drawSky(oldModelUnis);
 
+                        glDisable(GL_CULL_FACE);
+
                         if(clientEnvironment.settings->waterQuality != waterStatic && waterRefraction)
                         {
                             waterUnis->use();
@@ -2399,6 +2422,8 @@ int main(int argc, char *argv[])
 
                                 oldModelUnis->use();
                         }
+
+                        glEnable(GL_CULL_FACE);
 
                         //Render faces for players, pretty much:
                         for(unsigned int a = 0; a<serverData->newDynamicTypes.size(); a++)
@@ -2576,8 +2601,6 @@ int main(int argc, char *argv[])
                         serverData->playerCamera->render(boxEdgesUnis);
                         serverData->box->render(boxEdgesUnis);
 
-                    glEnable(GL_CULL_FACE);
-
                     //Just for the transparent blue quad of crappy water, good water is rendered first thing
                     if(clientEnvironment.settings->waterQuality == waterStatic || !waterRefraction)
                     {
@@ -2592,6 +2615,8 @@ int main(int argc, char *argv[])
 
                         glDisable(GL_BLEND);
                     }
+
+                    glEnable(GL_CULL_FACE);
                 //End drawing final scene
 
                 clientEnvironment.bottomPrint.checkForTimeouts();
