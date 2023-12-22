@@ -235,7 +235,7 @@ namespace syj
 
             int firstTab = line.find("\t");
             std::string fileName = line.substr(0,firstTab);
-#ifdef __linux__ 
+#ifdef __linux__
             replaceAll(fileName,"\\","/");
             std::string::size_type idx = fileName.rfind('.');
             if(idx != std::string::npos)  {
@@ -301,6 +301,10 @@ namespace syj
             CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow()->getChild("JoinServer/ConnectButton")->setDisabled(false);
             updater->getChild("Button")->setDisabled(false);
             updateLog("No files need updating!");
+
+            ((clientStuff*)updater->getUserData())->prefs->set("REVISION",((clientStuff*)updater->getUserData())->masterRevision);
+            ((clientStuff*)updater->getUserData())->prefs->set("NETWORK",((clientStuff*)updater->getUserData())->masterNetwork);
+            ((clientStuff*)updater->getUserData())->prefs->exportToFile("config.txt");
             return true;
         }
 

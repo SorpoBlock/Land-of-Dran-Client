@@ -178,6 +178,7 @@ void processCommand(clientStuff *clientEnvironment,std::string commandType,packe
         int sizebytes = data->readUInt(32);
         int type = data->readUInt(4);
         int id = data->readUInt(16);
+        clientEnvironment->cancelCustomContentTimeoutTime = SDL_GetTicks() + 15000;
         addCustomFileToGUI(name,path,checksum,sizebytes,type,id);
 
         return;

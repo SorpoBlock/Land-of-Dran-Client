@@ -65,6 +65,7 @@ namespace syj
         bool cancelCustomContent = false;
         bool ignoreGamePackets = true;
         int expectedCustomFiles = -1;
+        unsigned int cancelCustomContentTimeoutTime = 0;
 
         std::string wantedName = "Guest";
         std::string wantedIP = "127.0.0.1";

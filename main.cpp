@@ -640,6 +640,7 @@ int main(int argc, char *argv[])
                     clientEnvironment.waitingOnContentList = true;
                     clientEnvironment.cancelCustomContent = false;
                     clientEnvironment.expectedCustomFiles = -1;
+                    clientEnvironment.cancelCustomContentTimeoutTime = SDL_GetTicks() + 15000;
 
                     contentMenu->getChild("Join")->setText("Loading list...");
                     contentMenu->getChild("Join")->setDisabled(true);
@@ -869,6 +870,13 @@ int main(int argc, char *argv[])
                     clientEnvironment.waitingToPickServer = true;
                     currentState = STATE_MAINMENU;
                     break;
+                }
+
+                if(clientEnvironment.cancelCustomContentTimeoutTime < SDL_GetTicks())
+                {
+                    error("Connection to server timed out!");
+                    clientEnvironment.cancelCustomContent = true;
+                    continue;
                 }
 
                 if(!clientEnvironment.waitingOnContentList)
