@@ -32,6 +32,10 @@ namespace syj {
 			AudioFile<int16_t> audioFile; audioFile.load(fileName);
 			if(audioFile.getBitDepth() != 8 && audioFile.getBitDepth() != 16) { error(_fileName + " Weird audio format: " + std::to_string(audioFile.getNumChannels()) + " channels and " + std::to_string(audioFile.getBitDepth()) + " bit depth."); }
 			else {
+				//amplify 8bit sound to 16bit
+				if(audioFile.getBitDepth() == 8) {
+					for(int i = 0; i < audioFile.samples[0].size(); i++) { audioFile.samples[0][i]*=256; }
+				}
 				alBufferData(buffer, AL_FORMAT_MONO16, audioFile.samples[0].data(), audioFile.samples[0].size() * 2, audioFile.getSampleRate());
 			}
 		}
@@ -56,7 +60,7 @@ namespace syj {
 				if(file.is_open()) {
 					openmpt::module mod(file);
 					size_t parts = size_t(std::min(480.0, mod.get_duration_seconds()) * 24000.0) << 2; //api could potentially return infinite.
-					short* data = malloc(parts); //read the stream
+					short* data = (short*)malloc(parts); //read the stream
 					if(data) {
 						if(mod.read_interleaved_stereo(24000, parts >> 2, data)) { error(_fileName + ": could only read partial stream."); }
 						alBufferData(buffer, AL_FORMAT_STEREO16, data, parts, 24000);
