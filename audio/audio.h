@@ -7,7 +7,6 @@
 #include <AL/alext.h>
 #include <AL/efx.h>
 #include <AL/efx-presets.h>
-#include "code/external/AudioFile.h"
 #include "code/physics/player.h"
 #include "code/utility/ceguiHelper.h"
 #include "code/physics/brickPhysics.h"
