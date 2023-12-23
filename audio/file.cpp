@@ -53,7 +53,7 @@ namespace syj {
 						error(_fileName + ": failed to allocate memory."); 
 					}
 				}
-				delete data;
+				if(data) { delete data; }
 			}
 			else if(format == "mod") {
     			std::ifstream file(fileName, std::ios::binary);
@@ -64,11 +64,11 @@ namespace syj {
 					if(data) {
 						if(mod.read_interleaved_stereo(24000, parts >> 2, data)) { error(_fileName + ": could only read partial stream."); }
 						alBufferData(buffer, AL_FORMAT_STEREO16, data, parts, 24000);
+						delete data;
 					} else {
 						error(_fileName + ": failed to allocate memory."); 
 					}
 					file.close();
-					delete data;
 				} else {
 					error(_fileName + ": could not read.");
 				}
