@@ -2615,6 +2615,8 @@ int main(int argc, char *argv[])
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
                         waterUnis->use();
+                            glUniform1f(waterUnis->waterDelta,((float)SDL_GetTicks())*0.0002f);
+                            glUniform1f(waterUnis->target->getUniformLocation("waterLevel"),serverData->waterLevel); //TODO: Don't string match this every frame
                             clientEnvironment.settings->render(waterUnis);
                             serverData->env->passUniforms(waterUnis,true);
                             serverData->playerCamera->render(waterUnis);

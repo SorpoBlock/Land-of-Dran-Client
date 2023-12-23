@@ -5,7 +5,6 @@ uniform vec3 cameraPlayerDirection;
 
 uniform vec3 fogColor;
 uniform float fogDistance;
-uniform float waterLevel;
 
 uniform vec4 sunColor;
 uniform vec3 sunDirection;
@@ -42,9 +41,23 @@ float getHeight(float x,float z)
 
 void main() 
 {
-	if(!niceWater)
-	{
-		color = vec4(0.2,0.2,0.6,0.5);
+	if(!niceWater) {
+   		vec2 p = mod(UV*6.28318530718, 6.28318530718)-250.0;
+		vec2 i = vec2(p);
+		float c = 1.0;
+		float inten = .005;
+
+		for (int n = 0; n < 4; n++) 
+		{
+			float t = waterDelta * (1.0 - (3.5 / float(n+1)));
+			i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+			c += 1.0/length(vec2(p.x / (sin(i.x+t)/inten),p.y / (cos(i.y+t)/inten)));
+		}
+		c /= float(4);
+		c = 1.17-pow(c, 1.4);
+		vec3 colour = vec3(pow(abs(c), 8.0));
+		colour = clamp(colour + vec3(0.0, 0.35, 0.5), 0.0, 1.0);
+		color = vec4(colour, 0.25 + (colour.r + colour.g + colour.b) / 5.0);
 		return;
 	}
 
@@ -83,13 +96,6 @@ void main()
 	vec4 reflectColor = texture(reflectionTexture,reflectTexCoords);
 	vec4 refractColor = texture(refractionTexture,refractTexCoords);
 	
-	if(cameraPlayerPosition.y < waterLevel)
-	{
-		vec4 swap = reflectColor;
-		reflectColor = refractColor;
-		refractColor = swap;
-	}
-	
 	float nonLinearAlbedoF = 1.0;
 	reflectColor.rgb = pow(reflectColor.rgb,vec3(1.0 + 1.2 * nonLinearAlbedoF));
 	refractColor.rgb = pow(refractColor.rgb,vec3(1.0 + 1.2 * nonLinearAlbedoF));
@@ -105,7 +111,3 @@ void main()
 	
 	color.a = 1.0;
 }
-
-
-
-
