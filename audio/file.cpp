@@ -14,30 +14,15 @@ namespace syj {
 		if(_fileName.length() < 1) { return; }
 
 		//Load audio file.
-		AudioFile<float> audioFile; audioFile.load(fileName);
+		AudioFile<int16_t> audioFile; audioFile.load(fileName);
 
 		//Determine format for OpenAL.
-		ALenum format;
-		if(audioFile.getNumChannels() == 1 && audioFile.getBitDepth() == 8) { format = AL_FORMAT_MONO8; }
-		else if(audioFile.getNumChannels() == 1 && audioFile.getBitDepth() == 16) { format = AL_FORMAT_MONO16; }
-		else if(audioFile.getNumChannels() == 2 && audioFile.getBitDepth() == 8) { format = AL_FORMAT_STEREO8; }
-		else if(audioFile.getNumChannels() == 2 && audioFile.getBitDepth() == 16) { format = AL_FORMAT_STEREO16; }
-		else { error(_fileName + " Weird audio format: " + std::to_string(audioFile.getNumChannels()) + " channels and " + std::to_string(audioFile.getBitDepth()) + " bit depth."); }
+		if(audioFile.getBitDepth() != 8 && audioFile.getBitDepth() != 16) { error(_fileName + " Weird audio format: " + std::to_string(audioFile.getNumChannels()) + " channels and " + std::to_string(audioFile.getBitDepth()) + " bit depth."); }
 
 		//Generate OpenAL buffers.
 		debug("Loading audio " + fileName + " " + std::to_string(audioFile.getNumChannels()) +"/"+ std::to_string(audioFile.getBitDepth()) +"/"+ std::to_string(audioFile.getSampleRate()));
 		alGenBuffers(1,&buffer);
-		if(audioFile.getBitDepth() == 16) {
-			short *soundData = new short[audioFile.samples[0].size()];
-			for(unsigned int a = 0; a<audioFile.samples[0].size(); a++) { soundData[a] = (audioFile.samples[0][a]*32768); }
-			alBufferData(buffer,format,soundData,audioFile.samples[0].size()*sizeof(short),audioFile.getSampleRate());
-			delete soundData;
-		} else {
-			unsigned char *soundData = new unsigned char[audioFile.samples[0].size()];
-			for(unsigned int a = 0; a<audioFile.samples[0].size(); a++) { soundData[a] = 128+(audioFile.samples[0][a]*127); }
-			alBufferData(buffer,format,soundData,audioFile.samples[0].size()*sizeof(unsigned char),audioFile.getSampleRate());
-			delete soundData;
-		}
+		alBufferData(buffer, AL_FORMAT_MONO16, audioFile.samples[0].data(), audioFile.samples[0].size() * 2, audioFile.getSampleRate());
 
 		//Determine if there were any errors loading the audio.
 		ALenum errr = alGetError();
