@@ -1477,7 +1477,7 @@ int main(int argc, char *argv[])
                                         if(currentlyHeldItem->nextFireAnim != -1)
                                             currentlyHeldItem->play(currentlyHeldItem->nextFireAnim,true,currentlyHeldItem->nextFireAnimSpeed,false);
                                         if(currentlyHeldItem->nextFireSound != -1)
-                                            clientEnvironment.speaker->playSound2D(currentlyHeldItem->nextFireSound,currentlyHeldItem->nextFireSoundPitch,currentlyHeldItem->nextFireSoundGain);
+                                            clientEnvironment.speaker->playSound(currentlyHeldItem->nextFireSound,NULL,currentlyHeldItem->nextFireSoundPitch,currentlyHeldItem->nextFireSoundGain);
 
                                         if(currentlyHeldItem->nextFireEmitter != -1)
                                         {
@@ -1710,8 +1710,7 @@ int main(int argc, char *argv[])
                 {
                     clientEnvironment.currentlyOpen = paintCan;
                     glm::vec3 pos = serverData->playerCamera->getPosition();
-                    //clientEnvironment.speaker->playSound("Rattle",false,pos.x,pos.y,pos.z);
-                    clientEnvironment.speaker->playSound2D(clientEnvironment.speaker->resolveSound("Rattle"));
+                    clientEnvironment.speaker->playSound(clientEnvironment.speaker->resolveSound("Rattle"));
                     clientEnvironment.palette->advanceColumn();
                     serverData->ourTempBrick->basicChanged = serverData->ourTempBrick->basicChanged || serverData->ourTempBrick->isBasic;
                     serverData->ourTempBrick->specialChanged = serverData->ourTempBrick->specialChanged || !serverData->ourTempBrick->isBasic;
@@ -2037,8 +2036,7 @@ int main(int argc, char *argv[])
                             if(serverData->currentPlayer->control(atan2(serverData->playerCamera->getDirection().x,serverData->playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,serverData->canJet && rightDown))
                                 didJump = true;
                             if(didJump)
-                                clientEnvironment.speaker->playSound2D(clientEnvironment.speaker->resolveSound("Jump"));
-                                //clientEnvironment.speaker->playSound("Jump",false,serverData->playerCamera->getPosition().x,serverData->playerCamera->getPosition().y-1.0,serverData->playerCamera->getPosition().z);
+                                clientEnvironment.speaker->playSound(clientEnvironment.speaker->resolveSound("Jump"));
                         }
                     }
 

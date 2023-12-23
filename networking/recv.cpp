@@ -485,7 +485,7 @@ void processCommand(clientStuff *clientEnvironment,std::string commandType,packe
         if(foundItem->nextFireSound != -1)
         {
             location *soundLoc = new location(foundItem);
-            clientEnvironment->speaker->playSound3D(foundItem->nextFireSound,soundLoc,foundItem->nextFireSoundPitch,foundItem->nextFireSoundGain);
+            clientEnvironment->speaker->playSound(foundItem->nextFireSound,soundLoc,foundItem->nextFireSoundPitch,foundItem->nextFireSoundGain);
         }
 
         if(foundItem->nextFireEmitter != -1)
@@ -1965,9 +1965,8 @@ namespace syj
                             error("Could not find car " + std::to_string(carId) + " to attach music!");
                             return;
                         }
-                        //clientEnvironment->speaker->loopSound(id,loopId,car,pitch);
                         location *soundLocation = new location(car);
-                        clientEnvironment->speaker->playSound3D(id,soundLocation,pitch,1.0,loopId);
+                        clientEnvironment->speaker->playSound(id,soundLocation,pitch,1.0,loopId);
                     }
                     else
                     {
@@ -1975,8 +1974,7 @@ namespace syj
                         float y = data->readFloat();
                         float z = data->readFloat();
                         location *soundLocation = new location(glm::vec3(x,y,z));
-                        clientEnvironment->speaker->playSound3D(id,soundLocation,pitch,1.0,loopId);
-                        //clientEnvironment->speaker->loopSound(id,loopId,x,y,z,pitch);
+                        clientEnvironment->speaker->playSound(id,soundLocation,pitch,1.0,loopId);
                     }
                     return;
                 }
@@ -1986,8 +1984,7 @@ namespace syj
                 {
                     float pitch = data->readFloat();
                     float vol = data->readFloat();
-                    //clientEnvironment->speaker->playSound(id,loop,pitch,vol);
-                    clientEnvironment->speaker->playSound2D(id,pitch,vol);
+                    clientEnvironment->speaker->playSound(id,NULL,pitch,vol);
                     return;
                 }
 
@@ -2003,9 +2000,8 @@ namespace syj
                     float z = data->readFloat();
                     float pitch = data->readFloat();
                     float vol = data->readFloat();
-                    //clientEnvironment->speaker->playSound(id,loop,x,y,z,pitch,vol);
                     location *soundLocation = new location(glm::vec3(x,y,z));
-                    clientEnvironment->speaker->playSound3D(id,soundLocation,pitch,vol);
+                    clientEnvironment->speaker->playSound(id,soundLocation,pitch,vol);
                 }
                 return;
             }
