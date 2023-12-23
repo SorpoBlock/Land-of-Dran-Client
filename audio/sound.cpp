@@ -52,7 +52,7 @@ namespace syj {
 
 		// Basically, we go through the list of sources, starting at the one after the last one we set
 		// Trying to find a source that is not currently playing a sound, and use it.
-		int idx = lastUsedGeneralSound; int searchedSources; ALint isPlaying;
+		int idx = lastUsedGeneralSound; ALint isPlaying;
 		for(int searchedSources = 0; searchedSources < GENERAL_SOUND_COUNT_MINUS_1; searchedSources++) {
 			idx = (idx + 1) & GENERAL_SOUND_COUNT_MINUS_1;
 			alGetSourcei(generalSounds[idx], AL_SOURCE_STATE, &isPlaying);
