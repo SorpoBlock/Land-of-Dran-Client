@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 //
 // DESCRIPTION:  General audio system code.
-//   This handles the initialization of OpenAL and effects.
+//   This handles the initialization of OpenAL.
 //
 //-----------------------------------------------------------------------------
 #include "audio.h"
@@ -62,6 +62,7 @@ namespace syj {
 		}
 	}
 
+	//Cleanup
 	audioPlayer::~audioPlayer() {
 		alDeleteSources(LOOPING_SOUND_COUNT, loopingSounds);
 		alDeleteSources(GENERAL_SOUND_COUNT, generalSounds);
