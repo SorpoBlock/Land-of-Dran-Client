@@ -7,6 +7,10 @@
 #include "code/physics/bulletIncludes.h"
 #include "code/graphics/brickStructure.h"
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 namespace syj
 {
     //Holds up to 7 special faces and some collision data
