@@ -41,7 +41,7 @@ namespace syj
         btCollisionShape *shape = 0;
         int width,height,length;
 
-        void initModTerrain(std::string filePath);
+        void initModTerrain(std::vector<glm::vec3> &verts);
 
         specialBrickType(std::string blbFile,bool customMesh);
         ~specialBrickType();
