@@ -8,37 +8,11 @@
 
 namespace syj
 {
-    /* Effect object functions */
-    LPALGENEFFECTS audioPlayer::alGenEffects;
-    LPALDELETEEFFECTS audioPlayer::alDeleteEffects;
-    LPALISEFFECT audioPlayer::alIsEffect;
-    LPALEFFECTI audioPlayer::alEffecti;
-    LPALEFFECTIV audioPlayer::alEffectiv;
-    LPALEFFECTF audioPlayer::alEffectf;
-    LPALEFFECTFV audioPlayer::alEffectfv;
-    LPALGETEFFECTI audioPlayer::alGetEffecti;
-    LPALGETEFFECTIV audioPlayer::alGetEffectiv;
-    LPALGETEFFECTF audioPlayer::alGetEffectf;
-    LPALGETEFFECTFV audioPlayer::alGetEffectfv;
-
-    LPALGENAUXILIARYEFFECTSLOTS audioPlayer::alGenAuxiliaryEffectSlots;
-    LPALDELETEAUXILIARYEFFECTSLOTS audioPlayer::alDeleteAuxiliaryEffectSlots;
-    LPALISAUXILIARYEFFECTSLOT audioPlayer::alIsAuxiliaryEffectSlot;
-    LPALAUXILIARYEFFECTSLOTI audioPlayer::alAuxiliaryEffectSloti;
-    LPALAUXILIARYEFFECTSLOTIV audioPlayer::alAuxiliaryEffectSlotiv;
-    LPALAUXILIARYEFFECTSLOTF audioPlayer::alAuxiliaryEffectSlotf;
-    LPALAUXILIARYEFFECTSLOTFV audioPlayer::alAuxiliaryEffectSlotfv;
-    LPALGETAUXILIARYEFFECTSLOTI audioPlayer::alGetAuxiliaryEffectSloti;
-    LPALGETAUXILIARYEFFECTSLOTIV audioPlayer::alGetAuxiliaryEffectSlotiv;
-    LPALGETAUXILIARYEFFECTSLOTF audioPlayer::alGetAuxiliaryEffectSlotf;
-    LPALGETAUXILIARYEFFECTSLOTFV audioPlayer::alGetAuxiliaryEffectSlotfv;
-
 	//Audio player system initialization
 	audioPlayer::audioPlayer() {
 		for(int a = 0; a < GENERAL_SOUND_COUNT; a++) {
 			soundLocations[a] = 0;
 		}
-
 		alGenSources(LOOPING_SOUND_COUNT, loopingSounds);
 		alGenSources(GENERAL_SOUND_COUNT, generalSounds);
 
@@ -47,41 +21,7 @@ namespace syj
 			error("Allocating sources, OpenAL error: " + std::to_string(errr));
 		}
 
-	#if __STDC_VERSION__ >= 199901L
-	#define FUNCTION_CAST(T, ptr) (union {void *p; T f; }){ptr}.f
-	#elif defined(__cplusplus)
-	#define FUNCTION_CAST(T, ptr) reinterpret_cast<T>(ptr)
-	#else
-	#define FUNCTION_CAST(T, ptr) (T)(ptr)
-	#endif
-
-	#define LOAD_PROC(T, x) ((x) = FUNCTION_CAST(T, alGetProcAddress(#x)))
-		// FUNCTION_CAST(LPALGENEFFECTS,alGetProcAddress(alGenEffects));
-		LOAD_PROC(LPALGENEFFECTS, alGenEffects);
-		LOAD_PROC(LPALDELETEEFFECTS, alDeleteEffects);
-		LOAD_PROC(LPALISEFFECT, alIsEffect);
-		LOAD_PROC(LPALEFFECTI, alEffecti);
-		LOAD_PROC(LPALEFFECTIV, alEffectiv);
-		LOAD_PROC(LPALEFFECTF, alEffectf);
-		LOAD_PROC(LPALEFFECTFV, alEffectfv);
-		LOAD_PROC(LPALGETEFFECTI, alGetEffecti);
-		LOAD_PROC(LPALGETEFFECTIV, alGetEffectiv);
-		LOAD_PROC(LPALGETEFFECTF, alGetEffectf);
-		LOAD_PROC(LPALGETEFFECTFV, alGetEffectfv);
-
-		LOAD_PROC(LPALGENAUXILIARYEFFECTSLOTS, alGenAuxiliaryEffectSlots);
-		LOAD_PROC(LPALDELETEAUXILIARYEFFECTSLOTS, alDeleteAuxiliaryEffectSlots);
-		LOAD_PROC(LPALISAUXILIARYEFFECTSLOT, alIsAuxiliaryEffectSlot);
-		LOAD_PROC(LPALAUXILIARYEFFECTSLOTI, alAuxiliaryEffectSloti);
-		LOAD_PROC(LPALAUXILIARYEFFECTSLOTIV, alAuxiliaryEffectSlotiv);
-		LOAD_PROC(LPALAUXILIARYEFFECTSLOTF, alAuxiliaryEffectSlotf);
-		LOAD_PROC(LPALAUXILIARYEFFECTSLOTFV, alAuxiliaryEffectSlotfv);
-		LOAD_PROC(LPALGETAUXILIARYEFFECTSLOTI, alGetAuxiliaryEffectSloti);
-		LOAD_PROC(LPALGETAUXILIARYEFFECTSLOTIV, alGetAuxiliaryEffectSlotiv);
-		LOAD_PROC(LPALGETAUXILIARYEFFECTSLOTF, alGetAuxiliaryEffectSlotf);
-		LOAD_PROC(LPALGETAUXILIARYEFFECTSLOTFV, alGetAuxiliaryEffectSlotfv);
-	#undef LOAD_PROC
-
+		loadEFX();
 		errr = alGetError();
 		if(errr != AL_NO_ERROR) {
 			error("Loading EFX, OpenAL error: " + std::to_string(errr));
