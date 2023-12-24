@@ -6,7 +6,33 @@
 //-----------------------------------------------------------------------------
 #include "audio.h"
 
-namespace syj {
+namespace syj
+{
+    /* Effect object functions */
+    LPALGENEFFECTS audioPlayer::alGenEffects;
+    LPALDELETEEFFECTS audioPlayer::alDeleteEffects;
+    LPALISEFFECT audioPlayer::alIsEffect;
+    LPALEFFECTI audioPlayer::alEffecti;
+    LPALEFFECTIV audioPlayer::alEffectiv;
+    LPALEFFECTF audioPlayer::alEffectf;
+    LPALEFFECTFV audioPlayer::alEffectfv;
+    LPALGETEFFECTI audioPlayer::alGetEffecti;
+    LPALGETEFFECTIV audioPlayer::alGetEffectiv;
+    LPALGETEFFECTF audioPlayer::alGetEffectf;
+    LPALGETEFFECTFV audioPlayer::alGetEffectfv;
+
+    LPALGENAUXILIARYEFFECTSLOTS audioPlayer::alGenAuxiliaryEffectSlots;
+    LPALDELETEAUXILIARYEFFECTSLOTS audioPlayer::alDeleteAuxiliaryEffectSlots;
+    LPALISAUXILIARYEFFECTSLOT audioPlayer::alIsAuxiliaryEffectSlot;
+    LPALAUXILIARYEFFECTSLOTI audioPlayer::alAuxiliaryEffectSloti;
+    LPALAUXILIARYEFFECTSLOTIV audioPlayer::alAuxiliaryEffectSlotiv;
+    LPALAUXILIARYEFFECTSLOTF audioPlayer::alAuxiliaryEffectSlotf;
+    LPALAUXILIARYEFFECTSLOTFV audioPlayer::alAuxiliaryEffectSlotfv;
+    LPALGETAUXILIARYEFFECTSLOTI audioPlayer::alGetAuxiliaryEffectSloti;
+    LPALGETAUXILIARYEFFECTSLOTIV audioPlayer::alGetAuxiliaryEffectSlotiv;
+    LPALGETAUXILIARYEFFECTSLOTF audioPlayer::alGetAuxiliaryEffectSlotf;
+    LPALGETAUXILIARYEFFECTSLOTFV audioPlayer::alGetAuxiliaryEffectSlotfv;
+
 	//Audio player system initialization
 	audioPlayer::audioPlayer() {
 		for(int a = 0; a < GENERAL_SOUND_COUNT; a++) {

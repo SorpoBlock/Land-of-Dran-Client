@@ -20,31 +20,6 @@
 #define GENERAL_SOUND_COUNT 64
 #define GENERAL_SOUND_COUNT_MINUS_1 63 // I don't trust gcc with (GENERAL_SOUND_COUNT-1), rather play it safe
 
-/* Effect object functions */
-static LPALGENEFFECTS alGenEffects;
-static LPALDELETEEFFECTS alDeleteEffects;
-static LPALISEFFECT alIsEffect;
-static LPALEFFECTI alEffecti;
-static LPALEFFECTIV alEffectiv;
-static LPALEFFECTF alEffectf;
-static LPALEFFECTFV alEffectfv;
-static LPALGETEFFECTI alGetEffecti;
-static LPALGETEFFECTIV alGetEffectiv;
-static LPALGETEFFECTF alGetEffectf;
-static LPALGETEFFECTFV alGetEffectfv;
-
-static LPALGENAUXILIARYEFFECTSLOTS alGenAuxiliaryEffectSlots;
-static LPALDELETEAUXILIARYEFFECTSLOTS alDeleteAuxiliaryEffectSlots;
-static LPALISAUXILIARYEFFECTSLOT alIsAuxiliaryEffectSlot;
-static LPALAUXILIARYEFFECTSLOTI alAuxiliaryEffectSloti;
-static LPALAUXILIARYEFFECTSLOTIV alAuxiliaryEffectSlotiv;
-static LPALAUXILIARYEFFECTSLOTF alAuxiliaryEffectSlotf;
-static LPALAUXILIARYEFFECTSLOTFV alAuxiliaryEffectSlotfv;
-static LPALGETAUXILIARYEFFECTSLOTI alGetAuxiliaryEffectSloti;
-static LPALGETAUXILIARYEFFECTSLOTIV alGetAuxiliaryEffectSlotiv;
-static LPALGETAUXILIARYEFFECTSLOTF alGetAuxiliaryEffectSlotf;
-static LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv;
-
 namespace syj {
 	// Holds a sound file and metadata
 	struct sound {
@@ -92,6 +67,32 @@ namespace syj {
 	};
 
 	struct audioPlayer {
+
+        /* Effect object functions */
+        static LPALGENEFFECTS alGenEffects;
+        static LPALDELETEEFFECTS alDeleteEffects;
+        static LPALISEFFECT alIsEffect;
+        static LPALEFFECTI alEffecti;
+        static LPALEFFECTIV alEffectiv;
+        static LPALEFFECTF alEffectf;
+        static LPALEFFECTFV alEffectfv;
+        static LPALGETEFFECTI alGetEffecti;
+        static LPALGETEFFECTIV alGetEffectiv;
+        static LPALGETEFFECTF alGetEffectf;
+        static LPALGETEFFECTFV alGetEffectfv;
+
+        static LPALGENAUXILIARYEFFECTSLOTS alGenAuxiliaryEffectSlots;
+        static LPALDELETEAUXILIARYEFFECTSLOTS alDeleteAuxiliaryEffectSlots;
+        static LPALISAUXILIARYEFFECTSLOT alIsAuxiliaryEffectSlot;
+        static LPALAUXILIARYEFFECTSLOTI alAuxiliaryEffectSloti;
+        static LPALAUXILIARYEFFECTSLOTIV alAuxiliaryEffectSlotiv;
+        static LPALAUXILIARYEFFECTSLOTF alAuxiliaryEffectSlotf;
+        static LPALAUXILIARYEFFECTSLOTFV alAuxiliaryEffectSlotfv;
+        static LPALGETAUXILIARYEFFECTSLOTI alGetAuxiliaryEffectSloti;
+        static LPALGETAUXILIARYEFFECTSLOTIV alGetAuxiliaryEffectSlotiv;
+        static LPALGETAUXILIARYEFFECTSLOTF alGetAuxiliaryEffectSlotf;
+        static LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv;
+
 		// Updated to player position in update, used for sorting loops by distance:
 		static glm::vec3 musicSortPosition;
 
