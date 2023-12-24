@@ -1,5 +1,11 @@
 This is the client for the game Land of Dran.
 
+Website:
+https://dran.land
+
+Discord:
+https://discord.gg/X9pPq2z9us
+
 ### Linked Dependencies:
 
 The bullet physics library:
