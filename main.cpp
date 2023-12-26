@@ -47,7 +47,7 @@
 #include "code/graphics/bulletTrails.h"
 #include "code/gui/contentDownload.h"
 
-#define hardCodedNetworkVersion 10015
+#define hardCodedNetworkVersion 10016
 
 #define cammode_firstPerson 0
 #define cammode_thirdPerson 1
