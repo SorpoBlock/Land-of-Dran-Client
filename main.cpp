@@ -905,9 +905,21 @@ int main(int argc, char *argv[])
                         //gotta download at least one file...
 
                         IPaddress cdnServerAddr;
-                        SDLNet_ResolveHost(&cdnServerAddr,clientEnvironment.wantedIP.c_str(),20001);
+                        SDLNet_ResolveHost(&cdnServerAddr,clientEnvironment.wantedIP.c_str(),20000);
 
                         cdnClient = SDLNet_TCP_Open(&cdnServerAddr);
+
+                        if(!cdnClient)
+                        {
+                            delete serverConnection;
+                            serverConnection = 0;
+                            error("Could not connect to content server! (Did the host port-forward UDP AND TCP?");
+                            currentState = STATE_MAINMENU;
+                            clientEnvironment.cancelCustomContent = false;
+                            clientEnvironment.waitingToPickServer = true;
+                            break;
+                        }
+
                         cdnSocketSet = SDLNet_AllocSocketSet(1);
                         SDLNet_TCP_AddSocket(cdnSocketSet,cdnClient);
 
