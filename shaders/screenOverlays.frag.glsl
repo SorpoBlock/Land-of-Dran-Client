@@ -65,6 +65,8 @@ void main()
 			if(mySample > 0.5)
 				color = vec4(sunColor.rgb,1);
 		}
+		else 
+			color = vec4(0,0,0,0);
 	}
 	else
 		color = vec4(0,0,0,0);

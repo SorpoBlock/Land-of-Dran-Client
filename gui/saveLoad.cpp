@@ -87,7 +87,7 @@ bool saveBuild(const CEGUI::EventArgs &e)
     CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
     CEGUI::Window *saveLoadWindow = root->getChild("SaveLoad");
     clientStuff *clientEnvironment = (clientStuff*)saveLoadWindow->getUserData();
-    serverStuff *serverData = serverData;
+    serverStuff *serverData = clientEnvironment->serverData;
 
     std::string fileName = saveLoadWindow->getChild("BuildFilePath")->getText().c_str();
     if(fileName.length() < 1)
@@ -106,7 +106,7 @@ bool saveBuild(const CEGUI::EventArgs &e)
 
     float floatBuf = 0;
     unsigned char charBuf = 0;
-    unsigned int uIntBuf = landOfDranBuildMagic;
+    unsigned int uIntBuf = landOfDranBuildMagic+1;
     build.write((char*)&uIntBuf,sizeof(unsigned int));
 
     uIntBuf = serverData->staticBricks.getBrickCount();
@@ -169,6 +169,19 @@ bool saveBuild(const CEGUI::EventArgs &e)
 
         charBuf = brick->material;
         build.write((char*)&charBuf,sizeof(unsigned char));
+
+        //Client doesnt know brick ownership
+        int intBuf = -1;
+        build.write((char*)&intBuf,sizeof(int));
+
+        //Client doesnt know brick names
+        charBuf = 0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        //Don't feel like implementing print saving client side for now lol
+        //Client also doens't know about attached music, or lights, or collision for now
+        charBuf = 1;
+        build.write((char*)&charBuf,sizeof(unsigned char));
     }
 
     uIntBuf = serverData->staticBricks.transparentBasicBricks.size();
@@ -208,6 +221,19 @@ bool saveBuild(const CEGUI::EventArgs &e)
 
         charBuf = brick->material;
         build.write((char*)&charBuf,sizeof(unsigned char));
+
+        //Client doesnt know brick ownership
+        int intBuf = -1;
+        build.write((char*)&intBuf,sizeof(int));
+
+        //Client doesnt know brick names
+        charBuf = 0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        //Don't feel like implementing print saving client side for now lol
+        //Client also doens't know about attached music, or lights, or collision for now
+        charBuf = 1;
+        build.write((char*)&charBuf,sizeof(unsigned char));
     }
 
     uIntBuf = serverData->staticBricks.opaqueSpecialBricks.size();
@@ -241,6 +267,19 @@ bool saveBuild(const CEGUI::EventArgs &e)
 
         charBuf = brick->material;
         build.write((char*)&charBuf,sizeof(unsigned char));
+
+        //Client doesnt know brick ownership
+        int intBuf = -1;
+        build.write((char*)&intBuf,sizeof(int));
+
+        //Client doesnt know brick names
+        charBuf = 0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        //Don't feel like implementing print saving client side for now lol
+        //Client also doens't know about attached music, or lights, or collision for now
+        charBuf = 1;
+        build.write((char*)&charBuf,sizeof(unsigned char));
     }
 
     uIntBuf = serverData->staticBricks.transparentSpecialBricks.size();
@@ -273,6 +312,19 @@ bool saveBuild(const CEGUI::EventArgs &e)
         build.write((char*)&charBuf,sizeof(unsigned char));
 
         charBuf = brick->material;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        //Client doesnt know brick ownership
+        int intBuf = -1;
+        build.write((char*)&intBuf,sizeof(int));
+
+        //Client doesnt know brick names
+        charBuf = 0;
+        build.write((char*)&charBuf,sizeof(unsigned char));
+
+        //Don't feel like implementing print saving client side for now lol
+        //Client also doens't know about attached music, or lights, or collision for now
+        charBuf = 1;
         build.write((char*)&charBuf,sizeof(unsigned char));
     }
 
