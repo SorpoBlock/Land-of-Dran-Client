@@ -1055,6 +1055,12 @@ int main(int argc, char *argv[])
 
                 if(clientEnvironment.exitToWindows)
                 {
+                    packet quitPacket;
+                    quitPacket.writeUInt(clientPacketType_requestName,4);
+                    quitPacket.writeUInt(0,32);
+                    serverConnection->send(&quitPacket,true);
+                    serverConnection->run();
+
                     currentState = STATE_QUITTING;
                     break;
                 }
