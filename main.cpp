@@ -60,7 +60,8 @@ using namespace std::chrono;
 void gotKicked(client *theClient,unsigned int reason,void *userData)
 {
     clientStuff *clientEnvironment = (clientStuff*)userData;
-    clientEnvironment->serverData->kicked = true;
+    if(clientEnvironment->serverData)
+        clientEnvironment->serverData->kicked = true;
     clientEnvironment->fatalNotify("Disconnected!","Connection with server lost, reason: " + std::to_string(reason) + ".","Exit");
 }
 
@@ -879,6 +880,24 @@ int main(int argc, char *argv[])
                     continue;
                 }
 
+                if(clientEnvironment.fatalNotifyStarted)
+                {
+                    int *status = (int*)clientEnvironment.messageBox->getUserData();
+                    if(status)
+                    {
+                        if(status[0] == 0)
+                        {
+                            delete serverConnection;
+                            serverConnection = 0;
+                            clientEnvironment.fatalNotifyStarted = false;
+                            clientEnvironment.cancelCustomContent = false;
+                            clientEnvironment.waitingToPickServer = true;
+                            currentState = STATE_MAINMENU;
+                            break;
+                        }
+                    }
+                }
+
                 if(!clientEnvironment.waitingOnContentList)
                 {
                     bool oneEnabled = false;
@@ -1036,6 +1055,12 @@ int main(int argc, char *argv[])
 
                 if(clientEnvironment.exitToWindows)
                 {
+                    packet quitPacket;
+                    quitPacket.writeUInt(clientPacketType_requestName,4);
+                    quitPacket.writeUInt(0,32);
+                    serverConnection->send(&quitPacket,true);
+                    serverConnection->run();
+
                     currentState = STATE_QUITTING;
                     break;
                 }
@@ -1047,7 +1072,10 @@ int main(int argc, char *argv[])
                     {
                         if(status[0] == 0)
                         {
-                            currentState = STATE_QUITTING;
+                            clientEnvironment.waitingToPickServer = true;
+                            clientEnvironment.ignoreGamePackets = true;
+                            clientEnvironment.fatalNotifyStarted = false;
+                            currentState = STATE_CLEANUP;
                             break;
                         }
                     }
@@ -1257,6 +1285,13 @@ int main(int argc, char *argv[])
 
                     if(event.type == SDL_QUIT)
                     {
+
+                        packet quitPacket;
+                        quitPacket.writeUInt(clientPacketType_requestName,4);
+                        quitPacket.writeUInt(0,32);
+                        serverConnection->send(&quitPacket,true);
+                        serverConnection->run();
+
                         currentState = STATE_QUITTING;
                         break;
                     }
@@ -2827,6 +2862,11 @@ int main(int argc, char *argv[])
                 //serverData->debugColors.push_back(glm::vec3(1,1,1));
 
                 info("Connection established, requesting types...");
+
+                CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
+                CEGUI::Window *evalWindow = root->getChild("HUD/EvalWindow");
+                evalWindow->getChild("Login")->setVisible(true);
+                evalWindow->getChild("Code")->setVisible(false);
 
                 currentState = STATE_LOADING;
                 break;
