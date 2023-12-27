@@ -1285,6 +1285,13 @@ int main(int argc, char *argv[])
 
                     if(event.type == SDL_QUIT)
                     {
+
+                        packet quitPacket;
+                        quitPacket.writeUInt(clientPacketType_requestName,4);
+                        quitPacket.writeUInt(0,32);
+                        serverConnection->send(&quitPacket,true);
+                        serverConnection->run();
+
                         currentState = STATE_QUITTING;
                         break;
                     }
@@ -2855,6 +2862,11 @@ int main(int argc, char *argv[])
                 //serverData->debugColors.push_back(glm::vec3(1,1,1));
 
                 info("Connection established, requesting types...");
+
+                CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
+                CEGUI::Window *evalWindow = root->getChild("HUD/EvalWindow");
+                evalWindow->getChild("Login")->setVisible(true);
+                evalWindow->getChild("Code")->setVisible(false);
 
                 currentState = STATE_LOADING;
                 break;
