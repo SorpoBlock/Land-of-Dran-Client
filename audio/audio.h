@@ -67,32 +67,6 @@ namespace syj {
 	};
 
 	struct audioPlayer {
-
-        /* Effect object functions */
-        static LPALGENEFFECTS alGenEffects;
-        static LPALDELETEEFFECTS alDeleteEffects;
-        static LPALISEFFECT alIsEffect;
-        static LPALEFFECTI alEffecti;
-        static LPALEFFECTIV alEffectiv;
-        static LPALEFFECTF alEffectf;
-        static LPALEFFECTFV alEffectfv;
-        static LPALGETEFFECTI alGetEffecti;
-        static LPALGETEFFECTIV alGetEffectiv;
-        static LPALGETEFFECTF alGetEffectf;
-        static LPALGETEFFECTFV alGetEffectfv;
-
-        static LPALGENAUXILIARYEFFECTSLOTS alGenAuxiliaryEffectSlots;
-        static LPALDELETEAUXILIARYEFFECTSLOTS alDeleteAuxiliaryEffectSlots;
-        static LPALISAUXILIARYEFFECTSLOT alIsAuxiliaryEffectSlot;
-        static LPALAUXILIARYEFFECTSLOTI alAuxiliaryEffectSloti;
-        static LPALAUXILIARYEFFECTSLOTIV alAuxiliaryEffectSlotiv;
-        static LPALAUXILIARYEFFECTSLOTF alAuxiliaryEffectSlotf;
-        static LPALAUXILIARYEFFECTSLOTFV alAuxiliaryEffectSlotfv;
-        static LPALGETAUXILIARYEFFECTSLOTI alGetAuxiliaryEffectSloti;
-        static LPALGETAUXILIARYEFFECTSLOTIV alGetAuxiliaryEffectSlotiv;
-        static LPALGETAUXILIARYEFFECTSLOTF alGetAuxiliaryEffectSlotf;
-        static LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv;
-
 		// Updated to player position in update, used for sorting loops by distance:
 		static glm::vec3 musicSortPosition;
 
@@ -118,6 +92,9 @@ namespace syj {
 
 		void playSound(int soundID, location *loc = NULL, float pitch = 1.0, float volume = 1.0, int loopID = audioPlayerNotLooping);
 		void removeLoop(int loopID);
+
+		// EFX
+		void loadEFX();
 
 		// Sorts music loops by distance and passes our player transform to OpenAL.
 		// TODO: Up vector is always 0,1,0 for now, but we do lean sometimes...?

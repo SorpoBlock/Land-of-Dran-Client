@@ -5,7 +5,69 @@
 //-----------------------------------------------------------------------------
 #include "audio.h"
 
+/* Effect object functions */
+static LPALGENEFFECTS alGenEffects;
+static LPALDELETEEFFECTS alDeleteEffects;
+static LPALISEFFECT alIsEffect;
+static LPALEFFECTI alEffecti;
+static LPALEFFECTIV alEffectiv;
+static LPALEFFECTF alEffectf;
+static LPALEFFECTFV alEffectfv;
+static LPALGETEFFECTI alGetEffecti;
+static LPALGETEFFECTIV alGetEffectiv;
+static LPALGETEFFECTF alGetEffectf;
+static LPALGETEFFECTFV alGetEffectfv;
+static LPALGENAUXILIARYEFFECTSLOTS alGenAuxiliaryEffectSlots;
+static LPALDELETEAUXILIARYEFFECTSLOTS alDeleteAuxiliaryEffectSlots;
+static LPALISAUXILIARYEFFECTSLOT alIsAuxiliaryEffectSlot;
+static LPALAUXILIARYEFFECTSLOTI alAuxiliaryEffectSloti;
+static LPALAUXILIARYEFFECTSLOTIV alAuxiliaryEffectSlotiv;
+static LPALAUXILIARYEFFECTSLOTF alAuxiliaryEffectSlotf;
+static LPALAUXILIARYEFFECTSLOTFV alAuxiliaryEffectSlotfv;
+static LPALGETAUXILIARYEFFECTSLOTI alGetAuxiliaryEffectSloti;
+static LPALGETAUXILIARYEFFECTSLOTIV alGetAuxiliaryEffectSlotiv;
+static LPALGETAUXILIARYEFFECTSLOTF alGetAuxiliaryEffectSlotf;
+static LPALGETAUXILIARYEFFECTSLOTFV alGetAuxiliaryEffectSlotfv;
+
 namespace syj {
+	//Load EFX
+	void audioPlayer::loadEFX() {
+		#if __STDC_VERSION__ >= 199901L
+		#define FUNCTION_CAST(T, ptr) (union {void *p; T f; }){ptr}.f
+		#elif defined(__cplusplus)
+		#define FUNCTION_CAST(T, ptr) reinterpret_cast<T>(ptr)
+		#else
+		#define FUNCTION_CAST(T, ptr) (T)(ptr)
+		#endif
+
+		#define LOAD_PROC(T, x) ((x) = FUNCTION_CAST(T, alGetProcAddress(#x)))
+			// FUNCTION_CAST(LPALGENEFFECTS,alGetProcAddress(alGenEffects));
+			LOAD_PROC(LPALGENEFFECTS, alGenEffects);
+			LOAD_PROC(LPALDELETEEFFECTS, alDeleteEffects);
+			LOAD_PROC(LPALISEFFECT, alIsEffect);
+			LOAD_PROC(LPALEFFECTI, alEffecti);
+			LOAD_PROC(LPALEFFECTIV, alEffectiv);
+			LOAD_PROC(LPALEFFECTF, alEffectf);
+			LOAD_PROC(LPALEFFECTFV, alEffectfv);
+			LOAD_PROC(LPALGETEFFECTI, alGetEffecti);
+			LOAD_PROC(LPALGETEFFECTIV, alGetEffectiv);
+			LOAD_PROC(LPALGETEFFECTF, alGetEffectf);
+			LOAD_PROC(LPALGETEFFECTFV, alGetEffectfv);
+
+			LOAD_PROC(LPALGENAUXILIARYEFFECTSLOTS, alGenAuxiliaryEffectSlots);
+			LOAD_PROC(LPALDELETEAUXILIARYEFFECTSLOTS, alDeleteAuxiliaryEffectSlots);
+			LOAD_PROC(LPALISAUXILIARYEFFECTSLOT, alIsAuxiliaryEffectSlot);
+			LOAD_PROC(LPALAUXILIARYEFFECTSLOTI, alAuxiliaryEffectSloti);
+			LOAD_PROC(LPALAUXILIARYEFFECTSLOTIV, alAuxiliaryEffectSlotiv);
+			LOAD_PROC(LPALAUXILIARYEFFECTSLOTF, alAuxiliaryEffectSlotf);
+			LOAD_PROC(LPALAUXILIARYEFFECTSLOTFV, alAuxiliaryEffectSlotfv);
+			LOAD_PROC(LPALGETAUXILIARYEFFECTSLOTI, alGetAuxiliaryEffectSloti);
+			LOAD_PROC(LPALGETAUXILIARYEFFECTSLOTIV, alGetAuxiliaryEffectSlotiv);
+			LOAD_PROC(LPALGETAUXILIARYEFFECTSLOTF, alGetAuxiliaryEffectSlotf);
+			LOAD_PROC(LPALGETAUXILIARYEFFECTSLOTFV, alGetAuxiliaryEffectSlotfv);
+		#undef LOAD_PROC
+	}
+
 	//Get effect settings
 	EFXEAXREVERBPROPERTIES getEffectSettings(std::string in, bool &stopEffect) {
 		stopEffect = false;
