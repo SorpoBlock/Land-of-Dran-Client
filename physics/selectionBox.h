@@ -48,7 +48,7 @@ namespace syj
 
         void performRaycast(glm::vec3 start,glm::vec3 dir,btRigidBody *ignore = 0);
         void render(uniformsHolder *unis);
-        void drag(glm::vec3 position,glm::vec3 direction);
+        void drag(glm::vec3 position,glm::vec3 direction,float turnX,float turnY);
         void movePulls();
 
         selectionBox(btDynamicsWorld *_world,GLuint &_cubeVAO);

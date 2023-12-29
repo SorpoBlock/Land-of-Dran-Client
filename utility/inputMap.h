@@ -82,6 +82,16 @@ namespace syj
 
         public:
 
+        void resetKeyPresses()
+        {
+            for(int a = 0; a<inputCommand::endOfCommandEnum; a++)
+            {
+                keyPolled[a] = false;
+                keyToProcess[a] = false;
+                keyPressed[a] = false;
+            }
+        }
+
         SDL_Scancode getBoundKey(inputCommand forWhat)
         {
             if(forWhat > nothingBound && forWhat < endOfCommandEnum)
