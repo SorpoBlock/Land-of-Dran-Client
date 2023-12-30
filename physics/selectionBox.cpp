@@ -66,24 +66,7 @@ namespace syj
         delete ms;
     }
 
-            /*glm::vec3 up = middle + glm::vec3(0,1.0 + halfs.y,0);
-            glm::vec3 planeNormal = glm::normalize(up - position);
-            float length = 0;
-            if(intersectPlane(planeNormal,up,position,direction,length))*/
-    bool intersectPlane(const glm::vec3 &n, const glm::vec3 &p0, const glm::vec3 &l0, const glm::vec3 &l, float &t)
-    {
-        float denom = glm::dot(n, l);
-        if (denom > 1e-6)
-        {
-            glm::vec3 p0l0 = p0 - l0;
-            t = glm::dot(p0l0, n) / denom;
-            return (t >= 0);
-        }
-
-        return false;
-    }
-
-    void selectionBox::drag(glm::vec3 position,glm::vec3 direction)
+    void selectionBox::drag(glm::vec3 position,glm::vec3 direction,float turnX,float turnY)
     {
         if(currentPhase != selectionPhase::stretching)
             return;
@@ -94,135 +77,55 @@ namespace syj
         glm::vec3 halfs = BtToGlm((maxExtents - minExtents) / 2.0);
         glm::vec3 middle = BtToGlm(minExtents + glmToBt(halfs));
 
-        /*
-        btVector3 left = middle - btVector3(1.0 + halfs.x(),0,0);
-        btVector3 right = middle + btVector3(1.0 + halfs.x(),0,0);
-        btVector3 down = middle - btVector3(0,1.0 + halfs.y(),0);
-        btVector3 up = middle + btVector3(0,1.0 + halfs.y(),0);
-        btVector3 forward = middle + btVector3(0,0,1.0 + halfs.z());
-        btVector3 backward = middle - btVector3(0,0,1.0 + halfs.z());
-        */
-
         if(draggedBox == selectionSide::up)
         {
-            glm::vec3 up = middle + glm::vec3(0,1.0 + halfs.y,0); //position of dragging box
-            glm::vec3 planeNormal = glm::normalize(up - position);
-            float length = 0;
-            if(intersectPlane(planeNormal,up,position,direction,length))
-            {
-                glm::vec3 hitPos = position + direction * glm::vec3(length,length,length);
-                if(hitPos.y > minExtents.getY())
-                    maxExtents.setY(hitPos.y);
-            }
+            float val = maxExtents.getY()-turnY*10.0;
+            if(val < minExtents.getY()+0.1)
+                val = minExtents.getY()+0.1;
+            maxExtents.setY(val);
         }
         else if(draggedBox == selectionSide::down)
         {
-            glm::vec3 down = middle - glm::vec3(0,1.0 + halfs.y,0);
-            glm::vec3 planeNormal = glm::normalize(down - position);
-            float length = 0;
-            if(intersectPlane(planeNormal,down,position,direction,length))
-            {
-                glm::vec3 hitPos = position + direction * glm::vec3(length,length,length);
-                if(hitPos.y < maxExtents.getY())
-                    minExtents.setY(hitPos.y);
-            }
-        }
-        else if(draggedBox == selectionSide::forward)
-        {
-            glm::vec3 forward = middle + glm::vec3(0,0,1.0 + halfs.z);
-            glm::vec3 planeNormal = glm::vec3(0,-1,0);
-
-            float length = 0;
-            if(intersectPlane(planeNormal,forward,position,direction,length))
-            {
-                glm::vec3 hitPos = position + direction * glm::vec3(length,length,length);
-                if(hitPos.z > minExtents.getZ())
-                    maxExtents.setZ(hitPos.z);
-            }
-            else
-            {
-                planeNormal = glm::vec3(0,1,0);
-                length = 0;
-                if(intersectPlane(planeNormal,forward,position,direction,length))
-                {
-                    glm::vec3 hitPos = position + direction * glm::vec3(length,length,length);
-                    if(hitPos.z > minExtents.getZ())
-                        maxExtents.setZ(hitPos.z);
-                }
-            }
-        }
-        else if(draggedBox == selectionSide::backward)
-        {
-            glm::vec3 backward = middle - glm::vec3(0,0,1.0 + halfs.z);
-            glm::vec3 planeNormal = glm::vec3(0,-1,0);
-
-            float length = 0;
-            if(intersectPlane(planeNormal,backward,position,direction,length))
-            {
-                glm::vec3 hitPos = position + direction * glm::vec3(length,length,length);
-                if(hitPos.z < maxExtents.getZ())
-                    minExtents.setZ(hitPos.z);
-            }
-            else
-            {
-                planeNormal = glm::vec3(0,1,0);
-                length = 0;
-                if(intersectPlane(planeNormal,backward,position,direction,length))
-                {
-                    glm::vec3 hitPos = position + direction * glm::vec3(length,length,length);
-                    if(hitPos.z < maxExtents.getZ())
-                        minExtents.setZ(hitPos.z);
-                }
-            }
-        }
-        else if(draggedBox == selectionSide::left)
-        {
-            glm::vec3 left = middle - glm::vec3(1.0 + halfs.x,0,0);
-            glm::vec3 planeNormal = glm::vec3(0,-1,0);
-
-            float length = 0;
-            if(intersectPlane(planeNormal,left,position,direction,length))
-            {
-                glm::vec3 hitPos = position + direction * glm::vec3(length,length,length);
-                if(hitPos.x < maxExtents.getX())
-                    minExtents.setX(hitPos.x);
-            }
-            else
-            {
-                length = 0;
-                planeNormal = glm::vec3(0,1,0);
-                if(intersectPlane(planeNormal,left,position,direction,length))
-                {
-                    glm::vec3 hitPos = position + direction * glm::vec3(length,length,length);
-                    if(hitPos.x < maxExtents.getX())
-                        minExtents.setX(hitPos.x);
-                }
-            }
+            float val = minExtents.getY()-turnY*10.0;
+            if(val > maxExtents.getY()-0.1)
+                val = maxExtents.getY()-0.1;
+            minExtents.setY(val);
         }
         else if(draggedBox == selectionSide::right)
         {
-            glm::vec3 right = middle + glm::vec3(1.0 + halfs.x,0,0);
-            glm::vec3 planeNormal = glm::vec3(0,-1,0);
-
-            float length = 0;
-            if(intersectPlane(planeNormal,right,position,direction,length))
-            {
-                glm::vec3 hitPos = position + direction * glm::vec3(length,length,length);
-                if(hitPos.x > minExtents.getX())
-                    maxExtents.setX(hitPos.x);
-            }
-            else
-            {
-                planeNormal = glm::vec3(0,1,0);
-
-                length = 0;
-                if(intersectPlane(planeNormal,right,position,direction,length))
-                {
-                    glm::vec3 hitPos = position + direction * glm::vec3(length,length,length);
-                    if(hitPos.x > minExtents.getX())
-                        maxExtents.setX(hitPos.x);
-                }
-            }
+            if(position.z > middle.z)
+                turnX *= -1.0;
+            float val = maxExtents.getX()-turnX*10.0;
+            if(val < minExtents.getX()+0.1)
+                val = minExtents.getX()+0.1;
+            maxExtents.setX(val);
+        }
+        else if(draggedBox == selectionSide::left)
+        {
+            if(position.z > middle.z)
+                turnX *= -1.0;
+            float val = minExtents.getX()-turnX*10.0;
+            if(val > maxExtents.getX()-0.1)
+                val = maxExtents.getX()-0.1;
+            minExtents.setX(val);
+        }
+        else if(draggedBox == selectionSide::forward)
+        {
+            if(position.x < middle.x)
+                turnX *= -1.0;
+            float val = maxExtents.getZ()-turnX*10.0;
+            if(val < minExtents.getZ()+0.1)
+                val = minExtents.getZ()+0.1;
+            maxExtents.setZ(val);
+        }
+        else if(draggedBox == selectionSide::backward)
+        {
+            if(position.x < middle.x)
+                turnX *= -1.0;
+            float val = minExtents.getZ()-turnX*10.0;
+            if(val > maxExtents.getZ()-0.1)
+                val = maxExtents.getZ()-0.1;
+            minExtents.setZ(val);
         }
 
         movePulls();

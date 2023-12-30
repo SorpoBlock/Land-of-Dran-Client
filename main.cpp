@@ -1354,48 +1354,53 @@ int main(int argc, char *argv[])
                             }
                             else
                             {
-                                bool anyVisible = false;
-                                if(escapeMenu->isVisible())
-                                    anyVisible = true;
-                                if(optionsWindow->isVisible())
-                                   anyVisible = true;
-                                if(clientEnvironment.brickSelector->isVisible())
-                                   anyVisible = true;
-                                if(evalWindow->isVisible())
-                                   anyVisible = true;
-                                if(clientEnvironment.wrench->isVisible())
-                                   anyVisible = true;
-                                if(clientEnvironment.wheelWrench->isVisible())
-                                   anyVisible = true;
-                                if(clientEnvironment.steeringWrench->isVisible())
-                                   anyVisible = true;
-                                if(saveLoadWindow->isVisible())
-                                    anyVisible = true;
-                                if(clientEnvironment.playerList->isVisible())
-                                    anyVisible = true;
-                                if(godRayDebug->isVisible())
-                                    anyVisible = true;
-
-
-                                if(anyVisible)
-                                {
-                                    context.setMouseLock(true);
-                                    escapeMenu->setVisible(false);
-                                    clientEnvironment.brickSelector->setVisible(false);
-                                    optionsWindow->setVisible(false);
-                                    evalWindow->setVisible(false);
-                                    clientEnvironment.wrench->setVisible(false);
-                                    clientEnvironment.wheelWrench->setVisible(false);
-                                    clientEnvironment.steeringWrench->setVisible(false);
-                                    saveLoadWindow->setVisible(false);
-                                    clientEnvironment.playerList->setVisible(false);
-                                    godRayDebug->setVisible(false);
-                                }
+                                if(serverData->box->currentPhase != selectionBox::selectionPhase::idle)
+                                    serverData->box->currentPhase = selectionBox::selectionPhase::idle;
                                 else
                                 {
-                                    context.setMouseLock(false);
-                                    escapeMenu->setVisible(true);
-                                    escapeMenu->moveToFront();
+                                    bool anyVisible = false;
+                                    if(escapeMenu->isVisible())
+                                        anyVisible = true;
+                                    if(optionsWindow->isVisible())
+                                       anyVisible = true;
+                                    if(clientEnvironment.brickSelector->isVisible())
+                                       anyVisible = true;
+                                    if(evalWindow->isVisible())
+                                       anyVisible = true;
+                                    if(clientEnvironment.wrench->isVisible())
+                                       anyVisible = true;
+                                    if(clientEnvironment.wheelWrench->isVisible())
+                                       anyVisible = true;
+                                    if(clientEnvironment.steeringWrench->isVisible())
+                                       anyVisible = true;
+                                    if(saveLoadWindow->isVisible())
+                                        anyVisible = true;
+                                    if(clientEnvironment.playerList->isVisible())
+                                        anyVisible = true;
+                                    if(godRayDebug->isVisible())
+                                        anyVisible = true;
+
+
+                                    if(anyVisible)
+                                    {
+                                        context.setMouseLock(true);
+                                        escapeMenu->setVisible(false);
+                                        clientEnvironment.brickSelector->setVisible(false);
+                                        optionsWindow->setVisible(false);
+                                        evalWindow->setVisible(false);
+                                        clientEnvironment.wrench->setVisible(false);
+                                        clientEnvironment.wheelWrench->setVisible(false);
+                                        clientEnvironment.steeringWrench->setVisible(false);
+                                        saveLoadWindow->setVisible(false);
+                                        clientEnvironment.playerList->setVisible(false);
+                                        godRayDebug->setVisible(false);
+                                    }
+                                    else
+                                    {
+                                        context.setMouseLock(false);
+                                        escapeMenu->setVisible(true);
+                                        escapeMenu->moveToFront();
+                                    }
                                 }
                             }
                         }
@@ -1436,7 +1441,7 @@ int main(int argc, char *argv[])
                             y *= ((float)clientEnvironment.settings->mouseSensitivity) / 100.0;
                             serverData->playerCamera->turn(clientEnvironment.settings->invertMouseY ? y : -y,-x);
 
-                            serverData->box->drag(serverData->playerCamera->getPosition(),serverData->playerCamera->getDirection());
+                            serverData->box->drag(serverData->playerCamera->getPosition(),serverData->playerCamera->getDirection(),x,y);
                         }
                     }
 
@@ -1575,7 +1580,7 @@ int main(int argc, char *argv[])
                                 serverData->ghostCar = 0;
                             }
 
-                            serverData->box->currentPhase = selectionBox::selectionPhase::idle;
+                            //serverData->box->currentPhase = selectionBox::selectionPhase::idle;
                         }
 
                         if(event.button.button == SDL_BUTTON_LEFT && context.getMouseLocked())
@@ -1789,15 +1794,20 @@ int main(int argc, char *argv[])
                 {
                     if(clientEnvironment.currentlyOpen != brickBar)
                         bottomBarLastAct = SDL_GetTicks();
+                    playerInput.resetKeyPresses();
                     clientEnvironment.currentlyOpen = brickBar;
-
+                    serverData->ourTempBrick->resizeMode = 0;
                 }
+
                 if(guiClosed && !guiOpened)
                 {
                     if(clientEnvironment.currentlyOpen == brickBar)
                         bottomBarLastAct = SDL_GetTicks();
                     clientEnvironment.currentlyOpen = allClosed;
                 }
+
+                if(clientEnvironment.currentlyOpen != brickBar)
+                    playerInput.commandPressed(resizeToggle);
 
                 if(serverData->ourTempBrick->brickSlotSelected != -1)
                     serverData->ourTempBrick->manipulate(playerInput,hud,clientEnvironment.brickSelector,serverData->playerCamera->getYaw(),clientEnvironment.speaker,serverData->staticBricks);
@@ -2274,7 +2284,7 @@ int main(int argc, char *argv[])
                 if(waterFrame >= 2)
                     waterFrame = 0;
 
-                if(clientEnvironment.settings->waterQuality != waterStatic && waterRefraction)
+                if(clientEnvironment.settings->waterQuality != waterStatic && waterRefraction && serverData->waterLevel > 0)
                 {
                     if(waterFrame == 0)
                     {
@@ -2456,7 +2466,7 @@ int main(int argc, char *argv[])
 
                         glDisable(GL_CULL_FACE);
 
-                        if(clientEnvironment.settings->waterQuality != waterStatic && waterRefraction)
+                        if(clientEnvironment.settings->waterQuality != waterStatic && waterRefraction && serverData->waterLevel > 0)
                         {
                             waterUnis->use();
                                 clientEnvironment.settings->render(waterUnis);
@@ -2472,11 +2482,24 @@ int main(int argc, char *argv[])
                                 dudvTexture->bind(normal);
 
                                 water.render(waterUnis);
-
-                                oldModelUnis->use();
                         }
 
+                        //The flat placeholder land at the bottom of the world...
+                        whichModelUnis->use();
+                            clientEnvironment.settings->render(whichModelUnis);
+                            serverData->playerCamera->render(whichModelUnis);
+                            serverData->env->passUniforms(whichModelUnis);
+                            renderLights(whichModelUnis,serverData->lights);
+                            glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),1);
+                            grass.use(whichModelUnis);
+                            glBindVertexArray(quadVAO);
+                            glDrawArrays(GL_TRIANGLES,0,6);
+                            glBindVertexArray(0);
+                            glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),0);
+
                         glEnable(GL_CULL_FACE);
+
+                        oldModelUnis->use();
 
                         //Render faces for players, pretty much:
                         for(unsigned int a = 0; a<serverData->newDynamicTypes.size(); a++)
@@ -2655,7 +2678,7 @@ int main(int argc, char *argv[])
                         serverData->box->render(boxEdgesUnis);
 
                     //Just for the transparent blue quad of crappy water, good water is rendered first thing
-                    if(clientEnvironment.settings->waterQuality == waterStatic || !waterRefraction)
+                    if((clientEnvironment.settings->waterQuality == waterStatic || !waterRefraction) && serverData->waterLevel > 0 )
                     {
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -2894,6 +2917,8 @@ int main(int argc, char *argv[])
                         serverData->staticBricks.allocatePerTexture(clientEnvironment.prints->textures[a],false,false,true);
 
                     serverData->ourTempBrick = new tempBrick(serverData->staticBricks);
+                    serverData->ourTempBrick->resizeMode = 0;
+                    hud->getChild("ResizeText")->setVisible(false);
 
                     info("Starting main game loop!");
                     currentState = STATE_PLAYING;
