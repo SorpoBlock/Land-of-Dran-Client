@@ -1925,8 +1925,6 @@ int main(int argc, char *argv[])
 
                             for(int a = 0; a<res.m_collisionObjects.size(); a++)
                             {
-                                std::cout<<fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-BtToGlm(v)))<<" idx: "<<res.m_collisionObjects[a]->getUserIndex()<<"\n";
-
                                 if(res.m_collisionObjects[a]->getUserIndex() == userIndex_livingBrick)
                                     continue;
 
@@ -1966,7 +1964,7 @@ int main(int argc, char *argv[])
                                     serverData->currentPlayer->useGlobalTransform = false;
 
                                 serverData->playerCamera->thirdPersonTarget = serverData->cameraTarget->modelInterpolator.getPosition() + serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
-                                serverData->playerCamera->thirdPersonDistance = dist * 0.98;
+                                serverData->playerCamera->thirdPersonDistance = 30 * 0.98;
                                 serverData->playerCamera->setPosition(serverData->cameraTarget->modelInterpolator.getPosition());
                                 serverData->playerCamera->turn(0,0);
                             }
