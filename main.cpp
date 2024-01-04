@@ -261,8 +261,7 @@ int main(int argc, char *argv[])
                     *emitterUnis=0,*fontUnis=0,*godPrePassBrickUnis=0,
                     *godPrePassSunUnis=0,*modelUnis=0,*modelShadowUnis=0,
                     *oldModelUnis=0,*rectToCubeUnis=0,*screenOverlaysUnis=0,
-                    *shadowBrickUnis=0,*simpleBrickUnis=0,*waterUnis=0,
-                    *brickDNCUnis=0,*modelDNCUnis=0;
+                    *shadowBrickUnis=0,*waterUnis=0,*modelDNCUnis=0;
 
     info(std::to_string(programUnis.size()) + " shaders loaded.");
     for(int a = 0; a<programUnis.size(); a++)
@@ -294,12 +293,8 @@ int main(int argc, char *argv[])
             screenOverlaysUnis = programUnis[a];
         else if(programName == "shadowBrick")
             shadowBrickUnis = programUnis[a];
-        else if(programName == "simpleBrick")
-            simpleBrickUnis = programUnis[a];
         else if(programName == "water")
             waterUnis = programUnis[a];
-        else if(programName == "brickDNC")
-            brickDNCUnis = programUnis[a];
         else if(programName == "modelDNC")
             modelDNCUnis = programUnis[a];
         else
@@ -342,30 +337,6 @@ int main(int argc, char *argv[])
 
     clientEnvironment.picker = new avatarPicker(context.getResolution().x,context.getResolution().y);
 
-    btDefaultCollisionConfiguration *collisionConfiguration = new btDefaultCollisionConfiguration();
-    btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
-    btBroadphaseInterface* broadphase = new btDbvtBroadphase();
-    btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
-    btGImpactCollisionAlgorithm::registerAlgorithm(dispatcher);
-
-    btDynamicsWorld *world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
-
-    btCollisionShape *plane = 0;
-    btDefaultMotionState* planeState = 0;
-    btRigidBody *groundPlane = 0;
-
-    btVector3 gravity = btVector3(0,-70,0);
-    world->setGravity(gravity);
-    world->setForceUpdateAllAabbs(false); //Remove this and static bricks will lag the physics implementation a ton
-
-    plane = new btStaticPlaneShape(btVector3(0,1,0),0);
-    planeState = new btDefaultMotionState();
-    btRigidBody::btRigidBodyConstructionInfo planeCon(0,planeState,plane);
-    groundPlane = new btRigidBody(planeCon);
-    groundPlane->setFriction(1.0);
-    //groundPlane->setUserIndex(bodyUserIndex_plane);
-    world->addRigidBody(groundPlane);
-
     CEGUI::Window *bounceText = addGUIFromFile("justText.layout");
     bounceText->setVisible(true);
     bounceText->moveToBack();
@@ -405,6 +376,15 @@ int main(int argc, char *argv[])
     customFileDescriptor *downloading = 0;
     std::ofstream currentDownloadFile;
 
+    btDefaultCollisionConfiguration *collisionConfiguration = 0;
+    btCollisionDispatcher* dispatcher = 0;
+    btBroadphaseInterface* broadphase = 0;
+    btSequentialImpulseConstraintSolver* solver = 0;
+    btDynamicsWorld *world = 0;
+    btCollisionShape *plane = 0;
+    btDefaultMotionState* planeState = 0;
+    btRigidBody *groundPlane = 0;
+
     //Start connect screen
     //Start-up has finished
 
@@ -422,9 +402,33 @@ int main(int argc, char *argv[])
             }
             case STATE_CLEANUP:
             {
+                info("Starting clean up...");
+
+                ((CEGUI::Combobox *)clientEnvironment.wrench->getChild("MusicDropdown"))->resetList();
+
+                if(clientEnvironment.picker)
+                {
+                    if(clientEnvironment.picker->pickingPlayer)
+                    {
+                        delete clientEnvironment.picker->pickingPlayer;
+                        clientEnvironment.picker->pickingPlayer = 0;
+                    }
+
+                    for(int a = 0; a<clientEnvironment.picker->faceDecals.size(); a++)
+                        delete clientEnvironment.picker->faceDecals[a];
+                    clientEnvironment.picker->faceDecals.clear();
+                }
+
                 clientEnvironment.ignoreGamePackets = true;
 
                 serverStuff *serverData = clientEnvironment.serverData;
+
+                for(int a = 0; a<serverData->livingBricks.size(); a++)
+                {
+                    for(int b = 0; b<serverData->livingBricks[a]->newWheels.size(); b++)
+                        delete serverData->livingBricks[a]->newWheels[b];
+                    serverData->livingBricks[a]->newWheels.clear();
+                }
 
                 //Clear chats:
                 CEGUI::Listbox* chat = (CEGUI::Listbox*)clientEnvironment.chat;
@@ -545,6 +549,15 @@ int main(int argc, char *argv[])
                 if(waterRefraction)
                     delete waterRefraction;
                 waterRefraction = 0;
+
+                delete groundPlane;
+                delete plane;
+                delete planeState;
+                delete world;
+                delete collisionConfiguration;
+                delete dispatcher;
+                delete broadphase;
+                delete solver;
 
                 currentState = STATE_MAINMENU;
                 break;
@@ -1240,7 +1253,7 @@ int main(int argc, char *argv[])
                 btVector3 raystart = glmToBt(serverData->playerCamera->getPosition());
                 btVector3 rayend = glmToBt(serverData->playerCamera->getPosition() + serverData->playerCamera->getDirection() * glm::vec3(30.0));
                 btCollisionWorld::AllHitsRayResultCallback res(raystart,rayend);
-                world->rayTest(raystart,rayend,res);
+                world->rayTest(raystart,rayend,res); //Crash here, but it was when server crashed, 01Jan2024
 
                 int idx = -1;
                 float dist = 9999999;
@@ -2234,14 +2247,10 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                /*glFlush();
-                glFinish();
-                SDL_Delay(1);*/
-
                 //Graphics:
                 //Sun direction sundirection
 
-                uniformsHolder *whichBrickUnis = serverData->env->useIBL ? brickUnis : brickDNCUnis;
+                uniformsHolder *whichBrickUnis = brickUnis;
                 uniformsHolder *whichModelUnis = serverData->env->useIBL ? modelUnis : modelDNCUnis;
 
                 clientEnvironment.nonInstancedShader = oldModelUnis;
@@ -2251,30 +2260,21 @@ int main(int argc, char *argv[])
 
                 bdrf->bind(brdf);
 
-                std::string oldName = "";
-
                 serverData->env->godRayPass->bind();
                 //if(clientEnvironment.settings->godRayQuality != godRaysOff)
                 //{
                     godPrePassSunUnis->use();
 
-                        glUniform1i(godPrePassSunUnis->doingGodRayPass,true);
-                        oldName = serverData->playerCamera->name;
-                        serverData->playerCamera->name = "Shadow";
-                        serverData->playerCamera->render(godPrePassSunUnis);
+                        serverData->playerCamera->render(godPrePassSunUnis,"Player");
                         serverData->env->passUniforms(godPrePassSunUnis);
                         serverData->env->drawSun(godPrePassSunUnis);
-                        glUniform1i(godPrePassSunUnis->doingGodRayPass,false);
 
                     godPrePassBrickUnis->use();
 
-                        glUniform1i(godPrePassBrickUnis->doingGodRayPass,true);
-                        serverData->playerCamera->render(godPrePassBrickUnis);
-                        serverData->playerCamera->name = oldName;
+                        serverData->playerCamera->render(godPrePassBrickUnis,"Player");
                         serverData->staticBricks.renderEverything(godPrePassBrickUnis,true,0,SDL_GetTicks()/25);
                         for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
                             serverData->livingBricks[a]->renderAlive(godPrePassBrickUnis,true,SDL_GetTicks()/25);
-                        glUniform1i(godPrePassBrickUnis->doingGodRayPass,false);
                 //}
                 serverData->env->godRayPass->unbind();
 
@@ -2295,7 +2295,7 @@ int main(int argc, char *argv[])
                                     glUniform1f(oldModelUnis->clipHeight,-serverData->waterLevel);
                                 else
                                     glUniform1f(oldModelUnis->clipHeight,serverData->waterLevel);
-                                serverData->playerCamera->renderReflection(oldModelUnis,serverData->waterLevel);
+                                serverData->playerCamera->renderReflection(oldModelUnis,serverData->waterLevel,"Player");
                                 serverData->env->passUniforms(oldModelUnis);
                                 clientEnvironment.settings->render(oldModelUnis);
                                 serverData->env->drawSky(oldModelUnis);
@@ -2308,12 +2308,20 @@ int main(int argc, char *argv[])
                                 else
                                     glUniform1f(whichModelUnis->clipHeight,serverData->waterLevel);
                                 clientEnvironment.settings->render(whichModelUnis);
-                                serverData->playerCamera->renderReflection(whichModelUnis,serverData->waterLevel);
+                                serverData->playerCamera->renderReflection(whichModelUnis,serverData->waterLevel,"Player");
                                 serverData->env->passUniforms(whichModelUnis);
                                 for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
                                     serverData->newDynamicTypes[a]->renderInstanced(whichModelUnis);
 
                                 clientEnvironment.newWheelModel->renderInstanced(whichModelUnis);
+
+                                //The flat placeholder land at the bottom of the world...
+                                glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),1);
+                                grass.use(whichModelUnis);
+                                glBindVertexArray(quadVAO);
+                                glDrawArrays(GL_TRIANGLES,0,6);
+                                glBindVertexArray(0);
+                                glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),0);
 
 
                                 /*for(unsigned int a = 0; a<serverData->dynamics.size(); a++)
@@ -2333,7 +2341,7 @@ int main(int argc, char *argv[])
                                     glUniform1f(whichBrickUnis->clipHeight,-serverData->waterLevel);
                                 else
                                     glUniform1f(whichBrickUnis->clipHeight,serverData->waterLevel);
-                                serverData->playerCamera->renderReflection(whichBrickUnis,serverData->waterLevel);
+                                serverData->playerCamera->renderReflection(whichBrickUnis,serverData->waterLevel,"Player");
                                 serverData->env->passUniforms(whichBrickUnis);
                                 clientEnvironment.settings->render(whichBrickUnis);
 
@@ -2357,19 +2365,27 @@ int main(int argc, char *argv[])
                                 else
                                     glUniform1f(whichModelUnis->clipHeight,-serverData->waterLevel);
                                 clientEnvironment.settings->render(whichModelUnis);
-                                serverData->playerCamera->render(whichModelUnis);
+                                serverData->playerCamera->render(whichModelUnis,"Player");
                                 serverData->env->passUniforms(whichModelUnis);
                                 for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
                                     serverData->newDynamicTypes[a]->renderInstanced(whichModelUnis);
 
                                 clientEnvironment.newWheelModel->renderInstanced(whichModelUnis);
 
+                                //The flat placeholder land at the bottom of the world...
+                                glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),1);
+                                grass.use(whichModelUnis);
+                                glBindVertexArray(quadVAO);
+                                glDrawArrays(GL_TRIANGLES,0,6);
+                                glBindVertexArray(0);
+                                glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),0);
+
                             oldModelUnis->use();
                                 if(serverData->playerCamera->getPosition().y < serverData->waterLevel)
                                     glUniform1f(oldModelUnis->clipHeight,serverData->waterLevel);
                                 else
                                     glUniform1f(oldModelUnis->clipHeight,-serverData->waterLevel);
-                                serverData->playerCamera->render(oldModelUnis);
+                                serverData->playerCamera->render(oldModelUnis,"Player");
                                 serverData->env->passUniforms(oldModelUnis);
 
                             /*tessUnis->use();
@@ -2387,7 +2403,7 @@ int main(int argc, char *argv[])
                                     glUniform1f(whichBrickUnis->clipHeight,serverData->waterLevel);
                                 else
                                     glUniform1f(whichBrickUnis->clipHeight,-serverData->waterLevel);
-                                serverData->playerCamera->render(whichBrickUnis);
+                                serverData->playerCamera->render(whichBrickUnis,"Player");
                                 glEnable(GL_BLEND);
                                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                                 serverData->staticBricks.renderEverything(whichBrickUnis,false,&grass,SDL_GetTicks()/25);
@@ -2429,6 +2445,7 @@ int main(int argc, char *argv[])
                     serverData->env->shadowBuffer->bind();
 
                         modelShadowUnis->use();
+                            glUniform1i(modelShadowUnis->doingGeomShadows,true);
                             serverData->env->passLightMatricies(modelShadowUnis);
                             for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
                                 serverData->newDynamicTypes[a]->renderInstancedWithoutMaterials();
@@ -2437,6 +2454,7 @@ int main(int argc, char *argv[])
                         glDisable(GL_CULL_FACE);
 
                         shadowBrickUnis->use();
+                                glUniform1i(shadowBrickUnis->doingGeomShadows,true);
                                 serverData->env->passLightMatricies(shadowBrickUnis);
                                 serverData->staticBricks.renderEverything(shadowBrickUnis,true,0,SDL_GetTicks()/25);
                                 for(unsigned int a = 0; a<serverData->livingBricks.size(); a++)
@@ -2458,7 +2476,7 @@ int main(int argc, char *argv[])
 
                     oldModelUnis->use();
                         clientEnvironment.settings->render(oldModelUnis);
-                        serverData->playerCamera->render(oldModelUnis); //change
+                        serverData->playerCamera->render(oldModelUnis,"Player"); //change
                         serverData->env->passUniforms(oldModelUnis);
                         renderLights(oldModelUnis,serverData->lights);
 
@@ -2474,7 +2492,7 @@ int main(int argc, char *argv[])
                                 glUniform1f(waterUnis->waterDelta,((float)SDL_GetTicks())*0.0001);
                                 glUniform1f(waterUnis->target->getUniformLocation("waterLevel"),serverData->waterLevel); //TODO: Don't string match this every frame
                                 serverData->env->passUniforms(waterUnis,true);
-                                serverData->playerCamera->render(waterUnis);
+                                serverData->playerCamera->render(waterUnis,"Player");
 
                                 waterReflection->colorResult->bind(reflection);
                                 waterRefraction->colorResult->bind(refraction);
@@ -2487,7 +2505,7 @@ int main(int argc, char *argv[])
                         //The flat placeholder land at the bottom of the world...
                         whichModelUnis->use();
                             clientEnvironment.settings->render(whichModelUnis);
-                            serverData->playerCamera->render(whichModelUnis);
+                            serverData->playerCamera->render(whichModelUnis,"Player");
                             serverData->env->passUniforms(whichModelUnis);
                             renderLights(whichModelUnis,serverData->lights);
                             glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),1);
@@ -2578,7 +2596,7 @@ int main(int argc, char *argv[])
 
                         whichModelUnis->use();
                             clientEnvironment.settings->render(whichModelUnis);
-                            serverData->playerCamera->render(whichModelUnis);
+                            serverData->playerCamera->render(whichModelUnis,"Player");
                             serverData->env->passUniforms(whichModelUnis);
                             renderLights(whichModelUnis,serverData->lights);
                             for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
@@ -2587,7 +2605,7 @@ int main(int argc, char *argv[])
                         clientEnvironment.newWheelModel->renderInstanced(whichModelUnis);
 
                     whichBrickUnis->use();
-                        serverData->playerCamera->render(whichBrickUnis);
+                        serverData->playerCamera->render(whichBrickUnis,"Player");
                         serverData->env->passUniforms(whichBrickUnis);
                         clientEnvironment.settings->render(whichBrickUnis);
                         renderLights(whichBrickUnis,serverData->lights);
@@ -2605,7 +2623,7 @@ int main(int argc, char *argv[])
                         glEnable(GL_BLEND);
                         glDisable(GL_CULL_FACE);
                         emitterUnis->use();
-                            serverData->playerCamera->render(emitterUnis);
+                            serverData->playerCamera->render(emitterUnis,"Player");
                             serverData->env->passUniforms(emitterUnis);
                             clientEnvironment.settings->render(emitterUnis);
 
@@ -2616,7 +2634,7 @@ int main(int argc, char *argv[])
                     serverData->bulletTrails->purge();
                     glDisable(GL_CULL_FACE);
                     bulletUnis->use();
-                        serverData->playerCamera->render(bulletUnis);
+                        serverData->playerCamera->render(bulletUnis,"Player");
                         serverData->bulletTrails->render(bulletUnis);
                     glEnable(GL_CULL_FACE);
 
@@ -2624,7 +2642,7 @@ int main(int argc, char *argv[])
                         glLineWidth(3.0);
                         boxEdgesUnis->use();
                             glUniform1i(boxEdgesUnis->target->getUniformLocation("drawingRopes"),true);
-                            serverData->playerCamera->render(boxEdgesUnis);
+                            serverData->playerCamera->render(boxEdgesUnis,"Player");
                             for(unsigned int a = 0; a<serverData->ropes.size(); a++)
                                 serverData->ropes[a]->render();
                             glUniform1i(boxEdgesUnis->target->getUniformLocation("drawingRopes"),false);
@@ -2633,7 +2651,7 @@ int main(int argc, char *argv[])
                     glEnable(GL_BLEND);
                     glDisable(GL_CULL_FACE);
                     fontUnis->use();
-                            serverData->playerCamera->render(fontUnis);
+                            serverData->playerCamera->render(fontUnis,"Player");
                             for(unsigned int a = 0; a<serverData->newDynamics.size(); a++)
                             {
                                 if(!serverData->newDynamics[a])
@@ -2667,14 +2685,14 @@ int main(int argc, char *argv[])
                             clientEnvironment.vignetteStrength = 0;
 
                         clientEnvironment.settings->render(screenOverlaysUnis);
-                        serverData->playerCamera->render(screenOverlaysUnis);
+                        serverData->playerCamera->render(screenOverlaysUnis,"Player");
                         serverData->env->passUniforms(screenOverlaysUnis);
                         serverData->env->renderGodRays(screenOverlaysUnis);
 
                     glEnable(GL_BLEND);
 
                     boxEdgesUnis->use();
-                        serverData->playerCamera->render(boxEdgesUnis);
+                        serverData->playerCamera->render(boxEdgesUnis,"Player");
                         serverData->box->render(boxEdgesUnis);
 
                     //Just for the transparent blue quad of crappy water, good water is rendered first thing
@@ -2687,7 +2705,7 @@ int main(int argc, char *argv[])
                             glUniform1f(waterUnis->target->getUniformLocation("waterLevel"),serverData->waterLevel); //TODO: Don't string match this every frame
                             clientEnvironment.settings->render(waterUnis);
                             serverData->env->passUniforms(waterUnis,true);
-                            serverData->playerCamera->render(waterUnis);
+                            serverData->playerCamera->render(waterUnis,"Player");
 
                             water.render(waterUnis);
 
@@ -2713,6 +2731,26 @@ int main(int argc, char *argv[])
             }
             case STATE_CONNECTING:
             {
+                btDefaultCollisionConfiguration *collisionConfiguration = new btDefaultCollisionConfiguration();
+                btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
+                btBroadphaseInterface* broadphase = new btDbvtBroadphase();
+                btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+                btGImpactCollisionAlgorithm::registerAlgorithm(dispatcher);
+
+                btDynamicsWorld *world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+
+                btVector3 gravity = btVector3(0,-70,0);
+                world->setGravity(gravity);
+                world->setForceUpdateAllAabbs(false); //Remove this and static bricks will lag the physics implementation a ton
+
+                plane = new btStaticPlaneShape(btVector3(0,1,0),0);
+                planeState = new btDefaultMotionState();
+                btRigidBody::btRigidBodyConstructionInfo planeCon(0,planeState,plane);
+                groundPlane = new btRigidBody(planeCon);
+                groundPlane->setFriction(1.0);
+                //groundPlane->setUserIndex(bodyUserIndex_plane);
+                world->addRigidBody(groundPlane);
+
                 clientEnvironment.ignoreGamePackets = false;
 
                 //TODO: Multithread loading and have an actual loading screen...
@@ -2827,7 +2865,6 @@ int main(int argc, char *argv[])
 
                 serverData->playerCamera = new perspectiveCamera;;
                 serverData->playerCamera->setFieldOfVision(clientEnvironment.settings->fieldOfView);
-                serverData->playerCamera->name = "Player";
                 serverData->playerCamera->setDirection(glm::vec3(0.4,0,0.4));
                 serverData->playerCamera->setPosition(glm::vec3(0,0,0));
                 serverData->playerCamera->setAspectRatio(((double)context.getWidth())/((double)context.getHeight()));
@@ -2836,7 +2873,6 @@ int main(int argc, char *argv[])
                 {
                     perspectiveCamera waterCamera;
                     waterCamera.setFieldOfVision(serverData->playerCamera->getFieldOfVision());
-                    waterCamera.name = "Water";
                     renderTarget::renderTargetSettings waterReflectionSettings;
 
                     switch(clientEnvironment.settings->waterQuality)

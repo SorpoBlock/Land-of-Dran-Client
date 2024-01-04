@@ -190,7 +190,7 @@ namespace syj
         renderingSky            = toAdd.registerUniformBool("renderingSky"          ,false);
         sunAboveHorizon         = toAdd.registerUniformBool("sunAboveHorizon"       ,false);
         renderingRays           = toAdd.registerUniformBool("renderingRays"         ,false);
-        doingGodRayPass         = toAdd.registerUniformBool("doingGodRayPass"       ,false);
+        doingGeomShadows         = toAdd.registerUniformBool("doingGeomShadows"       ,false);
         useIBL                  = toAdd.registerUniformBool("useIBL"                ,false);
 
         //Lighting:

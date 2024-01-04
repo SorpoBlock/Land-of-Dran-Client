@@ -1,6 +1,6 @@
 #version 330 core
 
-layout(location = 0) in vec3 vertexPosition; //only x and y are set, z = 0 so why is it here?
+layout(location = 0) in vec3 vertexPosition; //only x and y are set for basic bricks, special bricks use all 3 dims
 layout(location = 1) in vec4 brickPositionAndMat;
 layout(location = 2) in vec4 brickRotation;
 layout(location = 3) in vec4 paintColorIn;
@@ -10,29 +10,35 @@ layout(location = 6) in vec3 customNormal;
 layout(location = 7) in vec3 customUVandTex;
 layout(location = 8) in vec4 customVertexColor;
 
+uniform vec3 cameraPlayerPosition;
 uniform mat4 viewPlayerMatrix;
 uniform mat4 projectionPlayerMatrix;
 uniform mat4 lightSpaceMatricies[3];
 
-uniform bool specialBricks;
 uniform bool livingBricks;
 uniform mat4 translateMatrix;
 uniform mat4 rotateMatrix;
 uniform float deltaT;
 uniform float clipHeight;
+uniform bool doingGeomShadows;
+uniform bool specialBricks;
 
+out mat3 TBN;
+out vec3 tanViewPos;
+out vec3 tanWorldPos;
 out vec3 modelPos;
 out vec3 worldPos;
 out vec3 normal;
 out vec2 uv;
+out vec2 roughUVs;
+out vec2 edgeSize;
 out vec2 verts;
 out vec4 finalColor;
-flat out vec2 swapDimensions;
 flat out vec3 dimension;
 flat out int direction;
 out vec4 shadowPos[3];
-out float brickMaterial;
-out float textureToUse;
+flat out int brickMaterial;
+flat out int textureToUse;
 
 mat4 makeRotateMatrix(float angle)
 {
@@ -45,18 +51,6 @@ mat4 makeRotateMatrix(float angle)
                                                -s,  0								 ,                         c         ,  0.0,
                 0.0,                                0.0,                                0.0,                                1.0);
 				
-				
-    /*return mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
-                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
-                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
-                0.0, */
-}
-
-vec2 rotateVec2(vec2 ina,float angle)
-{
-	float c = cos(angle);
-	float s = sin(angle);
-	return vec2(ina.x * c - ina.y * s,ina.x * s + ina.y * c);
 }
 
 bool floatCompare(float a,float b)
@@ -66,11 +60,20 @@ bool floatCompare(float a,float b)
 
 void main()
 {
+	normal = vec3(0,1,0);
+
 	vec3 brickSide = vec3(0,0,0);
-	brickMaterial = brickPositionAndMat.w;
+	brickMaterial = int(brickPositionAndMat.w);
 	
-	if(!specialBricks)
-	{	
+	if(specialBricks)
+	{
+		brickSide = vertexPosition;
+		textureToUse = int(customUVandTex.z);
+		uv = customUVandTex.xy;
+		normal = customNormal;
+	}
+	else
+	{
 		vec3 signedDims = brickDimensions.xyz;
 		if(faceDirection == 0) //top
 		{
@@ -153,13 +156,6 @@ void main()
 		}
 		brickSide.y /= 2.5;
 	}
-	else
-	{
-		brickSide = vertexPosition;
-		textureToUse = customUVandTex.z;
-		uv = customUVandTex.xy;
-		normal = customNormal;
-	}
 	
 	direction = faceDirection;
 	dimension = brickDimensions.xyz;
@@ -176,8 +172,10 @@ void main()
 		finalColor = customVertexColor;
 		
 	mat4 rot = makeRotateMatrix(brickRotation.w);
-	swapDimensions = (rot * vec4(1,0,0,0)).xz;
+	
+	vec2 swapDimensions = (rot * vec4(1,0,0,0)).xz;
 	swapDimensions = round(swapDimensions);
+	
 	normal = (rot * vec4(normal,0)).xyz;
 	worldPos = brickPositionAndMat.xyz + (rot * vec4(brickSide,1.0)).xyz;
 	
@@ -199,27 +197,73 @@ void main()
 							);
 		worldPos += distort;
 	}
+		
+	modelPos = worldPos;
 	
 	if(livingBricks)
 	{
-		modelPos = worldPos;
 		worldPos = (translateMatrix * rotateMatrix * vec4(worldPos,1.0)).xyz;
 		normal = (rotateMatrix * vec4(normal,0.0)).xyz;
 	}
-	else
-		modelPos = worldPos;
 	
 	if(clipHeight > 0.0)
 		gl_ClipDistance[0] = worldPos.y - clipHeight;
 	else
 		gl_ClipDistance[0] = abs(clipHeight) - worldPos.y; 
+			
+	//Used for calculating universal roughness UVs
+	float roughZoom = 10.0;
+	vec3 rotPos = modelPos;
+	//rotPos = abs(mod(rotPos,roughZoom)) / roughZoom;
+	rotPos.xz = vec2(rotPos.x * swapDimensions.x + (1.0-swapDimensions.x) * rotPos.z,rotPos.z * swapDimensions.x + (1.0-swapDimensions.x) * rotPos.x);
 	
-	gl_Position = projectionPlayerMatrix * viewPlayerMatrix * vec4(worldPos,1.0);
-	for(int i = 0; i<3; i++)
-		shadowPos[i] = lightSpaceMatricies[i] * vec4(worldPos,1.0);
+	//Used for calculating normal and AO UVs on the sides of bricks
+	edgeSize = vec2(0.05);
 	
-	if(floatCompare(brickMaterial,1))
+	//For both normal map and AO map side face UVs as well as for universal roughness map UVs
+	if(direction == 0 || direction == 1)	//top and bottom faces
 	{
-		gl_Position.z -= 0.01;
+		roughUVs = rotPos.xz;
+	}
+	else if(direction == 2 || direction == 3)	//north and south faces
+	{
+		roughUVs = rotPos.xy;
+		
+		edgeSize /= dimension.xy;
+	}
+	else									//east and west faces
+	{
+		roughUVs = rotPos.zy;
+		
+		edgeSize /= dimension.zy;
+	}
+	
+	roughUVs /= roughZoom;
+	
+	edgeSize *= 3.0;
+	
+	vec3 tangent = cross(normal,vec3(0,1,0));
+	vec3 bitangent = normalize(cross(normal,tangent));
+	tangent = normalize(cross(normal,bitangent));
+	
+    TBN = transpose(mat3(tangent,bitangent,normal));
+	tanViewPos = TBN * cameraPlayerPosition;
+	tanWorldPos = TBN * worldPos;
+	
+	if(doingGeomShadows)
+	{
+		gl_Position = vec4(worldPos,1.0);
+	}
+	else
+	{
+		gl_Position = projectionPlayerMatrix * viewPlayerMatrix * vec4(worldPos,1.0);
+		for(int i = 0; i<3; i++)
+			shadowPos[i] = lightSpaceMatricies[i] * vec4(worldPos,1.0);
+		
+		if(brickMaterial == 1)
+		{
+			gl_Position.z -= 0.01;
+		}
 	}
 } 
+

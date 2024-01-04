@@ -390,7 +390,6 @@ namespace syj
         pickingCamera.setFarPlane(100);
         pickingCamera.setPosition(glm::vec3(0,3,4.3));
         pickingCamera.setDirection(glm::vec3(0,0,-1));
-        pickingCamera.name = "Player";
     }
 
     void avatarPicker::runPickCycle(renderContext *context,uniformsHolder *instancedUnis,uniformsHolder *nonInstancedUnis,client *connection,preferenceFile *prefs)
@@ -641,7 +640,7 @@ namespace syj
 
             pickingTexture->bind();
             instancedUnis->target->use();
-                pickingCamera.render(instancedUnis);
+                pickingCamera.render(instancedUnis,"Player");
                 //playerModel->renderForPicking(graphics,rotMatrix * glm::scale(glm::vec3(0.02)));
                 pickingPlayer->useGlobalTransform = true;
                 pickingPlayer->hidden = false;
@@ -681,7 +680,9 @@ namespace syj
             pickingPlayer->meshColorChanged = true;
 
             instancedUnis->target->use();
-                pickingCamera.render(instancedUnis);
+                glUniform3f(instancedUnis->sunDirection,0.5714,0.2857,0.14285);
+                glUniform4f(instancedUnis->sunColor,1,1,1,0);
+                pickingCamera.render(instancedUnis,"Player");
                 /*glUniform1i(graphics->target->getUniformLocation("avatarSelectorLighting"),true);
                 playerModel->render(graphics,rotMatrix * glm::scale(glm::vec3(0.02)),false,&nodeColors,faceDecals.size() > 0 ? faceDecals[chosenDecal] : 0);
                 glUniform1i(graphics->target->getUniformLocation("avatarSelectorLighting"),false);*/
@@ -693,7 +694,7 @@ namespace syj
                 pickingPlayer->type->renderInstanced(instancedUnis);
 
             nonInstancedUnis->target->use();
-                pickingCamera.render(nonInstancedUnis);
+                pickingCamera.render(nonInstancedUnis,"Player");
                 pickingPlayer->type->renderNonInstanced(nonInstancedUnis);
 
             glDisable(GL_DEPTH_TEST);

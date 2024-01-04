@@ -12,7 +12,7 @@ namespace syj
 
     }
 
-    void orthographicCamera::render(uniformsHolder *holder)
+    void orthographicCamera::render(uniformsHolder *holder,std::string name)
     {
         /*projectionMatrix = glm::ortho(orthoBoundNear.x,orthoBoundFar.x,orthoBoundNear.y,orthoBoundFar.y,orthoBoundNear.z,orthoBoundFar.z);
         viewMatrix =  glm::lookAt(position,position + direction,nominalUp);
@@ -153,7 +153,7 @@ namespace syj
         projectionMatrix = glm::perspective(glm::radians(fieldOfVision), aspectRatio, nearPlane, farPlane);
     }
 
-    void perspectiveCamera::render(uniformsHolder *holder)
+    void perspectiveCamera::render(uniformsHolder *holder,std::string name)
     {
         glUniformMat(holder->viewMatrix(name),viewMatrix);
         glUniformMat(holder->angleMatrix(name),angleMatrix);
@@ -166,7 +166,7 @@ namespace syj
         glUniform3vec(holder->cameraUp(name),up);
     }
 
-    void perspectiveCamera::renderReflection(uniformsHolder *holder,float height)
+    void perspectiveCamera::renderReflection(uniformsHolder *holder,float height,std::string name)
     {
         glm::vec3 start,end,dir;
         if(thirdPerson)

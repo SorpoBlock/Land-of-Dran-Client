@@ -110,6 +110,8 @@ namespace syj
 
         newDynamic(newModel *_type,glm::vec3 baseScale = glm::vec3(0.02,0.02,0.02));
         ~newDynamic();
+
+        newDynamic(const newDynamic&) = delete; //Disable copy constructor
     };
 
     enum instancedLayout
@@ -176,6 +178,8 @@ namespace syj
 
         instancedMesh(aiMesh *src);
         ~instancedMesh();
+
+        instancedMesh(const instancedMesh&) = delete; //Disable copy constructor
     };
 
     struct nonInstancedMesh : newMesh
@@ -189,6 +193,8 @@ namespace syj
 
         nonInstancedMesh(aiMesh *src);
         ~nonInstancedMesh();
+
+        nonInstancedMesh(const nonInstancedMesh&) = delete; //Disable copy constructor
     };
 
     struct newNode
@@ -215,6 +221,8 @@ namespace syj
         void foldNodeInto(aiNode *source,newModel *parent);
         newNode(aiNode *source,newModel *parent);
         ~newNode();
+
+        newNode(const newNode&) = delete; //Disable copy constructor
     };
 
     struct newModel
@@ -259,6 +267,8 @@ namespace syj
         void renderInstancedWithoutMaterials();
         void renderNonInstanced(uniformsHolder *graphics);
         void compileAll();
+
+        newModel(const newModel&) = delete; //Disable copy constructor
     };
 }
 

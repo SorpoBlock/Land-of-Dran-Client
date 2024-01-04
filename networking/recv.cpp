@@ -2049,20 +2049,34 @@ namespace syj
                                     location::locations[l]->dynamic = 0;
                             }
 
-                            for(int e = 0; e<serverData->emitters.size(); e++)
+                            std::vector<emitter*> justToDebugPrint;
+                            int removedEmitters = 0;
+                            auto iterEmitter = serverData->emitters.begin();
+                            while(iterEmitter != serverData->emitters.end())
                             {
-                                if(serverData->emitters[e]->attachedToItem == serverData->items[a])
+                                if((*iterEmitter)->attachedToModel == serverData->items[a])
                                 {
-                                    delete serverData->emitters[e];
-                                    serverData->emitters[e] = 0;
-                                    serverData->emitters.erase(serverData->emitters.begin() + e);
+                                    justToDebugPrint.push_back((*iterEmitter));
+                                    delete (*iterEmitter);
+                                    iterEmitter = serverData->emitters.erase(iterEmitter);
+                                    removedEmitters++;
+                                    continue;
                                 }
-                                if(serverData->emitters[e]->attachedToModel == serverData->items[a])
+                                if((*iterEmitter)->attachedToItem == serverData->items[a])
                                 {
-                                    delete serverData->emitters[e];
-                                    serverData->emitters[e] = 0;
-                                    serverData->emitters.erase(serverData->emitters.begin() + e);
+                                    justToDebugPrint.push_back((*iterEmitter));
+                                    delete (*iterEmitter);
+                                    iterEmitter = serverData->emitters.erase(iterEmitter);
+                                    removedEmitters++;
+                                    continue;
                                 }
+                                ++iterEmitter;
+                            }
+                            if(removedEmitters > 1)
+                            {
+                                std::cout<<"More than one removed emitter, removing dynamic!\n";
+                                for(int z = 0; z<justToDebugPrint.size(); z++)
+                                    std::cout<<justToDebugPrint[z]<<"\n";
                             }
 
                             delete serverData->items[a];
@@ -3095,7 +3109,7 @@ namespace syj
                                 serverData->currentPlayer = 0;
                             }
 
-                            for(int b = 0; b<serverData->emitters.size(); b++)
+                            /*for(int b = 0; b<serverData->emitters.size(); b++)
                             {
                                 if(serverData->emitters[b]->attachedToModel == serverData->newDynamics[a])
                                 {
@@ -3111,6 +3125,36 @@ namespace syj
                                     serverData->emitters[b] = 0;
                                     serverData->emitters.erase(serverData->emitters.begin() + b);
                                 }
+                            }*/
+
+                            std::vector<emitter*> justToDebugPrint;
+                            int removedEmitters = 0;
+                            auto iterEmitter = serverData->emitters.begin();
+                            while(iterEmitter != serverData->emitters.end())
+                            {
+                                if((*iterEmitter)->attachedToModel == serverData->newDynamics[a])
+                                {
+                                    justToDebugPrint.push_back((*iterEmitter));
+                                    delete (*iterEmitter);
+                                    iterEmitter = serverData->emitters.erase(iterEmitter);
+                                    removedEmitters++;
+                                    continue;
+                                }
+                                if((*iterEmitter)->attachedToItem == serverData->newDynamics[a])
+                                {
+                                    justToDebugPrint.push_back((*iterEmitter));
+                                    delete (*iterEmitter);
+                                    iterEmitter = serverData->emitters.erase(iterEmitter);
+                                    removedEmitters++;
+                                    continue;
+                                }
+                                ++iterEmitter;
+                            }
+                            if(removedEmitters > 1)
+                            {
+                                std::cout<<"More than one removed emitter, removing dynamic!\n";
+                                for(int z = 0; z<justToDebugPrint.size(); z++)
+                                    std::cout<<justToDebugPrint[z]<<"\n";
                             }
 
                             for(int l = 0; l<location::locations.size(); l++)

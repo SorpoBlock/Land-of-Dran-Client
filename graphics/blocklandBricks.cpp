@@ -30,6 +30,14 @@ namespace syj
             delete specialBrickTypes[a];
         for(int a = 0; a<printTypes.size(); a++)
             delete printTypes[a];
+        for(int a = 0; a<basicTypes.size(); a++)
+        {
+            if(basicTypes[a].shape)
+            {
+                delete basicTypes[a].shape;
+                basicTypes[a].shape = 0;
+            }
+        }
     }
 
     specialBrickTypeInstanceHolder::~specialBrickTypeInstanceHolder()

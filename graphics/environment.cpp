@@ -53,8 +53,8 @@ namespace syj
             //For some reason I made it just reuse the top texture for the bottom texture idk lol
             if(!useIBL)
             {
-                skyTexturesSideDay[a!=5 ? a : 0].bind(albedo);
-                skyTexturesSideNight[a!=5 ? a : 0].bind(normal);
+                skyTexturesSideDay[a!=5 ? a : 0]->bind(albedo);
+                skyTexturesSideNight[a!=5 ? a : 0]->bind(normal);
             }
             glBindVertexArray(skyBoxFacesVAO[a]);
             glDrawArrays(GL_TRIANGLES,0,6);
@@ -72,13 +72,19 @@ namespace syj
     void environment::loadDaySkyBox(std::string path)
     {
         for(int a = 0; a<5; a++)
-            skyTexturesSideDay[a].createFromFile(path + std::to_string(a) + ".png");
+        {
+            skyTexturesSideDay[a] = new texture;
+            skyTexturesSideDay[a]->createFromFile(path + std::to_string(a) + ".png");
+        }
     }
 
     void environment::loadNightSkyBox(std::string path)
     {
         for(int a = 0; a<5; a++)
-            skyTexturesSideNight[a].createFromFile(path + std::to_string(a) + ".png");
+        {
+            skyTexturesSideNight[a] = new texture;
+            skyTexturesSideNight[a]->createFromFile(path + std::to_string(a) + ".png");
+        }
     }
 
     void environment::loadSunModel(std::string path)
@@ -88,8 +94,21 @@ namespace syj
 
     environment::~environment()
     {
+        for(int a = 0; a<5; a++)
+        {
+            if(skyTexturesSideDay[a])
+                delete skyTexturesSideDay[a];
+            if(skyTexturesSideNight[a])
+                delete skyTexturesSideNight[a];
+        }
         delete lightSpaceMatricies;
         delete godRayPass;
+        if(IBL != 0)
+            glDeleteTextures(1,&IBL);
+        if(IBLIrr != 0)
+            glDeleteTextures(1,&IBLIrr);
+        if(IBLRad != 0)
+            glDeleteTextures(1,&IBLRad);
         glDeleteVertexArrays(6,skyBoxFacesVAO);
         glDeleteBuffers(6,skyBoxVertBuffer);
         glDeleteBuffers(6,skyBoxUVBuffer);

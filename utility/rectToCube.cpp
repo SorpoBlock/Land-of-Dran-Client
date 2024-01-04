@@ -90,6 +90,9 @@ namespace syj
 
         glBindTexture(GL_TEXTURE_CUBE_MAP,0);
 
+        glDeleteFramebuffers(1, &captureFBO);
+        glDeleteRenderbuffers(1, &captureRBO);
+
         return envCubemap;
     }
 }

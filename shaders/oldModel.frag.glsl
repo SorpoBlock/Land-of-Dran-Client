@@ -476,16 +476,39 @@ void main()
     color.rgb += (kD * albedo / PI + pointSpecular) * radiance * NdotL; */
 	//End point light
 	
-	vec3 R = reflect(-viewVector,newNormal);
-    vec3 irradiance = textureLod(cubeMapIrradiance, vec3(1,-1,1)*newNormal,0).rgb;
-    vec3 diffuse      = irradiance * albedo;
-	diffuse += albedo * (irradiance + windowTint);
-    const float MAX_REFLECTION_LOD = 10.0;
-    vec3 prefilteredColor = textureLod(cubeMapRadiance, normalize(vec3(1,-1,1)*R),  roughness * MAX_REFLECTION_LOD).rgb + windowTint;    
-    vec2 brdf  = texture(brdfTexture, vec2(max(dot(newNormal, viewVector), 0.0), roughness)).rg;
-    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * totalFaceAwayFromSunAmountSpecular;
-    vec3 ambient = (kD * diffuse + specular) * occlusion * totalFaceAwayFromSunAmountDiffuse;
-	color.rgb += ambient;
+	if(useIBL)
+	{
+		vec3 R = reflect(-viewVector,newNormal);
+		vec3 irradiance = textureLod(cubeMapIrradiance, vec3(1,-1,1)*newNormal,0).rgb;
+		vec3 diffuse      = irradiance * albedo;
+		diffuse += albedo * (irradiance + windowTint);
+		const float MAX_REFLECTION_LOD = 10.0;
+		vec3 prefilteredColor = textureLod(cubeMapRadiance, normalize(vec3(1,-1,1)*R),  roughness * MAX_REFLECTION_LOD).rgb + windowTint;    
+		vec2 brdf  = texture(brdfTexture, vec2(max(dot(newNormal, viewVector), 0.0), roughness)).rg;
+		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * totalFaceAwayFromSunAmountSpecular;
+		vec3 ambient = (kD * diffuse + specular) * occlusion * totalFaceAwayFromSunAmountDiffuse;
+		color.rgb += ambient;
+	}
+	else
+	{
+		color.rgb += albedo_.rgb;
+		/*float NdotL = max(dot(normalize(newNormal), normalize(sunDirection)), 0.0);  
+		float NDF = DistributionGGX(newNormal, normalize(viewVector+sunDirection), roughness);   
+		float G   = GeometrySmith(dot(newNormal,viewVector),NdotL,roughness);   
+		
+		vec3 numerator    = NDF * G * F; 
+		float denominator = 4 * dot(newNormal,viewVector) * NdotL + 0.001; // 0.001 to prevent divide by zero
+		vec3 specular = numerator / denominator;
+		
+		//The contentious part
+		float totalFaceAwayFromSunAmount = min(1.0-(shadowCoverage*0.8),NdotL);
+		
+		specular *= sqrt(clamp(vec3(1.0 - shadowCoverage),0.1,1));
+		vec3 windowRadiance = windowTint.rgb * sunColor.rgb;
+		color.rgb += (kD * albedo / PI + specular) * sunColor.rgb * totalFaceAwayFromSunAmount;
+		color.rgb += (kD * albedo / PI + specular) * windowRadiance * NdotL;
+		color.rgb += vec3(0.2) * albedo * occlusion * normalize(sunColor.rgb);*/
+	}
 	
 	//Old DNC lighting code:
 	/*float totalFaceAwayFromSunAmount = min(1.0-(shadowCoverage*0.8),NdotL);

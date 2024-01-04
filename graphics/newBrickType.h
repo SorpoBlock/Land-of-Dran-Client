@@ -36,6 +36,7 @@ namespace syj
 
         basicBrickRenderData(const basicBrickRenderData &toCopy)
         {
+            std::cout<<"Basic brick copied.\n";
             position = toCopy.position;
             material = toCopy.material;
             rotation = toCopy.rotation;
@@ -69,9 +70,6 @@ namespace syj
 
         ~newBrickRenderer()
         {
-            for(int a = 0; a<perTextureVAO.size(); a++)
-                glDeleteVertexArrays(1,&perTextureVAO[a]);
-
             for(int a = 0; a<perTexturePositionMatBuffer.size(); a++)
                 glDeleteBuffers(1,&perTexturePositionMatBuffer[a]);
             for(int a = 0; a<perTextureRotationBuffer.size(); a++)
@@ -98,6 +96,9 @@ namespace syj
                 glDeleteBuffers(1,&transparentPerTextureDirectionBuffer[a]);
 
             glDeleteBuffers(1,&vertBuffer);
+
+            for(int a = 0; a<perTextureVAO.size(); a++)
+                glDeleteVertexArrays(1,&perTextureVAO[a]);
 
             for(int a = 0; a<specialBrickTypes.size(); a++)
                 delete specialBrickTypes[a];
