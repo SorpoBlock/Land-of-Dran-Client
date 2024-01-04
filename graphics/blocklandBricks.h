@@ -62,6 +62,7 @@ namespace syj
         specialBrickRenderData(){}
         specialBrickRenderData(const specialBrickRenderData &source)
         {
+            std::cout<<"Special brick copied.\n";
             position = source.position;
             rotation = source.rotation;
             color = source.color;
@@ -87,7 +88,7 @@ namespace syj
         specialBrickType *type = 0;
 
         faceDirection whichFace;
-        GLuint buffers[9];
+        GLuint buffers[3];
         GLuint vao;
         specialBrickTypeInstanceHolder(specialBrickType *based);
         void update(specialBrickRenderData *theBrick);
@@ -97,6 +98,8 @@ namespace syj
         void recompileInstances();
 
         ~specialBrickTypeInstanceHolder();
+
+        specialBrickTypeInstanceHolder(const specialBrickTypeInstanceHolder&) = delete; //Disable copy constructor
     };
 
     struct blocklandCompatibility

@@ -119,7 +119,7 @@ namespace syj
             }
             else
             {
-                position = attachedToItem->modelInterpolator.getPosition();
+                position = attachedToItem->modelInterpolator.getPosition(); //Crash here 01Jan2024
                 //TODO: THERE IS (was?) A CRASH HERE (i copied this comment lol)
                 if(meshName != "")
                 {
@@ -212,6 +212,17 @@ namespace syj
 
     particleType::~particleType()
     {
+        int deleted = 0;
+        for(int a = 0; a<particles.size(); a++)
+        {
+            if(particles[a])
+            {
+                delete particles[a];
+                particles[a] = 0;
+                deleted++;
+            }
+        }
+
         glDeleteBuffers(3,buffers);
         glDeleteVertexArrays(1,&vao);
     }

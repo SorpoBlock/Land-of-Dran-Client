@@ -1239,6 +1239,7 @@ namespace syj
                 if(instances[a]->decal)
                 {
                     glUniform1i(graphics->useAlbedo      ,1);
+                    glUniform1i(graphics->useAO      ,0);
                     instances[a]->decal->bind(albedo);
                 }
             }

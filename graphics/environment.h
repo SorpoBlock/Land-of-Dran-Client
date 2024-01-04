@@ -56,9 +56,9 @@ namespace syj
         //Image based lighting stuff:
         bool useIBL = false;
 
-        GLuint IBL;
-        GLuint IBLRad;
-        GLuint IBLIrr;
+        GLuint IBL = 0;
+        GLuint IBLRad = 0;
+        GLuint IBLIrr = 0;
         //End IBL stuff
 
 
@@ -111,8 +111,8 @@ namespace syj
 
         //One texture for each side of the sky, excluding the bottom which is untextured currently:
         //We interpolate between the two skyboxes during dawn and dusk
-        texture skyTexturesSideDay[5];
-        texture skyTexturesSideNight[5];
+        texture *skyTexturesSideDay[5] = {0,0,0,0,0};
+        texture *skyTexturesSideNight[5] = {0,0,0,0,0};
 
         void shadowsCalc(perspectiveCamera *playerCamera,glm::vec3 shadowDir);
         void calc(float deltaMS,perspectiveCamera *playerCamera);

@@ -50,7 +50,7 @@ namespace syj
          GLint cubeMapIrradianceUni = -1;
 
          GLint sunAboveHorizon = -1;
-         GLint doingGodRayPass = -1;
+         GLint doingGeomShadows = -1;
 
          GLint calcTBN = -1;
 

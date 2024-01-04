@@ -495,7 +495,8 @@ namespace syj
             descriptors[a]->instances--;
             if(descriptors[a]->instances == 0)
             {
-                stbi_image_free(descriptors[a]->data);
+                //stbi_image_free(descriptors[a]->data);
+                delete descriptors[a]->data;
                 descriptors[a]->data = 0;
 
                 int globalIter = -1;

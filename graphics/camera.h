@@ -22,7 +22,6 @@ namespace syj
 
         public:
             float debugPitch=0,debugYaw=0;
-            std::string name = "";
 
             glm::mat4 getProjectionMatrix(){return projectionMatrix;}
             glm::mat4 getViewMatrix(){return viewMatrix;}
@@ -33,7 +32,7 @@ namespace syj
             glm::vec3 getDirection();
             virtual void setPosition(glm::vec3 newPos) = 0;
             virtual glm::vec3 getPosition() = 0;
-            virtual void render(uniformsHolder *holder) = 0;
+            virtual void render(uniformsHolder *holder,std::string name) = 0;
             float getYaw(){return atan2(direction.x,direction.z);}
             float getPitch(){return asin(direction.y);}
 
@@ -69,8 +68,8 @@ namespace syj
             void setDirection(float pitch,float yaw);
             glm::vec3 getPosition();
 
-            void renderReflection(uniformsHolder *holder,float height);
-            void render(uniformsHolder *holder);
+            void renderReflection(uniformsHolder *holder,float height,std::string name);
+            void render(uniformsHolder *holder,std::string name);
 
             perspectiveCamera();
     };
@@ -82,7 +81,7 @@ namespace syj
         glm::vec3 orthoBoundNear;
         glm::vec3 orthoBoundFar;
 
-        void render(uniformsHolder *holder);
+        void render(uniformsHolder *holder,std::string name);
         void walkForward(float amount);
         void walkRight(float amount);
         void setDirection(glm::vec3 newDir);

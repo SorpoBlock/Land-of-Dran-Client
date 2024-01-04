@@ -45,6 +45,8 @@ namespace syj
 
         specialBrickType(std::string blbFile,bool customMesh);
         ~specialBrickType();
+
+        specialBrickType(const specialBrickType&) = delete; //Disable copy constructor
     };
 }
 

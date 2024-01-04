@@ -61,6 +61,8 @@ namespace syj
 
             void setParams(GLenum _textureType,int w,int h);
 
+            texture(const texture&) = delete; //Disable copy constructor
+
         public:
 
             void allocateDepth(unsigned int width,unsigned int height,unsigned int _layers,GLenum internalFormat,GLenum format,GLenum type);
