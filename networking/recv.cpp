@@ -2472,7 +2472,7 @@ namespace syj
                         //std::cout<<"Dims: "<<width<<","<<height<<","<<length<<"\n";
                         tmp->dimensions = glm::ivec4(width,height,length,0);
                         bool doNotCompile = false;
-                        found->addBasicBrick(tmp,angleID,0,serverData->world,doNotCompile);
+                        found->addBasicBrick(tmp,angleID,0,(btDynamicsWorld*)0,doNotCompile);
                     }
                     else
                     {
@@ -2492,7 +2492,8 @@ namespace syj
                                 tmp->rotation = serverData->staticBricks.rotations[angleID];
                                 tmp->material = material;
                                 bool doNotCompile = false;
-                                found->addSpecialBrick(tmp,serverData->world,i,angleID,doNotCompile);
+                                found->addSpecialBrick(tmp,(btDynamicsWorld*)0,i,angleID,doNotCompile);
+
                                 //std::cout<<tmp->type->type->uiName<<" special type\n";
                                 break;
                             }

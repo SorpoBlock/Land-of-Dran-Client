@@ -47,7 +47,7 @@
 #include "code/graphics/bulletTrails.h"
 #include "code/gui/contentDownload.h"
 
-#define hardCodedNetworkVersion 10016
+#define hardCodedNetworkVersion 10017
 
 #define cammode_firstPerson 0
 #define cammode_thirdPerson 1
@@ -1917,33 +1917,42 @@ int main(int argc, char *argv[])
 
                             btVector3 raystart = glmToBt(glm::vec3(v.x(),v.y(),v.z()));
                             btVector3 rayend = glmToBt(glm::vec3(v.x(),v.y(),v.z()) - serverData->playerCamera->getDirection() * glm::vec3(30.0));
-                            btCollisionWorld::ClosestRayResultCallback res(raystart,rayend);
+                            btCollisionWorld::AllHitsRayResultCallback res(raystart,rayend);
                             world->rayTest(raystart,rayend,res);
 
-                            /*int idx = -1;
-                            float dist = 9999999;
+                            int idx = -1;
+                            float dist = 0;
 
-                            if(serverData->cameraTarget)
+                            for(int a = 0; a<res.m_collisionObjects.size(); a++)
                             {
-                                for(int a = 0; a<res.m_collisionObjects.size(); a++)
+                                std::cout<<fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-BtToGlm(v)))<<" idx: "<<res.m_collisionObjects[a]->getUserIndex()<<"\n";
+
+                                if(res.m_collisionObjects[a]->getUserIndex() == userIndex_livingBrick)
+                                    continue;
+
+                                if(serverData->cameraTarget)
                                 {
-                                    if(res.m_collisionObjects[a] != serverData->cameraTarget->body)
-                                    {
-                                        if(fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition())) < dist)
-                                        {
-                                            dist = fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-serverData->playerCamera->getPosition()));
-                                            idx = a;
-                                        }
-                                    }
+                                    if(res.m_collisionObjects[a] == serverData->cameraTarget->body)
+                                        continue;
                                 }
-                            }*/
+
+                                if(idx == -1 || fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-BtToGlm(v))) < dist)
+                                {
+                                    dist = fabs(glm::length(BtToGlm(res.m_hitPointWorld[a])-BtToGlm(v)));
+                                    idx = a;
+                                }
+                            }
+
+                            //dist = 30 - dist;
+                            if(idx == -1)
+                                dist = 30;
 
                             if(serverData->currentPlayer && serverData->currentPlayer->body && !serverData->giveUpControlOfCurrentPlayer)
                             {
                                 btTransform t = serverData->currentPlayer->body->getWorldTransform();
                                 v = t.getOrigin();
                                 serverData->playerCamera->thirdPersonTarget = glm::vec3(v.x(),v.y(),v.z()) + serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
-                                serverData->playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
+                                serverData->playerCamera->thirdPersonDistance = dist * 0.98;
                                 serverData->playerCamera->setPosition(glm::vec3(v.x(),v.y(),v.z()));
                                 serverData->playerCamera->turn(0,0);
                                 serverData->currentPlayer->useGlobalTransform = true;
@@ -1957,7 +1966,7 @@ int main(int argc, char *argv[])
                                     serverData->currentPlayer->useGlobalTransform = false;
 
                                 serverData->playerCamera->thirdPersonTarget = serverData->cameraTarget->modelInterpolator.getPosition() + serverData->cameraTarget->type->eyeOffset / glm::vec3(2.0,2.0,2.0);
-                                serverData->playerCamera->thirdPersonDistance = 30 * res.m_closestHitFraction * 0.98;
+                                serverData->playerCamera->thirdPersonDistance = dist * 0.98;
                                 serverData->playerCamera->setPosition(serverData->cameraTarget->modelInterpolator.getPosition());
                                 serverData->playerCamera->turn(0,0);
                             }
