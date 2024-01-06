@@ -20,6 +20,8 @@
 //Code for the server
 //#include "server.h"
 
+#define quitRequestMagic 500
+
 //Linux specific code
 #ifdef __linux__
     #define LOD_BUILD_AND_DATE " - " + __DATE__ + " (Linux)"

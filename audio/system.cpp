@@ -146,6 +146,8 @@ namespace syj
 				// Except we gotta update positions for moving objects
 				glm::vec3 pos = allLoops[a].loc->getPosition();
 				alSource3f(loopingSounds[allLoops[a].mostRecentSource], AL_POSITION, pos.x, pos.y, pos.z);
+				if(allLoops[a].loc->type == carBrick)
+                    alSourcef(loopingSounds[allLoops[a].mostRecentSource], AL_PITCH, 0.6 + (allLoops[a].loc->getSpeed()/150.0) * 3.0);
 				continue;
 			}
 
@@ -159,7 +161,10 @@ namespace syj
 					glm::vec3 pos = allLoops[a].loc->getPosition();
 
 					// Actually play the loop:
-					alSourcef(loopingSounds[b], AL_PITCH, allLoops[a].pitch);
+                    if(allLoops[a].loc->type == carBrick)
+                        alSourcef(loopingSounds[allLoops[a].mostRecentSource], AL_PITCH, allLoops[a].loc->getSpeed()/100.0);
+                    else
+                        alSourcef(loopingSounds[b], AL_PITCH, allLoops[a].pitch);
 					alSourcef(loopingSounds[b], AL_GAIN, allLoops[a].volume);
 					alSource3f(loopingSounds[b], AL_POSITION, pos.x, pos.y, pos.z);
 					alSource3f(loopingSounds[b], AL_VELOCITY, 0, 0, 0);

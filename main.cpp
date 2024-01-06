@@ -47,7 +47,7 @@
 #include "code/graphics/bulletTrails.h"
 #include "code/gui/contentDownload.h"
 
-#define hardCodedNetworkVersion 10017
+#define hardCodedNetworkVersion 10018
 
 #define cammode_firstPerson 0
 #define cammode_thirdPerson 1
@@ -1055,7 +1055,7 @@ int main(int argc, char *argv[])
 
                     packet quitPacket;
                     quitPacket.writeUInt(clientPacketType_requestName,4);
-                    quitPacket.writeUInt(0,32);
+                    quitPacket.writeUInt(quitRequestMagic,32);
                     serverConnection->send(&quitPacket,true);
                     serverConnection->run();
 
@@ -1070,7 +1070,7 @@ int main(int argc, char *argv[])
                 {
                     packet quitPacket;
                     quitPacket.writeUInt(clientPacketType_requestName,4);
-                    quitPacket.writeUInt(0,32);
+                    quitPacket.writeUInt(quitRequestMagic,32);
                     serverConnection->send(&quitPacket,true);
                     serverConnection->run();
 
@@ -1301,7 +1301,7 @@ int main(int argc, char *argv[])
 
                         packet quitPacket;
                         quitPacket.writeUInt(clientPacketType_requestName,4);
-                        quitPacket.writeUInt(0,32);
+                        quitPacket.writeUInt(quitRequestMagic,32);
                         serverConnection->send(&quitPacket,true);
                         serverConnection->run();
 

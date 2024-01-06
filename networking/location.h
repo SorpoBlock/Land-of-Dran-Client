@@ -29,7 +29,7 @@ namespace syj
 
         //Only used by lights, maybe later emitters:
         glm::vec3 direction = glm::vec3(0,0,0);
-
+        float getSpeed() const;
         glm::vec3 getDirection() const;
         ~location();
         location(glm::vec3 position);

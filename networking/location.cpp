@@ -130,6 +130,14 @@ namespace syj
         calculatedOffset = glm::vec3(0,0,0);
     }
 
+    float location::getSpeed() const
+    {
+        if(type == carBrick && car)
+            return car->lastSpeed;
+        else
+            return 0;
+    }
+
     glm::vec3 location::getPosition() const
     {
         switch(type)

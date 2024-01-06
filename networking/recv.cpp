@@ -2790,6 +2790,7 @@ namespace syj
                     float x = data->readFloat();
                     float y = data->readFloat();
                     float z = data->readFloat();
+                    float speed = data->readFloat();
                     btQuaternion quat = readQuat(data);
                     float rotX = quat.x();
                     float rotY = quat.y();
@@ -2824,6 +2825,7 @@ namespace syj
                     {
                         if(serverData->livingBricks[i]->serverID == id)
                         {
+                            serverData->livingBricks[i]->lastSpeed = speed;
                             serverData->livingBricks[i]->carTransform.addTransform(packetTime,glm::vec3(x,y,z),glm::quat(rotW,rotX,rotY,rotZ));
                             for(int wheel = 0; wheel<numWheels; wheel++)
                             {

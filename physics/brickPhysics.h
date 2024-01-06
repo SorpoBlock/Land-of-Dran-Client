@@ -55,6 +55,7 @@ namespace syj
 
     struct livingBrick : newBrickRenderer
     {
+        float lastSpeed = 0;
         int serverID = -1;
         btVehicleRaycaster* vehicleRayCaster = 0;
         btRaycastVehicle *vehicle = 0;
