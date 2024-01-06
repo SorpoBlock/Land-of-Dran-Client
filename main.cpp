@@ -2315,20 +2315,13 @@ int main(int argc, char *argv[])
                                 else
                                     glUniform1f(whichModelUnis->clipHeight,serverData->waterLevel);
                                 clientEnvironment.settings->render(whichModelUnis);
+                                glUniform1i(whichModelUnis->target->getUniformLocation("useShadows"),false);
                                 serverData->playerCamera->renderReflection(whichModelUnis,serverData->waterLevel,"Player");
                                 serverData->env->passUniforms(whichModelUnis);
                                 for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
                                     serverData->newDynamicTypes[a]->renderInstanced(whichModelUnis);
 
                                 clientEnvironment.newWheelModel->renderInstanced(whichModelUnis);
-
-                                //The flat placeholder land at the bottom of the world...
-                                glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),1);
-                                grass.use(whichModelUnis);
-                                glBindVertexArray(quadVAO);
-                                glDrawArrays(GL_TRIANGLES,0,6);
-                                glBindVertexArray(0);
-                                glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),0);
 
 
                                 /*for(unsigned int a = 0; a<serverData->dynamics.size(); a++)
@@ -2351,6 +2344,7 @@ int main(int argc, char *argv[])
                                 serverData->playerCamera->renderReflection(whichBrickUnis,serverData->waterLevel,"Player");
                                 serverData->env->passUniforms(whichBrickUnis);
                                 clientEnvironment.settings->render(whichBrickUnis);
+                                glUniform1i(whichBrickUnis->target->getUniformLocation("useShadows"),false);
 
                                 glEnable(GL_BLEND);
                                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2372,6 +2366,7 @@ int main(int argc, char *argv[])
                                 else
                                     glUniform1f(whichModelUnis->clipHeight,-serverData->waterLevel);
                                 clientEnvironment.settings->render(whichModelUnis);
+                                glUniform1i(whichModelUnis->target->getUniformLocation("useShadows"),false);
                                 serverData->playerCamera->render(whichModelUnis,"Player");
                                 serverData->env->passUniforms(whichModelUnis);
                                 for(int a = 0; a<serverData->newDynamicTypes.size(); a++)
@@ -2380,12 +2375,14 @@ int main(int argc, char *argv[])
                                 clientEnvironment.newWheelModel->renderInstanced(whichModelUnis);
 
                                 //The flat placeholder land at the bottom of the world...
+                                glDisable(GL_CULL_FACE);
                                 glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),1);
                                 grass.use(whichModelUnis);
                                 glBindVertexArray(quadVAO);
                                 glDrawArrays(GL_TRIANGLES,0,6);
                                 glBindVertexArray(0);
                                 glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),0);
+                                glEnable(GL_CULL_FACE);
 
                             oldModelUnis->use();
                                 if(serverData->playerCamera->getPosition().y < serverData->waterLevel)
@@ -2406,6 +2403,7 @@ int main(int argc, char *argv[])
                             glUniform1i(whichBrickUnis->target->getUniformLocation("debugMode"),debugMode);
                             serverData->env->passUniforms(whichBrickUnis);
                             clientEnvironment.settings->render(whichBrickUnis);
+                                glUniform1i(whichBrickUnis->target->getUniformLocation("useShadows"),false);
                                 if(serverData->playerCamera->getPosition().y < serverData->waterLevel)
                                     glUniform1f(whichBrickUnis->clipHeight,serverData->waterLevel);
                                 else

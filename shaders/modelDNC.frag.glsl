@@ -40,6 +40,7 @@ uniform vec3 debugColor;
 uniform vec3 tint;
 uniform bool useTint;
 uniform bool skipCamera;
+uniform bool bottomLand;
 
 uniform bool avatarSelectorLighting;
 uniform int currentMesh;
@@ -250,6 +251,8 @@ void main()
 	vec3 tanViewVector = normalize(tanViewPos - tanFragPos);
 	
 	vec2 realUV = uv;
+	if(bottomLand)
+		realUV = vec2(mod(worldPos.x,50)/50,mod(worldPos.z,50)/50);
 	
 	if(useHeight)
 	{
@@ -352,6 +355,12 @@ void main()
 	float roughness = mohr.a;
 	if(!useRoughness)
 		roughness = 0.5;
+		
+	if(bottomLand)
+	{
+		metalness = 0.0;
+		roughness = 1.0;
+	}
 	
 	//New IBL lighting code:	
 	windowTint *= 0.6;

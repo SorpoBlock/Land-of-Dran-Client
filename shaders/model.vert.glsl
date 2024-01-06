@@ -28,6 +28,8 @@ uniform mat4 rotateMatrix;
 uniform mat4 scaleMatrix;
 uniform mat4 modelMatrix;
 
+uniform bool bottomLand;
+
 //Fragment shader inputs:
 out vec2 uv;
 out vec3 normal;
@@ -44,6 +46,21 @@ flat out int pickingColor;
 
 void main()
 {
+	if(bottomLand)
+	{
+		worldPos = vec3(cameraPlayerPosition.x+positions.x*500.0,0,cameraPlayerPosition.z+positions.y*500.0);
+		normal = vec3(0,1,0);
+		tangent = vec3(0,0,1);
+		bitangent = vec3(1,0,0);
+		uv = positions.xy;
+		gl_Position = projectionPlayerMatrix * viewPlayerMatrix * vec4(worldPos,1);
+		if(clipHeight > 0.0)
+			gl_ClipDistance[0] = worldPos.y - clipHeight;
+		else
+			gl_ClipDistance[0] = abs(clipHeight) - worldPos.y; 
+		return;
+	}
+
 	//Instances of instanced meshes that we want hidden will have perMeshTransform set to glm::mat4(nan(""))
 	if(isnan(perMeshTransform[0][0]))
 	{

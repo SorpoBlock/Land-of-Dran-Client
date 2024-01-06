@@ -40,6 +40,7 @@ uniform vec3 debugColor;
 uniform vec3 tint;
 uniform bool useTint;
 uniform bool skipCamera;
+uniform bool bottomLand;
 
 uniform bool avatarSelectorLighting;
 uniform int currentMesh;
@@ -77,9 +78,9 @@ const float PI = 3.14159265359;
 // Don't worry if you don't get what's going on; you generally want to do normal 
 // mapping the usual way for performance anways; I do plan make a note of this 
 // technique somewhere later in the normal mapping tutorial.
-vec3 getNormalFromMap(vec2 realUV)
+vec3 getNormalFromMapGrad(vec2 realUV,vec2 dx,vec2 dy)
 {
-    vec3 tangentNormal = textureLod(normalTexture, realUV,0).xyz * 2.0 - 1.0;
+    vec3 tangentNormal = textureGrad(normalTexture, realUV,dx,dy).xyz * 2.0 - 1.0;
 	
     //Extra code so that if useNormal(map) is 0, texture map normal defaults to 0,1,0 aka it's just the interpolated vertex normal
 	if(!useNormal)
@@ -93,8 +94,8 @@ vec3 getNormalFromMap(vec2 realUV)
 		//Honeslty don't even need this because assImp calcs TBN for us
 		vec3 Q1  = dFdx(worldPos);
 		vec3 Q2  = dFdy(worldPos);
-		vec2 st1 = dFdx(realUV);
-		vec2 st2 = dFdy(realUV);
+		vec2 st1 = dx;
+		vec2 st2 = dy;
 		vec3 N   = normalize(normal);
 		vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
 		vec3 B  = -normalize(cross(N, T));
@@ -212,6 +213,9 @@ vec2 simpleParallaxMapping(vec2 texCoords, vec3 viewDir)
 
 void main()
 {	
+	vec2 dxuv = dFdx(uv);
+	vec2 dyuv = dFdy(uv);
+
 	if(usePickingColor == 1)
 	{
 		float pickingFloat = pickingColor;
@@ -250,6 +254,12 @@ void main()
 	vec3 tanViewVector = normalize(tanViewPos - tanFragPos);
 	
 	vec2 realUV = uv;
+	if(bottomLand)
+	{
+		realUV = vec2(mod(worldPos.x,50)/50,mod(worldPos.z,50)/50);
+		dxuv *= 3.0;
+		dyuv *= 3.0;
+	}
 	
 	if(useHeight)
 	{
@@ -265,7 +275,7 @@ void main()
 
 	vec4 albedo_ = vec4(nodeColor,1);
 	if(useAlbedo)
-		albedo_ = texture(albedoTexture,realUV);
+		albedo_ = textureGrad(albedoTexture,realUV,dxuv,dyuv);
 	/*if(useNodeColor)
 	{ 
 		if(useAlbedo)
@@ -286,9 +296,12 @@ void main()
 	
 	if(albedo_.a < 0.1)
 		discard;
-	vec3 newNormal = getNormalFromMap(realUV);	
+	vec3 newNormal = normal;
+		
 	float nonLinearAlbedoF = 1.0;											//Honestly no clue if this applies to bricks...
 	vec3 albedo = pow(albedo_.rgb,vec3(1.0 + 1.2 * nonLinearAlbedoF));
+	
+	newNormal = getNormalFromMapGrad(realUV,dxuv,dyuv);	
 	
 	vec3 windowTint = vec3(0); 
 	float bias = max(0.01 * (1.0 - dot(newNormal, normalize(sunDirection))), 0.001);  
@@ -336,7 +349,7 @@ void main()
 		}
 	}
 	
-	vec4 mohr = texture(mohrTexture,realUV);
+	vec4 mohr = textureGrad(mohrTexture,realUV,dxuv,dyuv);
 	
 	//Metalness defaults to 0
 	float metalness = mohr.r;
@@ -352,6 +365,12 @@ void main()
 	float roughness = mohr.a;
 	if(!useRoughness)
 		roughness = 0.5;
+		
+	if(bottomLand)
+	{
+		metalness = 0.0;
+		roughness = 1.0;
+	}
 	
 	//New IBL lighting code:	
 	windowTint *= 0.6;
