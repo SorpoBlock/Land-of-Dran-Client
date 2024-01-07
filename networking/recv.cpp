@@ -226,6 +226,10 @@ void processCommand(clientStuff *clientEnvironment,std::string commandType,packe
             serverData->env->sunDirection.x = data->readFloat();
             serverData->env->sunDirection.y = data->readFloat();
             serverData->env->sunDirection.z = data->readFloat();
+
+            serverData->env->fogColor.r = data->readFloat();
+            serverData->env->fogColor.g = data->readFloat();
+            serverData->env->fogColor.b = data->readFloat();
         }
         else
         {

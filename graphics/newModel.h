@@ -51,7 +51,8 @@ namespace syj
         btDynamicsWorld *world = 0;
         unsigned int lastPlayerControl = 0;
         bool walking = false;
-        bool control(float yaw,bool forward,bool backward,bool left,bool right,bool jump,bool isJetting,bool allowTurning=true,bool relativeSpeed = false);
+        float crouchProgress = 0.0;
+        bool control(float yaw,bool forward,bool backward,bool left,bool right,bool jump,bool crouch,bool isJetting,bool allowTurning=true,bool relativeSpeed = false);
 
         //Networking stuff:
         int serverID = -1;
@@ -110,7 +111,6 @@ namespace syj
 
         newDynamic(newModel *_type,glm::vec3 baseScale = glm::vec3(0.02,0.02,0.02));
         ~newDynamic();
-
         newDynamic(const newDynamic&) = delete; //Disable copy constructor
     };
 

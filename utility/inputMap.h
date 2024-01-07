@@ -55,7 +55,8 @@ namespace syj
         playersListButton = 42,
         debugInfo = 43,
         debugMode = 44,
-        endOfCommandEnum = 45        //inputCommands::endOfEnum gives the size of the enum
+        crouch = 45,
+        endOfCommandEnum = 46        //inputCommands::endOfEnum gives the size of the enum
     };
 
     std::string inputCommandToString(inputCommand command);

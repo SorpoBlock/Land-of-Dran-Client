@@ -612,7 +612,7 @@ namespace syj
 
                 packet transPacket;
                 transPacket.writeUInt(2,4);
-                transPacket.writeUInt(0,5);
+                transPacket.writeUInt(0,6);
                 transPacket.writeBit(false);
                 transPacket.writeBit(false);
                 transPacket.writeBit(false);

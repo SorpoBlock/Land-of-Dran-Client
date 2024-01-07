@@ -1210,7 +1210,7 @@ int main(int argc, char *argv[])
                     {
                         if(rightDown && serverData->canJet)
                         {
-                            serverData->currentPlayer->body->setGravity(btVector3(0,20,0));
+                            //serverData->currentPlayer->body->setGravity(btVector3(0,20,0));
                         }
                         else
                         {
@@ -1893,7 +1893,9 @@ int main(int argc, char *argv[])
                                 pos = serverData->cameraTarget->modelInterpolator.getPosition();
                             }
 
-                            pos += serverData->cameraTarget->type->eyeOffset;
+                            float crouchEyeLerp = std::clamp(1.0-serverData->cameraTarget->crouchProgress,0.1,1.0);
+                            glm::vec3 crouchVector = glm::vec3(serverData->playerCamera->getDirection().x*3.0,0.2,serverData->playerCamera->getDirection().z*3.0);
+                            pos += glm::mix(crouchVector,serverData->cameraTarget->type->eyeOffset,crouchEyeLerp);
                             serverData->playerCamera->setPosition( pos );
                         }
                         else //3rd person
@@ -2100,6 +2102,7 @@ int main(int argc, char *argv[])
                     netControlState |= playerInput.commandKeyDown(walkLeft) ? 4 : 0;
                     netControlState |= playerInput.commandKeyDown(walkRight) ? 8 : 0;
                     netControlState |= doJump ? 16 : 0;
+                    netControlState |= playerInput.commandKeyDown(crouch) ? 32 : 0;
                     //if(camMode == 2)
                       //  netControlState = 0;
                     if(evalWindow->isActive() && evalWindow->isVisible())
@@ -2110,19 +2113,21 @@ int main(int argc, char *argv[])
                     {
                         if(SDL_GetTicks() - serverData->currentPlayer->flingPreventionStartTime > 100)
                         {
-                            if(serverData->currentPlayer->control(atan2(serverData->playerCamera->getDirection().x,serverData->playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,serverData->canJet && rightDown))
+                            if(serverData->currentPlayer->control(atan2(serverData->playerCamera->getDirection().x,serverData->playerCamera->getDirection().z),netControlState & 1,netControlState & 2,netControlState & 4,netControlState & 8,netControlState &16,netControlState&32,serverData->canJet && rightDown))
                                 didJump = true;
                             if(didJump)
                                 clientEnvironment.speaker->playSound(clientEnvironment.speaker->resolveSound("Jump"));
                         }
                     }
 
-                    int fullControlState  = netControlState + (leftDown << 5);
-                    fullControlState |= (clientEnvironment.currentlyOpen == inventory) ? 0b1000000 : 0;
-                    fullControlState |= serverData->selectedSlot << 7;
-                    fullControlState += rightDown << 11;
-                    fullControlState |= (clientEnvironment.currentlyOpen == paintCan) ? (1 << 12) : 0;
-                    fullControlState |= chatEditbox->isActive() ? (1 << 13) : 0;
+                    //1,2,4,8,16,32,64,128,256,512,1024,
+                    //0,1,2,3,4 ,5 ,6 ,7  ,8  ,9  ,10  ,
+                    int fullControlState  = netControlState + (leftDown << 6);
+                    fullControlState |= (clientEnvironment.currentlyOpen == inventory) ? (1<<7) : 0;
+                    fullControlState |= serverData->selectedSlot << 8;
+                    fullControlState += rightDown << 12;
+                    fullControlState |= (clientEnvironment.currentlyOpen == paintCan) ? (1 << 13) : 0;
+                    fullControlState |= chatEditbox->isActive() ? (1 << 14) : 0;
 
                     glm::vec3 playerDirDiff = serverData->playerCamera->getDirection() - lastPlayerDir;
                     if(fabs(glm::length(playerDirDiff)) > 0.02 || fullControlState != lastPlayerControlMask || doJump || SDL_GetTicks() > (unsigned)(lastSentTransData + 1000))
@@ -2135,7 +2140,7 @@ int main(int argc, char *argv[])
                             transPacket.writeUInt(2,4);
                             if(camMode == 2)
                                 netControlState = 0;
-                            transPacket.writeUInt(netControlState,5);
+                            transPacket.writeUInt(netControlState,6);
                             transPacket.writeBit(didJump);//This one controls if the sound is played
                             transPacket.writeBit(context.getMouseLocked() && leftDown);
                             transPacket.writeBit(context.getMouseLocked() && rightDown);
@@ -2960,6 +2965,8 @@ int main(int argc, char *argv[])
                     serverData->ourTempBrick = new tempBrick(serverData->staticBricks);
                     serverData->ourTempBrick->resizeMode = 0;
                     hud->getChild("ResizeText")->setVisible(false);
+
+                    playerInput.resetKeyPresses();
 
                     info("Starting main game loop!");
                     currentState = STATE_PLAYING;

@@ -52,6 +52,7 @@ namespace syj
             case playersListButton: return "Players List";
             case debugInfo: return "Debug Info";
             case debugMode: return "Debug Mode";
+            case crouch: return "Crouch";
             case endOfCommandEnum: return "Error 1";
             default: return "Error 2";
         }
@@ -112,7 +113,7 @@ namespace syj
         bindKey(rotateBrickBackwards,SDL_SCANCODE_KP_7);
         bindKey(moveBrickUpThree,SDL_SCANCODE_P);
         bindKey(moveBrickDownThree,SDL_SCANCODE_SEMICOLON);
-
+        bindKey(crouch,SDL_SCANCODE_LSHIFT);
         bindKey(debugInfo,SDL_SCANCODE_F1);
         bindKey(debugMode,SDL_SCANCODE_F2);
         bindKey(playersListButton,SDL_SCANCODE_F3);
