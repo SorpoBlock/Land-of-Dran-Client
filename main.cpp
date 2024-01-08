@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
 
     CEGUI::Window *root = CEGUI::System::getSingleton().getDefaultGUIContext().getRootWindow();
 
-    clientEnvironment.picker = new avatarPicker(context.getResolution().x,context.getResolution().y);
+    clientEnvironment.picker = new avatarPicker();
 
     CEGUI::Window *bounceText = addGUIFromFile("justText.layout");
     bounceText->setVisible(true);
@@ -2383,6 +2383,7 @@ int main(int argc, char *argv[])
                                 glDisable(GL_CULL_FACE);
                                 glUniform1i(whichModelUnis->target->getUniformLocation("bottomLand"),1);
                                 grass.use(whichModelUnis);
+                                renderLights(whichModelUnis,serverData->lights);
                                 glBindVertexArray(quadVAO);
                                 glDrawArrays(GL_TRIANGLES,0,6);
                                 glBindVertexArray(0);

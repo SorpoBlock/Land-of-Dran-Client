@@ -355,7 +355,7 @@ namespace syj
         button->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&buyDecal));
     }
 
-    avatarPicker::avatarPicker(int resX,int resY)
+    avatarPicker::avatarPicker()
     {
         decalPicker = addGUIFromFile("facePicker.layout");
         decalPicker->setUserData(this);
@@ -373,18 +373,6 @@ namespace syj
         buttons->getChild("Cancel")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&revertAll));
         decalPicker->getChild("Cancel")->subscribeEvent(CEGUI::PushButton::EventClicked,CEGUI::Event::Subscriber(&decalRevert));
 
-        renderTarget::renderTargetSettings settings;
-        settings.useColor = true;
-        settings.resX = resX;
-        settings.resY = resY;
-        settings.numColorChannels = 1;
-        settings.clearColor = glm::vec4(1,1,1,1);
-        pickingTexture = new renderTarget(settings);
-
-        float x = resX;
-        float y = resY;
-
-        pickingCamera.setAspectRatio(x/y);
         pickingCamera.setFieldOfVision(90);
         pickingCamera.setNearPlane(0.1);
         pickingCamera.setFarPlane(100);
@@ -394,6 +382,23 @@ namespace syj
 
     void avatarPicker::runPickCycle(renderContext *context,uniformsHolder *instancedUnis,uniformsHolder *nonInstancedUnis,client *connection,preferenceFile *prefs)
     {
+        if(pickingTexture)
+        {
+            delete pickingTexture;
+            pickingTexture = 0;
+        }
+
+        renderTarget::renderTargetSettings settings;
+        settings.useColor = true;
+        settings.resX = context->getResolution().x;
+        settings.resY = context->getResolution().y;
+        settings.numColorChannels = 1;
+        settings.clearColor = glm::vec4(1,1,1,1);
+        pickingTexture = new renderTarget(settings);
+        float x = settings.resX;
+        float y = settings.resY;
+        pickingCamera.setAspectRatio(x/y);
+
         //Sometimes the decals haven't loaded by the time the other types have so put this here too
         preference *tmp = prefs->getPreference("FACEDECAL");
         if(tmp)

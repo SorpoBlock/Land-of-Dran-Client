@@ -38,7 +38,7 @@ namespace syj
         float modelPitch = 0;
 
         void loadFromPrefs(preferenceFile *prefs);
-        avatarPicker(int resX,int resY);
+        avatarPicker();
         void sendAvatarPrefs(client *connection,preferenceFile *prefs);
     };
 }
